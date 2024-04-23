@@ -1,24 +1,27 @@
 {
-  "name": "yab",
-  "private": true,
-  "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
-    "prettier": "^3.2.5",
-    "turbo": "latest"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "bun@1.1.2",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+	"name": "yab",
+	"private": true,
+	"scripts": {
+		"build": "turbo build",
+		"dev": "turbo dev",
+		"lint": "turbo lint",
+		"format": "bunx @biomejs/biome format --write \"**/*.{ts,tsx,md}\"",
+		"commit": "bunx cz"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.7.1",
+		"cz-conventional-changelog": "^3.3.0",
+		"lefthook": "^1.6.10",
+		"semantic-release": "^23.0.8",
+		"turbo": "latest"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"packageManager": "bun@1.1.2",
+	"workspaces": ["apps/*", "packages/*"],
+	"dependencies": {
+		"@commitlint/cli": "^19.3.0",
+		"@commitlint/config-conventional": "^19.2.2"
+	}
 }
