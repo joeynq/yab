@@ -1,9 +1,14 @@
 {
-	"cSpell.words": ["biomejs", "bunx", "commitlint", "datasource", "lefthook"],
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit"
-	},
+	"cSpell.words": [
+		"biomejs",
+		"bunx",
+		"commitlint",
+		"datasource",
+		"diod",
+		"lefthook"
+	],
 	"[javascript]": {
 		"editor.defaultFormatter": "biomejs.biome"
-	}
+	},
+	"editor.tabSize": 2
 }
