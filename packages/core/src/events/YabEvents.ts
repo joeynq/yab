@@ -1,11 +1,16 @@
+import type { Server } from "bun";
+import type { Container } from "diod";
+import type { Context } from "../interfaces/Context";
+import type { Configuration } from "../services";
+
 export enum YabEvents {
 	OnStarted = "started",
-	OnInitialized = "initialized",
 	OnRequest = "onRequest",
+	OnInit = "init",
 }
 
 export type YabEventMap = {
-	[YabEvents.OnStarted]: [];
-	[YabEvents.OnInitialized]: [];
-	[YabEvents.OnRequest]: [Request, Response];
+	[YabEvents.OnStarted]: [Server, Configuration];
+	[YabEvents.OnInit]: [{ config: Configuration; container: Container }];
+	[YabEvents.OnRequest]: [Context];
 };

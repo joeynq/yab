@@ -1,6 +1,7 @@
-import type { Serve } from "bun";
-import { ContainerBuilder } from "diod";
+import type { Serve, Server } from "bun";
+import { type Container, ContainerBuilder } from "diod";
 import { type YabEventMap, YabEvents } from "./events/YabEvents";
+import type { Context } from "./interfaces/Context";
 import type { HookMetadata } from "./interfaces/Hook";
 import type { ModuleConstructor, YabOptions } from "./interfaces/Module";
 import { Configuration } from "./services/Configuration";
@@ -11,7 +12,9 @@ import { HookMetadataKey } from "./symbols/metadata";
 export class Yab {
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
-	#container = new ContainerBuilder();
+	#builder = new ContainerBuilder();
+	#container!: Container;
+	#context?: (ctx: Context) => Record<string, unknown>;
 
 	get bunOptions(): Serve {
 		return {
@@ -28,14 +31,14 @@ export class Yab {
 
 	constructor(options?: YabOptions) {
 		this.#config = new Configuration(options);
-		this.#container.register(Configuration).useFactory(() => this.#config);
+		this.#builder.register(Configuration).useFactory(() => this.#config);
 	}
 
 	#initModules() {
 		const modConf = this.#config.options.modules ?? [];
 		modConf.map(([mod, ...args]) => {
 			const instance = new mod(...args);
-			this.#container.register(mod).useInstance(instance);
+			this.#builder.register(mod).useInstance(instance);
 
 			const hookMetadata = Reflect.getMetadata(
 				HookMetadataKey,
@@ -51,11 +54,37 @@ export class Yab {
 		});
 	}
 
+	#buildContext(request: Request, response: Response) {
+		return {
+			request,
+			response,
+			container: this.#builder.build({ autowire: true }),
+			requestId: crypto.randomUUID(),
+		};
+	}
+
 	async #fetch(request: Request): Promise<Response> {
 		const response = new Response("Served", { status: 200 });
-		await this.#hooks.invoke(YabEvents.OnRequest, request, response);
+
+		const context = this.#buildContext(request, response);
+		await this.#hooks.invoke(YabEvents.OnRequest, {
+			...context,
+			...this.#context?.(context),
+		});
 
 		return response;
+	}
+
+	/**
+	 * The `context` function in TypeScript returns an empty object of a specified type.
+	 * @param {Context} context - The `context` parameter is of type `Context`, which is a generic type
+	 * that extends `Record<string, unknown>`. This means that `context` is expected to be an object with
+	 * string keys and values of any type.
+	 * @returns An empty object of type T is being returned.
+	 */
+	context<T extends Record<string, unknown>>(getContext: (ctx: Context) => T) {
+		this.#context = getContext;
+		return this;
 	}
 
 	use<M extends ModuleConstructor>(
@@ -66,11 +95,17 @@ export class Yab {
 		return this;
 	}
 
-	start(onStarted: () => void) {
+	async start(onStarted: (server: Server, config: Configuration) => void) {
 		this.#initModules();
-		this.#container.build();
-		Bun.serve(this.bunOptions);
-		this.#hooks.invoke(YabEvents.OnStarted);
-		onStarted();
+
+		this.#builder.build({ autowire: true });
+		await this.#hooks.invoke(YabEvents.OnInit, {
+			config: this.#config,
+			container: this.#container,
+		});
+
+		const server = Bun.serve(this.bunOptions);
+		await this.#hooks.invoke(YabEvents.OnStarted, server, this.#config);
+		onStarted(server, this.#config);
 	}
 }
