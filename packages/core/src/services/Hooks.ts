@@ -4,7 +4,7 @@ type EventHandler<
 	EventType extends { [key: string]: string },
 	Event extends EnumValues<EventType>,
 	EventMap extends Record<EnumValues<EventType>, unknown[]>,
-> = (...args: EventPayload<EventType, Event, EventMap>) => void;
+> = (...args: EventPayload<EventType, Event, EventMap>) => void | Promise<void>;
 
 export class Hooks<
 	EventType extends { [key: string]: string },
@@ -40,7 +40,10 @@ export class Hooks<
 	) {
 		const hooks = this.#hooks.get(event);
 		if (hooks) {
-			await Promise.all([...hooks].map((hook) => hook(...args)));
+			// run all hooks in sequence order and get the result
+			for (const hook of hooks) {
+				await hook(...args);
+			}
 		}
 	}
 }

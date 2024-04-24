@@ -7,5 +7,5 @@ export enum YabEvents {
 export type YabEventMap = {
 	[YabEvents.OnStarted]: [];
 	[YabEvents.OnInitialized]: [];
-	[YabEvents.OnRequest]: [Request];
+	[YabEvents.OnRequest]: [Request, Response];
 };

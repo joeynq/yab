@@ -5,6 +5,7 @@ import type { HookMetadata } from "./interfaces/Hook";
 import type { ModuleConstructor, YabOptions } from "./interfaces/Module";
 import { Configuration } from "./services/Configuration";
 import { Hooks } from "./services/Hooks";
+import { Res } from "./services/Res";
 import { HookMetadataKey } from "./symbols/metadata";
 
 export class Yab {
@@ -15,7 +16,13 @@ export class Yab {
 	get bunOptions(): Serve {
 		return {
 			...this.#config.bunOptions,
-			fetch: this.#fetch.bind(this),
+			fetch: (request: Request) => {
+				try {
+					return this.#fetch(request);
+				} catch (error) {
+					return Res.error(error as Error);
+				}
+			},
 		};
 	}
 
@@ -44,9 +51,11 @@ export class Yab {
 		});
 	}
 
-	#fetch(request: Request): Promise<Response> {
-		this.#hooks.invoke(YabEvents.OnRequest, request);
-		throw new Error("Not implemented");
+	async #fetch(request: Request): Promise<Response> {
+		const response = new Response("Served", { status: 200 });
+		await this.#hooks.invoke(YabEvents.OnRequest, request, response);
+
+		return response;
 	}
 
 	use<M extends ModuleConstructor>(
