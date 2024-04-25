@@ -1,6 +1,6 @@
+import { deepmerge } from "deepmerge-ts";
 import type {
 	AnyClass,
-	DeepPartial,
 	Dictionary,
 	Path,
 	PathValue,
@@ -78,35 +78,7 @@ export const deepEqual = <T>(a: T, b: T): boolean => {
 	return false;
 };
 
-export const deepMerge = <T extends object>(
-	target: T,
-	source: DeepPartial<T>,
-): T => {
-	for (const key in source) {
-		if (source[key] instanceof Object) {
-			if (!target[key]) {
-				Object.assign(target, { [key]: {} });
-			}
-
-			source[key] &&
-				hasOwn(target, key) &&
-				deepMerge(
-					// @ts-ignore
-					target[key],
-					// biome-ignore lint/style/noNonNullAssertion: <explanation>
-					source[key]!,
-				);
-		} else {
-			Object.assign(target, { [key]: source[key] });
-		}
-	}
-
-	return target;
-};
-
-export const deepClone = <T extends object>(source: T): T => {
-	return deepMerge({} as T, source);
-};
+export const deepMerge = deepmerge;
 
 export const hasOwn = <T extends object>(obj: T, key: string) => {
 	return obj && Object.prototype.hasOwnProperty.call(obj, key);

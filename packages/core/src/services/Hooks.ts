@@ -1,4 +1,5 @@
-import type { EnumValues, EventPayload } from "../interfaces";
+import type { EnumValues } from "@yab/utils";
+import type { EventPayload } from "../interfaces";
 
 type EventHandler<
 	EventType extends { [key: string]: string },

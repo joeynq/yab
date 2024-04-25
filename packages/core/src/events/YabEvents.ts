@@ -3,9 +3,9 @@ import type { Context, EnhancedContainer } from "../interfaces";
 import type { Configuration } from "../services";
 
 export enum YabEvents {
-	OnStarted = "started",
-	OnRequest = "onRequest",
-	OnInit = "init",
+	OnStarted = "app:started",
+	OnRequest = "app:request",
+	OnInit = "app:init",
 }
 
 export type YabEventMap = {

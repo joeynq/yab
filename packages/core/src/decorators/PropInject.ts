@@ -20,6 +20,6 @@ export const PropInject = (): PropertyDecorator => {
 		});
 
 		const descriptor = Object.getOwnPropertyDescriptor(target, OnInitSymbol);
-		descriptor && YabHook("init")(target, OnInitSymbol, descriptor);
+		descriptor && YabHook("app:init")(target, OnInitSymbol, descriptor);
 	};
 };

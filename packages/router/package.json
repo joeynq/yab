@@ -16,6 +16,8 @@
 		"typescript": "^5.0.0"
 	},
 	"dependencies": {
+		"fast-querystring": "^1.1.2",
+		"memoirist": "^0.1.10",
 		"reflect-metadata": "^0.2.2"
 	}
 }

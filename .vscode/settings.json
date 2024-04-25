@@ -8,7 +8,9 @@
 		"datasource",
 		"deburr",
 		"deburred",
-		"lefthook"
+		"deepmerge",
+		"lefthook",
+		"Mergeable"
 	],
 	"[javascript]": {
 		"editor.defaultFormatter": "biomejs.biome"

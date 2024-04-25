@@ -21,10 +21,10 @@ export class Configuration {
 	}
 
 	getModuleOptions<Config>(instance: Module<Config>) {
-		return this.options.modules[instance.id] as Config;
+		return this.options.modules[instance.constructor.name] as Config;
 	}
 
 	setModuleOptions<Config>(instance: Module<Config>, config: Config) {
-		this.options.modules[instance.id] = config;
+		this.options.modules[instance.constructor.name] = config;
 	}
 }

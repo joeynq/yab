@@ -6,16 +6,12 @@ import {
 	type YabEventMap,
 	YabHook,
 } from "@yab/core";
+import { deepMerge } from "@yab/utils";
 import type { RouterConfig, SlashedPath } from "./interfaces";
 
 @Injectable()
 export class RouterModule implements Module<RouterConfig> {
-	id = "yab-router";
-
 	config: RouterConfig;
-
-	@PropInject() private configService!: Configuration;
-
 	constructor(prefix: SlashedPath, controllers: unknown[]) {
 		if (!controllers.length) {
 			throw new Error("No controllers provided");
@@ -25,14 +21,11 @@ export class RouterModule implements Module<RouterConfig> {
 		};
 	}
 
-	@YabHook("init")
-	init({ config: service, container }: YabEventMap["init"][0]) {
+	@YabHook("app:init")
+	init({ config: service, container }: YabEventMap["app:init"][0]) {
 		const config = service.getModuleOptions(this);
 
-		service.setModuleOptions(this, {
-			...config,
-			...this.config,
-		});
+		service.setModuleOptions(this, deepMerge(config, this.config));
 		container.registerValue(Configuration, service);
 	}
 }

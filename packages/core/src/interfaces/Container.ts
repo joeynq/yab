@@ -1,7 +1,6 @@
 import type { AwilixContainer } from "awilix";
 import type { Module, ModuleConstructor } from "./Module";
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type InjectionToken<T> = string | { new (...args: any[]): T };
 
 export interface EnhancedContainer extends AwilixContainer {

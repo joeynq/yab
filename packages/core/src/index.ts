@@ -6,3 +6,4 @@ export * from "./interfaces";
 export * from "./services";
 export * from "./symbols";
 export * from "./container";
+export * from "./utils";

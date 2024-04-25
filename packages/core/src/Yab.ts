@@ -1,3 +1,4 @@
+import { uuid } from "@yab/utils";
 import { asValue } from "awilix";
 import type { Serve, Server } from "bun";
 import { container } from "./container";
@@ -36,7 +37,7 @@ export class Yab {
 			request,
 			response,
 			container,
-			requestId: crypto.randomUUID(),
+			requestId: uuid(),
 		};
 	}
 
