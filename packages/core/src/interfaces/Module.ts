@@ -1,15 +1,16 @@
 import type { Serve } from "bun";
 
-export interface ModuleConstructor {
+export interface ModuleConstructor<Config = unknown> {
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	new (...args: any[]): Module;
+	new (...args: any[]): Module<Config>;
 }
-export interface Module {
+export interface Module<Config = unknown> {
 	id: string;
+	config: Config;
 }
 
 interface YabInternalOptions {
-	modules: [ModuleConstructor, ...unknown[]][];
+	modules: Record<string, unknown>;
 }
 
-export type YabOptions = YabInternalOptions & Omit<Serve, "modules" | "fetch">;
+export type YabOptions = YabInternalOptions & Omit<Serve, "fetch">;

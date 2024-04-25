@@ -1,0 +1,17 @@
+{
+	"name": "example",
+	"module": "index.ts",
+	"type": "module",
+	"dependencies": {
+		"@yab/core": "link:@yab/core",
+		"@yab/router": "link:@yab/router",
+		"awilix": "^10.0.2",
+		"reflect-metadata": "^0.2.2"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	}
+}

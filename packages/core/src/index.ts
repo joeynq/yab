@@ -1,10 +1,8 @@
-import { Yab } from "./Yab";
-
+import "reflect-metadata";
 export * from "./Yab";
 export * from "./decorators";
 export * from "./events";
 export * from "./interfaces";
 export * from "./services";
 export * from "./symbols";
-
-new Yab().start(() => console.log("Server started!"));
+export * from "./container";

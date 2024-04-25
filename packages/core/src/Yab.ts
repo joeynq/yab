@@ -1,5 +1,6 @@
+import { asValue } from "awilix";
 import type { Serve, Server } from "bun";
-import { type Container, ContainerBuilder } from "diod";
+import { container } from "./container";
 import { type YabEventMap, YabEvents } from "./events/YabEvents";
 import type { Context } from "./interfaces/Context";
 import type { HookMetadata } from "./interfaces/Hook";
@@ -12,8 +13,6 @@ import { HookMetadataKey } from "./symbols/metadata";
 export class Yab {
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
-	#builder = new ContainerBuilder();
-	#container!: Container;
 	#context?: (ctx: Context) => Record<string, unknown>;
 
 	get bunOptions(): Serve {
@@ -31,26 +30,8 @@ export class Yab {
 
 	constructor(options?: YabOptions) {
 		this.#config = new Configuration(options);
-		this.#builder.register(Configuration).useFactory(() => this.#config);
-	}
-
-	#initModules() {
-		const modConf = this.#config.options.modules ?? [];
-		modConf.map(([mod, ...args]) => {
-			const instance = new mod(...args);
-			this.#builder.register(mod).useInstance(instance);
-
-			const hookMetadata = Reflect.getMetadata(
-				HookMetadataKey,
-				mod.prototype,
-			) as HookMetadata<typeof YabEvents> | undefined;
-			if (hookMetadata) {
-				// @ts-expect-error
-				const handler = mod[hookMetadata.method].bind(mod);
-				handler && this.#hooks.register(hookMetadata.event, handler);
-			}
-
-			return instance;
+		container.register({
+			[Configuration.name]: asValue(this.#config),
 		});
 	}
 
@@ -58,7 +39,7 @@ export class Yab {
 		return {
 			request,
 			response,
-			container: this.#builder.build({ autowire: true }),
+			container,
 			requestId: crypto.randomUUID(),
 		};
 	}
@@ -75,13 +56,6 @@ export class Yab {
 		return response;
 	}
 
-	/**
-	 * The `context` function in TypeScript returns an empty object of a specified type.
-	 * @param {Context} context - The `context` parameter is of type `Context`, which is a generic type
-	 * that extends `Record<string, unknown>`. This means that `context` is expected to be an object with
-	 * string keys and values of any type.
-	 * @returns An empty object of type T is being returned.
-	 */
 	context<T extends Record<string, unknown>>(getContext: (ctx: Context) => T) {
 		this.#context = getContext;
 		return this;
@@ -91,17 +65,30 @@ export class Yab {
 		module: M,
 		...args: ConstructorParameters<M>
 	): this {
-		this.#config.setModuleOptions(module, ...args);
+		const instance = container.registerModule(module, ...args);
+
+		const hookMetadata = Reflect.getMetadata(
+			HookMetadataKey,
+			module.prototype,
+		) as Record<string, (string | symbol)[]> | undefined;
+		if (hookMetadata) {
+			for (const [event, methods] of Object.entries(hookMetadata)) {
+				for (const method of methods) {
+					// @ts-expect-error
+					const handler = instance[method].bind(instance);
+					// @ts-expect-error
+					handler && this.#hooks.register(event, handler);
+				}
+			}
+		}
+
 		return this;
 	}
 
 	async start(onStarted: (server: Server, config: Configuration) => void) {
-		this.#initModules();
-
-		this.#builder.build({ autowire: true });
 		await this.#hooks.invoke(YabEvents.OnInit, {
 			config: this.#config,
-			container: this.#container,
+			container: container,
 		});
 
 		const server = Bun.serve(this.bunOptions);

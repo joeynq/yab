@@ -1,8 +1,8 @@
-import type { Container } from "diod";
+import type { EnhancedContainer } from "./Container";
 
 export interface Context {
 	request: Request;
 	response: Response;
-	container: Container;
+	container: EnhancedContainer;
 	requestId: string;
 }

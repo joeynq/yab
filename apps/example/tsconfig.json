@@ -1,21 +1,18 @@
 {
-	"include": ["src"],
-	"exclude": ["node_modules", "dist", "coverage"],
 	"compilerOptions": {
 		// Enable latest features
-		"lib": ["ESNext", "Decorators"],
+		"lib": ["ESNext", "DOM"],
 		"target": "ESNext",
 		"module": "ESNext",
 		"moduleDetection": "force",
-		"experimentalDecorators": true,
-		"emitDecoratorMetadata": true,
+		"jsx": "react-jsx",
+		"allowJs": true,
 
 		// Bundler mode
 		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
 		"verbatimModuleSyntax": true,
-		"noEmit": false,
-		"outDir": "dist",
-		"declaration": true,
+		"noEmit": true,
 
 		// Best practices
 		"strict": true,
@@ -25,9 +22,6 @@
 		// Some stricter flags (disabled by default)
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
-		"noPropertyAccessFromIndexSignature": false,
-
-		// type
-		"types": ["@types/bun", "reflect-metadata"]
+		"noPropertyAccessFromIndexSignature": false
 	}
 }

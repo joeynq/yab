@@ -1,5 +1,6 @@
 import type { Serve } from "bun";
-import type { ModuleConstructor, YabOptions } from "../interfaces/Module";
+import { injectable } from "tsyringe";
+import type { Module, YabOptions } from "../interfaces/Module";
 
 export class Configuration {
 	options!: YabOptions;
@@ -14,24 +15,17 @@ export class Configuration {
 	constructor(options?: YabOptions) {
 		this.options = Object.assign(
 			{
-				modules: [],
+				modules: {},
 			},
 			options,
 		);
 	}
 
-	getModuleOptions(module: ModuleConstructor) {
-		return (
-			this.options.modules?.find(([mod]) => mod === module)?.slice(1) ?? []
-		);
+	getModuleOptions<Config>(instance: Module<Config>) {
+		return this.options.modules[instance.id] as Config;
 	}
 
-	setModuleOptions(module: ModuleConstructor, ...args: unknown[]) {
-		const modIndex = this.options.modules?.findIndex(([mod]) => mod === module);
-		if (modIndex && modIndex > -1) {
-			this.options.modules?.splice(modIndex, 1, [module, ...args]);
-		} else {
-			this.options.modules?.push([module, ...args]);
-		}
+	setModuleOptions<Config>(instance: Module<Config>, config: Config) {
+		this.options.modules[instance.id] = config;
 	}
 }
