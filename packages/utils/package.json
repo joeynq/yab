@@ -1,0 +1,12 @@
+{
+	"name": "@yab/utils",
+	"module": "src/index.ts",
+	"main": "dist/index.js",
+	"type": "module",
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	}
+}
