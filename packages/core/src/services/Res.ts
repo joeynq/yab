@@ -1,11 +1,6 @@
 import type { BunFile } from "bun";
-import {
-	HttpErrorCodes,
-	HttpRedirectCodes,
-	HttpSuccessCodes,
-} from "../enum/http";
-import { HttpException } from "../exceptions";
-import { InternalServerError } from "../exceptions/InternalServerError";
+import { HttpErrorCodes, HttpRedirectCodes, HttpSuccessCodes } from "../enum";
+import { HttpException, InternalServerError } from "../exceptions";
 
 const response = (status: number, data: unknown) => {
 	return new Response(data ? JSON.stringify(data) : null, {

@@ -1,2 +1,2 @@
-import "reflect-metadata";
 export * from "./RouterModule";
+export * from "./interfaces";

@@ -1,6 +1,5 @@
 import type { Serve } from "bun";
-import { injectable } from "tsyringe";
-import type { Module, YabOptions } from "../interfaces/Module";
+import type { Module, YabOptions } from "../interfaces";
 
 export class Configuration {
 	options!: YabOptions;

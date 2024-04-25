@@ -1,4 +1,4 @@
-import type { EnumValues, EventPayload } from "../interfaces/Event";
+import type { EnumValues, EventPayload } from "../interfaces";
 
 type EventHandler<
 	EventType extends { [key: string]: string },

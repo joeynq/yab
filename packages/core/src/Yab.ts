@@ -1,14 +1,10 @@
 import { asValue } from "awilix";
 import type { Serve, Server } from "bun";
 import { container } from "./container";
-import { type YabEventMap, YabEvents } from "./events/YabEvents";
-import type { Context } from "./interfaces/Context";
-import type { HookMetadata } from "./interfaces/Hook";
-import type { ModuleConstructor, YabOptions } from "./interfaces/Module";
-import { Configuration } from "./services/Configuration";
-import { Hooks } from "./services/Hooks";
-import { Res } from "./services/Res";
-import { HookMetadataKey } from "./symbols/metadata";
+import { type YabEventMap, YabEvents } from "./events";
+import type { Context, ModuleConstructor, YabOptions } from "./interfaces";
+import { Configuration, Hooks, Res } from "./services";
+import { HookMetadataKey } from "./symbols";
 
 export class Yab {
 	#config: Configuration;

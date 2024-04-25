@@ -1,23 +1,12 @@
 import {
 	Configuration,
+	Injectable,
 	type Module,
 	PropInject,
 	type YabEventMap,
 	YabHook,
 } from "@yab/core";
-
-type SlashedPath = `/${string}`;
-
-export type RouterConfig = {
-	[key: SlashedPath]: unknown;
-};
-
-const Injectable = (): ClassDecorator => {
-	return (target) => {
-		// console.log("Injectable", target);
-		return target;
-	};
-};
+import type { RouterConfig, SlashedPath } from "./interfaces";
 
 @Injectable()
 export class RouterModule implements Module<RouterConfig> {

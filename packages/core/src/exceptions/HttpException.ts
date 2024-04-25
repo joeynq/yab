@@ -1,4 +1,4 @@
-import type { HttpErrorCodes } from "../enum/http";
+import type { HttpErrorCodes } from "../enum";
 
 export abstract class HttpException extends Error {
 	constructor(

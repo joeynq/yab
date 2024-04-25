@@ -1,5 +1,5 @@
-import type { EnumValues } from "../interfaces/Event";
-import { HookMetadataKey } from "../symbols/metadata";
+import type { EnumValues } from "../interfaces";
+import { HookMetadataKey } from "../symbols";
 
 export function Hook<EventType extends { [key: string]: string }>(
 	event: EnumValues<EventType>,

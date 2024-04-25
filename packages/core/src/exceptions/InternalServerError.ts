@@ -1,4 +1,4 @@
-import { HttpErrorCodes } from "../enum/http";
+import { HttpErrorCodes } from "../enum";
 import { HttpException } from "./HttpException";
 
 export class InternalServerError extends HttpException {

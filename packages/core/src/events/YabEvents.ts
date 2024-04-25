@@ -1,6 +1,5 @@
 import type { Server } from "bun";
-import type { EnhancedContainer } from "../interfaces/Container";
-import type { Context } from "../interfaces/Context";
+import type { Context, EnhancedContainer } from "../interfaces";
 import type { Configuration } from "../services";
 
 export enum YabEvents {
