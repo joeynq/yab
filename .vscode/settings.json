@@ -6,6 +6,8 @@
 		"bunx",
 		"commitlint",
 		"datasource",
+		"deburr",
+		"deburred",
 		"lefthook"
 	],
 	"[javascript]": {
@@ -15,5 +17,6 @@
 		"quickfix.biome": "explicit",
 		"source.organizeImports.biome": "explicit"
 	},
-	"editor.tabSize": 2
+	"editor.tabSize": 2,
+	"exportall.config.relExclusion": ["/packages/utils/src/internal"]
 }
