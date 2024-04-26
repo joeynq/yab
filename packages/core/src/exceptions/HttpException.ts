@@ -1,11 +1,20 @@
 import type { HttpErrorCodes } from "../enum";
 
-export abstract class HttpException extends Error {
+export class HttpException extends Error {
 	constructor(
 		public readonly status: HttpErrorCodes,
 		message: string,
 	) {
 		super(message);
+	}
+
+	toResponse() {
+		return new Response(JSON.stringify({ error: this.toJSON() }), {
+			status: this.status,
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
 	}
 
 	toJSON() {

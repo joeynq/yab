@@ -4,6 +4,7 @@
 	"type": "module",
 	"dependencies": {
 		"@yab/core": "link:@yab/core",
+		"@yab/logger": "link:@yab/logger",
 		"@yab/router": "link:@yab/router",
 		"awilix": "^10.0.2",
 		"reflect-metadata": "^0.2.2"

@@ -1,0 +1,26 @@
+{
+	"name": "@yab/logger",
+	"module": "src/index.ts",
+	"main": "dist/index.js",
+	"type": "module",
+	"scripts": {
+		"build": "tsc"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@yab/core": "link:@yab/core",
+		"@yab/utils": "link:@yab/utils",
+		"awilix": "^10.0.2"
+	},
+	"peerDependencies": {
+		"@yab/core": "^0.0.0",
+		"@yab/utils": "^0.0.0",
+		"awilix": "^10.0.2",
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"pino": "^9.0.0",
+		"pino-pretty": "^11.0.0",
+		"reflect-metadata": "^0.2.2"
+	}
+}

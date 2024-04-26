@@ -3,8 +3,10 @@ import { asValue } from "awilix";
 import type { Server } from "bun";
 import { container } from "./container";
 import { type YabEventMap, YabEvents } from "./events";
+import { HttpException } from "./exceptions";
 import type {
 	Context,
+	Logger,
 	ModuleConfig,
 	ModuleConstructor,
 	YabOptions,
@@ -15,6 +17,7 @@ import { HookMetadataKey } from "./symbols";
 export class Yab {
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
+
 	#context?: (ctx: Context) => Record<string, unknown>;
 
 	constructor(options?: YabOptions) {
@@ -24,12 +27,15 @@ export class Yab {
 		});
 	}
 
-	#buildContext(request: Request): Context {
+	async #buildContext(request: Request): Promise<Context> {
 		const defaultContext: Context = {
 			request,
 			container,
 			requestId: uuid(),
+			serverUrl: "",
+			logger: console as Logger,
 		};
+
 		return {
 			...defaultContext,
 			...(this.#context ? this.#context(defaultContext) : {}),
@@ -112,13 +118,23 @@ export class Yab {
 
 		const server = Bun.serve({
 			...this.#config.bunOptions,
-			async fetch(request: Request): Promise<Response> {
-				const context = buildContext(request);
-				const response = await hooks.invoke(YabEvents.OnRequest, [context], {
-					breakOnResult: true,
-				});
+			async fetch(request, server): Promise<Response> {
+				const context = await buildContext(request);
+				context.serverUrl = server.url.toString();
 
-				return response || new Response("OK", { status: 200 });
+				try {
+					const response = await hooks.invoke(YabEvents.OnRequest, [context], {
+						breakOnResult: true,
+					});
+
+					return response || new Response("OK", { status: 200 });
+				} catch (error) {
+					if (error instanceof HttpException) {
+						return error.toResponse();
+					}
+
+					return new HttpException(500, (error as Error).message).toResponse();
+				}
 			},
 		});
 		await this.#hooks.invoke(YabEvents.OnStarted, [server, this.#config]);

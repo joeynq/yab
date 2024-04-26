@@ -11,6 +11,8 @@
 		"deepmerge",
 		"lefthook",
 		"Mergeable",
+		"pino",
+		"Proxify",
 		"typebox"
 	],
 	"[javascript]": {

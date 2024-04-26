@@ -1,5 +1,6 @@
 import { type AnyFunction, type Dictionary, uuid } from "@yab/utils";
 import type { Serve } from "bun";
+import type { LoggerOptions } from "pino";
 
 export interface ModuleConstructor<Config extends Dictionary = Dictionary> {
 	new (...args: any[]): Module<Config>;
@@ -21,6 +22,7 @@ export interface ModuleConfig<Config extends Dictionary = Dictionary> {
 
 interface YabInternalOptions {
 	modules: ModuleConfig[];
+	logger?: LoggerOptions;
 }
 
 export type YabOptions = YabInternalOptions & Omit<Serve, "fetch">;

@@ -75,6 +75,12 @@ export class RouterModule extends Module<RouterConfig> {
 
 	@YabHook("app:init")
 	initRoute({ container }: Parameters<YabEventMap["app:init"]>[0]) {
+		type ConsoleTable = {
+			method: string;
+			path: string;
+			handler: string;
+		};
+		const table: ConsoleTable[] = [];
 		for (const [root, routes] of Object.entries(this.config)) {
 			for (const route of routes) {
 				const {
@@ -91,34 +97,54 @@ export class RouterModule extends Module<RouterConfig> {
 					.resolveClass(controller);
 
 				const method = httpMethod.toLowerCase();
-				const routePath = `${root}${prefix}${path}`;
-				const handler = ctrl[actionName].bind(controller);
+				const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
+				const handler = ctrl[actionName]?.bind(ctrl);
 
 				if (!handler) {
 					throw new Error(`Method ${actionName} not found`);
 				}
+
+				Object.defineProperty(handler, "name", {
+					value: `${controller.name}.${actionName}`,
+					writable: false,
+				});
+
 				this.#routeMatcher.add(method, routePath, {
 					handler,
 					payload,
 					response,
 				});
+				table.push({
+					method,
+					path: routePath,
+					handler: `${controller.name}.${actionName}`,
+				});
 			}
 		}
+		console.table(table);
 	}
 
 	@YabHook("app:request")
 	async onRequest(context: Parameters<YabEventMap["app:request"]>[0]) {
-		const { request } = context;
+		const { request, serverUrl } = context;
+
 		const match = this.#routeMatcher.find(
 			request.method.toLowerCase(),
-			request.url,
+			request.url.replace(serverUrl, "/"),
 		);
 
 		if (!match) {
+			context.logger.error(`${request.method} ${request.url} not found`);
 			return Res.error(
 				new NotFound(`${request.method} ${request.url} not found`),
 			);
 		}
+
+		context.logger.info(
+			`${request.method} ${
+				request.url
+			}. Handler: ${match.store.handler.name.replace("bound ", "")}`,
+		);
 
 		// to do, run all beforeRoute hooks
 
