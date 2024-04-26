@@ -2,6 +2,16 @@
 	"name": "@yab/logger",
 	"module": "src/index.ts",
 	"main": "dist/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js"
+		},
+		"./loggers": {
+			"import": "./dist/loggers/index.js",
+			"require": "./dist/loggers/index.js"
+		}
+	},
 	"type": "module",
 	"scripts": {
 		"build": "tsc"

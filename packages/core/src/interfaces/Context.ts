@@ -1,20 +1,21 @@
+import type { Dictionary } from "@yab/utils";
 import type { EnhancedContainer } from "./Container";
 
-export abstract class Logger {
-	abstract info(obj: object, message: string, ...args: unknown[]): void;
-	abstract info(message: string, ...args: unknown[]): void;
+export interface Logger extends Dictionary<any> {
+	info(obj: object, message: string, ...args: unknown[]): void;
+	info(message: string, ...args: unknown[]): void;
 
-	abstract error(obj: object, message: string, ...args: unknown[]): void;
-	abstract error(message: string, ...args: unknown[]): void;
+	error(obj: object, message: string, ...args: unknown[]): void;
+	error(message: string, ...args: unknown[]): void;
 
-	abstract warn(obj: object, message: string, ...args: unknown[]): void;
-	abstract warn(message: string, ...args: unknown[]): void;
+	warn(obj: object, message: string, ...args: unknown[]): void;
+	warn(message: string, ...args: unknown[]): void;
 
-	abstract debug(obj: object, message: string, ...args: unknown[]): void;
-	abstract debug(message: string, ...args: unknown[]): void;
+	debug(obj: object, message: string, ...args: unknown[]): void;
+	debug(message: string, ...args: unknown[]): void;
 
-	abstract trace(obj: object, message: string, ...args: unknown[]): void;
-	abstract trace(message: string, ...args: unknown[]): void;
+	trace(obj: object, message: string, ...args: unknown[]): void;
+	trace(message: string, ...args: unknown[]): void;
 }
 
 export interface Context {

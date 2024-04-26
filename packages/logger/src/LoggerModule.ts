@@ -1,36 +1,39 @@
 import {
 	type Context,
+	type Logger,
 	Module,
 	YabHook,
-	type YabOptions,
 	container,
 } from "@yab/core";
 import { asValue } from "awilix";
-import type { LoggerOptions } from "pino";
 import {
 	LoggerKey,
-	createLogger,
-	getLogger,
-	useContext,
-} from "./services/logger";
+	LoggerService,
+	type LoggerServiceOptions,
+} from "./services/LoggerService";
 
-export class LoggerModule extends Module<{ pino: LoggerOptions }> {
-	constructor(public config: { pino: LoggerOptions }) {
+export interface LoggerModuleConfig<L extends Logger = Logger>
+	extends LoggerServiceOptions<L> {}
+
+export class LoggerModule<L extends Logger> extends Module<
+	LoggerModuleConfig<L>
+> {
+	service: LoggerService<L>;
+
+	constructor(public config: LoggerModuleConfig<L>) {
 		super();
-		this.#initLogger(config.pino);
+		this.service = new LoggerService(config);
+		this.#register();
 	}
 
-	#initLogger(pinoOptions?: YabOptions["logger"]) {
-		createLogger(pinoOptions);
-		const logger = getLogger();
+	#register() {
 		container.register({
-			[LoggerKey.toString()]: asValue(logger),
+			[LoggerKey.toString()]: asValue(this.service.logger),
 		});
 	}
 
 	@YabHook("app:request")
 	async applyContext(ctx: Context) {
-		await useContext(ctx);
-		ctx.logger = getLogger();
+		await this.service.useRequestContext(ctx);
 	}
 }

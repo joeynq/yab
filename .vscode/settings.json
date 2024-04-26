@@ -25,6 +25,7 @@
 	"editor.tabSize": 2,
 	"exportall.config.relExclusion": [
 		"/packages/utils/src/internal",
-		"/packages/core/src/index.ts"
+		"/packages/core/src/index.ts",
+		"/packages/logger/src/logger"
 	]
 }
