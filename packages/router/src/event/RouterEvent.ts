@@ -1,8 +1,8 @@
 import type { Context } from "@yab/core";
 
 export enum RouterEvent {
-	BeforeRoute = "beforeRoute",
-	AfterRoute = "afterRoute",
+	BeforeRoute = "router:beforeRoute",
+	AfterRoute = "router:afterRoute",
 }
 
 export type RouterEventMap = {

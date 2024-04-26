@@ -8,10 +8,10 @@ import {
 	type YabEventMap,
 	YabHook,
 } from "@yab/core";
-import type { AnyClass, AnyFunction } from "@yab/utils";
+import { type AnyClass, type AnyFunction, ensure } from "@yab/utils";
 import { asClass } from "awilix";
 import Memoirist from "memoirist";
-import type { RouterEvent, RouterEventMap } from "./event";
+import { RouterEvent, type RouterEventMap } from "./event";
 import { NotFound } from "./exceptions";
 import type { RouteObject, RouterConfig, SlashedPath } from "./interfaces";
 import { Res, getControllerMetadata } from "./utils";
@@ -50,9 +50,7 @@ export class RouterModule extends Module<RouterConfig> {
 
 	constructor(prefix: SlashedPath, controllers: AnyClass<any>[]) {
 		super();
-		if (!controllers.length) {
-			throw new Error("No controllers provided");
-		}
+		ensure(controllers.length > 0, "No controllers provided");
 		this.config = {
 			[prefix]: controllers.flatMap((controller) =>
 				this.#extractMetadata(controller).map((action) => ({
@@ -70,9 +68,9 @@ export class RouterModule extends Module<RouterConfig> {
 
 	#extractMetadata(controller: AnyClass): RouteObject[] {
 		const metadata = getControllerMetadata(controller);
-		if (!metadata) {
-			throw new Error("Controller metadata not found");
-		}
+
+		ensure(metadata, `Controller metadata not found for ${controller.name}`);
+
 		return Object.entries(metadata.routes).map(([actionName, route]) => ({
 			controller: metadata.controller,
 			prefix: metadata.prefix,
@@ -104,9 +102,10 @@ export class RouterModule extends Module<RouterConfig> {
 
 				const handler = ctrl[actionName]?.bind(ctrl);
 
-				if (!handler) {
-					throw new Error(`Method ${actionName} not found`);
-				}
+				ensure(
+					handler,
+					`Method ${actionName} not found in controller ${controller.name}`,
+				);
 
 				const method = httpMethod.toLowerCase();
 				const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
@@ -152,11 +151,13 @@ export class RouterModule extends Module<RouterConfig> {
 
 		context.logger.info(`${request.method} ${request.url}`);
 
-		// to do, run all beforeRoute hooks
+		await this.hooks.invoke(RouterEvent.BeforeRoute, [context]);
 
 		const result = await match.store.handler(context);
 
-		// to do, run all afterRoute hooks
+		await this.hooks.invoke(RouterEvent.AfterRoute, [context, result], {
+			breakOnResult: true,
+		});
 
 		if (result instanceof Response) {
 			return result;
