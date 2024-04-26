@@ -10,7 +10,7 @@ export const createLogger = (options?: LoggerOptions): BaseLogger => {
 				crlf: true,
 				colorize: true,
 				translateTime: "SYS:HH:MM:ss.l",
-				messageFormat: "{requestId}\n\t{msg}\n\n",
+				messageFormat: "{{requestId}} {msg}",
 				ignore: "requestId",
 			},
 		},

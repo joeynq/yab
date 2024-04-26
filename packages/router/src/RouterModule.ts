@@ -1,7 +1,9 @@
 import type { TObject } from "@sinclair/typebox";
 import {
 	Hooks,
+	InjectLogger,
 	Injectable,
+	type Logger,
 	Module,
 	type YabEventMap,
 	YabHook,
@@ -13,6 +15,12 @@ import type { RouterEvent, RouterEventMap } from "./event";
 import { NotFound } from "./exceptions";
 import type { RouteObject, RouterConfig, SlashedPath } from "./interfaces";
 import { Res, getControllerMetadata } from "./utils";
+
+type ConsoleTable = {
+	method: string;
+	path: string;
+	handler: string;
+};
 
 type RouteMatch = {
 	handler: AnyFunction;
@@ -36,6 +44,9 @@ export class RouterModule extends Module<RouterConfig> {
 
 	config: RouterConfig;
 	hooks = new Hooks<typeof RouterEvent, RouterEventMap>();
+
+	@InjectLogger()
+	logger!: Logger;
 
 	constructor(prefix: SlashedPath, controllers: AnyClass<any>[]) {
 		super();
@@ -75,11 +86,6 @@ export class RouterModule extends Module<RouterConfig> {
 
 	@YabHook("app:init")
 	initRoute({ container }: Parameters<YabEventMap["app:init"]>[0]) {
-		type ConsoleTable = {
-			method: string;
-			path: string;
-			handler: string;
-		};
 		const table: ConsoleTable[] = [];
 		for (const [root, routes] of Object.entries(this.config)) {
 			for (const route of routes) {
@@ -96,16 +102,18 @@ export class RouterModule extends Module<RouterConfig> {
 					.register(controller.name, asClass(controller))
 					.resolveClass(controller);
 
-				const method = httpMethod.toLowerCase();
-				const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
 				const handler = ctrl[actionName]?.bind(ctrl);
 
 				if (!handler) {
 					throw new Error(`Method ${actionName} not found`);
 				}
 
+				const method = httpMethod.toLowerCase();
+				const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
+				const handlerName = `${controller.name}.${actionName}`;
+
 				Object.defineProperty(handler, "name", {
-					value: `${controller.name}.${actionName}`,
+					value: handlerName,
 					writable: false,
 				});
 
@@ -117,11 +125,13 @@ export class RouterModule extends Module<RouterConfig> {
 				table.push({
 					method,
 					path: routePath,
-					handler: `${controller.name}.${actionName}`,
+					handler: handlerName,
 				});
 			}
 		}
+
 		console.table(table);
+		this.logger.info(`${table.length} routes initialized`);
 	}
 
 	@YabHook("app:request")
@@ -140,11 +150,7 @@ export class RouterModule extends Module<RouterConfig> {
 			);
 		}
 
-		context.logger.info(
-			`${request.method} ${
-				request.url
-			}. Handler: ${match.store.handler.name.replace("bound ", "")}`,
-		);
+		context.logger.info(`${request.method} ${request.url}`);
 
 		// to do, run all beforeRoute hooks
 

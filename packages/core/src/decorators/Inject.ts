@@ -1,5 +1,6 @@
 import type { AnyClass } from "@yab/utils";
 import { container } from "../container";
+import { getTokenName } from "../utils";
 import { YabHook } from "./YabHook";
 
 const OnInitSymbol = Symbol("OnInit");
@@ -10,16 +11,11 @@ export const Inject = (
 	return (target, key) => {
 		let tokenName: string;
 
-		if (typeof token === "string") {
-			tokenName = token;
-		} else if (typeof token === "symbol") {
-			tokenName = token.toString();
-		} else if (token) {
-			tokenName = token.name;
+		if (token) {
+			tokenName = getTokenName(token);
 		} else {
 			tokenName = Reflect.getMetadata("design:type", target, key).name;
 		}
-		console.log(tokenName);
 
 		// define new property onInit
 		Object.defineProperty(target, OnInitSymbol, {

@@ -1,4 +1,10 @@
-import { type DeepPartial, deepMerge } from "@yab/utils";
+import {
+	type AnyClass,
+	type DeepPartial,
+	deepMerge,
+	isClass,
+	isInstance,
+} from "@yab/utils";
 
 export const getMetadata = <T = any>(
 	key: string | symbol,
@@ -22,4 +28,17 @@ export const mergeMetadata = <T extends object = object>(
 ): void => {
 	const existing = getMetadata<T>(key, target) ?? {};
 	setMetadata(key, deepMerge(existing, value), target);
+};
+
+export const getTokenName = (token: string | symbol | AnyClass): string => {
+	if (typeof token === "symbol") {
+		return token.toString();
+	}
+	if (isClass(token)) {
+		return token.name;
+	}
+	if (isInstance(token)) {
+		return token.constructor.name;
+	}
+	return token;
 };

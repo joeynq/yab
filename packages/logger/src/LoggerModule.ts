@@ -1,13 +1,13 @@
 import {
 	type Context,
 	type Logger,
+	LoggerKey,
 	Module,
 	YabHook,
 	container,
 } from "@yab/core";
 import { asValue } from "awilix";
 import {
-	LoggerKey,
 	LoggerService,
 	type LoggerServiceOptions,
 } from "./services/LoggerService";

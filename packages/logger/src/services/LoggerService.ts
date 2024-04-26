@@ -1,8 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { Context, Logger } from "@yab/core";
 
-export const LoggerKey = Symbol("Logger");
-
 export interface LoggerServiceOptions<L extends Logger>
 	extends Record<string, unknown> {
 	logger: L;
