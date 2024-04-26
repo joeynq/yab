@@ -9,12 +9,13 @@ export enum YabEvents {
 }
 
 export type YabEventMap = {
-	[YabEvents.OnStarted]: [Server, Configuration];
-	[YabEvents.OnInit]: [
-		{
-			config: Configuration;
-			container: EnhancedContainer;
-		},
-	];
-	[YabEvents.OnRequest]: [Context];
+	[YabEvents.OnStarted]: (
+		server: Server,
+		config: Configuration,
+	) => Promise<void>;
+	[YabEvents.OnInit]: (initContext: {
+		config: Configuration;
+		container: EnhancedContainer;
+	}) => Promise<void>;
+	[YabEvents.OnRequest]: (context: Context) => Promise<Response>;
 };

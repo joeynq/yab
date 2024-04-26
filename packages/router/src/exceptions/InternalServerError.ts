@@ -1,5 +1,4 @@
-import { HttpErrorCodes } from "../enum";
-import { HttpException } from "./HttpException";
+import { HttpErrorCodes, HttpException } from "@yab/core";
 
 export class InternalServerError extends HttpException {
 	constructor(message: string) {

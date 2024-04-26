@@ -1,15 +1,21 @@
-import type { EnumValues } from "@yab/utils";
-import type { EventPayload } from "../interfaces";
+import type { AnyFunction, EnumValues, MaybePromiseFunction } from "@yab/utils";
+import type { EventPayload, EventResult } from "../interfaces";
 
 type EventHandler<
 	EventType extends { [key: string]: string },
 	Event extends EnumValues<EventType>,
-	EventMap extends Record<EnumValues<EventType>, unknown[]>,
-> = (...args: EventPayload<EventType, Event, EventMap>) => void | Promise<void>;
+	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction>,
+> = (
+	...args: EventPayload<EventType, Event, EventMap>
+) => EventResult<EventType, Event, EventMap>;
+
+interface InvokeOptions {
+	breakOnResult?: boolean;
+}
 
 export class Hooks<
 	EventType extends { [key: string]: string },
-	EventMap extends Record<EnumValues<EventType>, unknown[]>,
+	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction>,
 > {
 	#hooks = new Map<
 		string,
@@ -37,13 +43,16 @@ export class Hooks<
 
 	async invoke<Event extends EnumValues<EventType>>(
 		event: Event,
-		...args: EventPayload<EventType, Event, EventMap>
-	) {
+		args: EventPayload<EventType, Event, EventMap>,
+		{ breakOnResult = false }: InvokeOptions = {},
+	): Promise<EventResult<EventType, Event, EventMap> | undefined> {
 		const hooks = this.#hooks.get(event);
 		if (hooks) {
-			// run all hooks in sequence order and get the result
 			for (const hook of hooks) {
-				await hook(...args);
+				const result = await hook(...args);
+				if (breakOnResult && result) {
+					return result;
+				}
 			}
 		}
 	}

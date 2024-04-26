@@ -1,6 +1,9 @@
 export type AnyClass<T = unknown> = { new (...args: unknown[]): T };
 export type Dictionary<T = unknown> = Record<string, T>;
-export type AnyFunction = (...args: unknown[]) => unknown;
+export type AnyFunction = (...args: any[]) => unknown;
+export type AnyPromiseFunction = (...args: any[]) => Promise<unknown>;
+export type MaybePromiseFunction = AnyFunction | AnyPromiseFunction;
+export type MaybePromise<T> = T | Promise<T>;
 
 export type DeepPartial<T extends object> = {
 	[P in keyof T]?: T[P] extends AnyClass | AnyFunction | Primitive

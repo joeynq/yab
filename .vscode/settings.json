@@ -10,7 +10,8 @@
 		"deburred",
 		"deepmerge",
 		"lefthook",
-		"Mergeable"
+		"Mergeable",
+		"typebox"
 	],
 	"[javascript]": {
 		"editor.defaultFormatter": "biomejs.biome"
@@ -20,5 +21,8 @@
 		"source.organizeImports.biome": "explicit"
 	},
 	"editor.tabSize": 2,
-	"exportall.config.relExclusion": ["/packages/utils/src/internal"]
+	"exportall.config.relExclusion": [
+		"/packages/utils/src/internal",
+		"/packages/core/src/index.ts"
+	]
 }
