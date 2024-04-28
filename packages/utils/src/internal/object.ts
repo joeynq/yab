@@ -1,4 +1,4 @@
-export type AnyClass<T = unknown> = { new (...args: unknown[]): T };
+export type AnyClass<T = unknown> = { new (...args: any[]): T };
 export type Dictionary<T = unknown> = Record<string, T>;
 export type AnyFunction = (...args: any[]) => unknown;
 export type AnyPromiseFunction = (...args: any[]) => Promise<unknown>;

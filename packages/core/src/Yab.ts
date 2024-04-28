@@ -1,7 +1,7 @@
 import { type AnyFunction, deepMerge, uuid } from "@yab/utils";
 import { asValue } from "awilix";
 import type { Server } from "bun";
-import { container } from "./container";
+import { useContainerRef } from "./container";
 import { type YabEventMap, YabEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
@@ -18,12 +18,13 @@ export class Yab {
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
 	#context = new ContextService();
+	#container = useContainerRef();
 
 	#customContext?: (ctx: Context) => Record<string, unknown>;
 
 	constructor(options?: YabOptions) {
 		this.#config = new Configuration(options);
-		container.register({
+		this.#container.register({
 			[Configuration.name]: asValue(this.#config),
 		});
 	}
@@ -43,7 +44,7 @@ export class Yab {
 	#initModules() {
 		const moduleConfigs = this.#config.options.modules;
 		for (const { name } of moduleConfigs) {
-			const module = container.resolve(name);
+			const module = this.#container.resolve(name);
 
 			this.#registerHooksFromModule(module);
 		}
@@ -53,7 +54,7 @@ export class Yab {
 		const context: Context = {
 			requestId: request.headers.get("x-request-id") || uuid(),
 			logger: console as Logger,
-			container,
+			container: this.#container,
 			request,
 			serverUrl: server.url.toString(),
 			userIp: server.requestIP(request) || undefined,
@@ -102,7 +103,7 @@ export class Yab {
 		module: M,
 		...args: ConstructorParameters<M>
 	): this {
-		const instance = container.registerModule(module, ...args);
+		const instance = this.#container.registerModule(module, ...args);
 		const config: ModuleConfig = {
 			name: module.name,
 			id: instance.id,
@@ -139,7 +140,7 @@ export class Yab {
 		await this.#hooks.invoke(YabEvents.OnInit, [
 			{
 				config: this.#config,
-				container,
+				container: this.#container,
 			},
 		]);
 

@@ -1,7 +1,17 @@
 {
-	"name": "@yab/utils",
+	"name": "@yab/cache",
 	"module": "src/index.ts",
 	"main": "dist/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js"
+		},
+		"./lru": {
+			"import": "./dist/adapters/LruAdapter.js",
+			"require": "./dist/adapters/LruAdapter.js"
+		}
+	},
 	"type": "module",
 	"devDependencies": {
 		"@types/bun": "latest",

@@ -1,4 +1,11 @@
-import { type EnhancedContainer, Module, YabHook } from "@yab/core";
+import {
+	type EnhancedContainer,
+	Inject,
+	InjectLogger,
+	type Logger,
+	Module,
+	YabHook,
+} from "@yab/core";
 import type { AnyClass, Dictionary } from "../../utils/dist";
 import type { CacheAdapter } from "./interfaces/CacheAdapter";
 
@@ -15,6 +22,9 @@ export class CacheModule<Adapter extends CacheAdapter> extends Module<
 	#adapter: Adapter;
 	config: CacheModuleOptions<Adapter>["options"] & Dictionary;
 
+	@InjectLogger()
+	logger!: Logger;
+
 	constructor(options: CacheModuleOptions<Adapter>) {
 		super();
 		this.#adapter = new options.adapter(options.options);
@@ -23,6 +33,9 @@ export class CacheModule<Adapter extends CacheAdapter> extends Module<
 
 	@YabHook("app:init")
 	async init({ container }: { container: EnhancedContainer }) {
-		container.registerValue(this.#adapter.constructor.name, this.#adapter);
+		container.registerValue(CacheModuleKey.toString(), this.#adapter);
+		this.logger.info(
+			`Cache module initialized with ${this.#adapter.constructor.name}.`,
+		);
 	}
 }

@@ -1,10 +1,10 @@
 import {
 	type Context,
+	type EnhancedContainer,
 	type Logger,
 	LoggerKey,
 	Module,
 	YabHook,
-	container,
 } from "@yab/core";
 import { asValue } from "awilix";
 import {
@@ -23,10 +23,10 @@ export class LoggerModule<L extends Logger> extends Module<
 	constructor(public config: LoggerModuleConfig<L>) {
 		super();
 		this.service = new LoggerService(config);
-		this.#register();
 	}
 
-	#register() {
+	@YabHook("app:init")
+	async init({ container }: { container: EnhancedContainer }) {
 		container.register({
 			[LoggerKey.toString()]: asValue(this.service.logger),
 		});

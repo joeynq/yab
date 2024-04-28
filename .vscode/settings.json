@@ -26,6 +26,7 @@
 	"exportall.config.relExclusion": [
 		"/packages/utils/src/internal",
 		"/packages/core/src/index.ts",
-		"/packages/logger/src/logger"
+		"/packages/logger/src/logger",
+		"/packages/cache/src/adapters"
 	]
 }

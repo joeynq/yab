@@ -43,9 +43,11 @@ const enhance = (container: AwilixContainer) => {
 	return container as EnhancedContainer;
 };
 
-export const container = enhance(
+const container = enhance(
 	createContainer({
 		injectionMode: InjectionMode.CLASSIC,
 		strict: true,
 	}),
 );
+
+export const useContainerRef = () => container;
