@@ -1,0 +1,20 @@
+{
+	"name": "@yab/auth",
+	"module": "src/index.ts",
+	"main": "dist/index.js",
+	"type": "module",
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@yab/core": "link:@yab/core",
+		"@yab/utils": "link:@yab/utils"
+	},
+	"peerDependencies": {
+		"@yab/core": "^0.0.0",
+		"@yab/utils": "^0.0.0",
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"jose": "^5.2.4",
+		"reflect-metadata": "^0.2.2"
+	}
+}

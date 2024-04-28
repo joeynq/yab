@@ -1,3 +1,4 @@
+import { AuthModule } from "@yab/auth";
 import { CacheModule } from "@yab/cache";
 import { LruAdapter } from "@yab/cache/lru";
 import { Yab } from "@yab/core";
@@ -23,6 +24,14 @@ new Yab()
 		options: {
 			max: 100,
 			maxAge: 1000 * 60 * 60,
+		},
+	})
+	.use(AuthModule, {
+		type: "bearer",
+		tokenFrom: "header",
+		tokenName: "Authorization",
+		strategies: {
+			issuer: "https://example.com",
 		},
 	})
 	.use(RouterModule, "/api", [UserController])
