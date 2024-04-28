@@ -27,6 +27,7 @@ export class Yab {
 		this.#container.register({
 			[Configuration.name]: asValue(this.#config),
 		});
+		this.#container.registerValue(ContextService, this.#context);
 	}
 
 	#registerHooksFromModule(instance: InstanceType<ModuleConstructor>) {
@@ -66,7 +67,7 @@ export class Yab {
 		};
 	}
 
-	#runWithContext<T>(initContext: Context) {
+	#runWithContext(initContext: Context) {
 		return new Promise<Response>((resolve) => {
 			this.#context.runWithContext(initContext, async () => {
 				try {
