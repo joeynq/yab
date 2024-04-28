@@ -27,10 +27,7 @@ new Yab()
 		},
 	})
 	.use(AuthModule, {
-		type: "bearer",
-		tokenFrom: "header",
-		tokenName: "Authorization",
-		strategies: {
+		authOptions: {
 			issuer: "https://example.com",
 		},
 	})
