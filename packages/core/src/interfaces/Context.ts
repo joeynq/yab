@@ -1,4 +1,5 @@
 import type { Dictionary } from "@yab/utils";
+import type { SocketAddress } from "bun";
 import type { EnhancedContainer } from "./Container";
 
 export interface Logger extends Dictionary<any> {
@@ -24,4 +25,6 @@ export interface Context {
 	requestId: string;
 	serverUrl: string;
 	logger: Logger;
+	userIp?: SocketAddress;
+	useAgent?: string;
 }

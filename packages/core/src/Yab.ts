@@ -11,35 +11,21 @@ import type {
 	ModuleConstructor,
 	YabOptions,
 } from "./interfaces";
-import { Configuration, Hooks } from "./services";
+import { Configuration, ContextService, Hooks } from "./services";
 import { HookMetadataKey } from "./symbols";
 
 export class Yab {
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
+	#context = new ContextService();
 
-	#context?: (ctx: Context) => Record<string, unknown>;
+	#customContext?: (ctx: Context) => Record<string, unknown>;
 
 	constructor(options?: YabOptions) {
 		this.#config = new Configuration(options);
 		container.register({
 			[Configuration.name]: asValue(this.#config),
 		});
-	}
-
-	async #buildContext(request: Request): Promise<Context> {
-		const defaultContext: Context = {
-			request,
-			container,
-			requestId: uuid(),
-			serverUrl: "",
-			logger: console as Logger,
-		};
-
-		return {
-			...defaultContext,
-			...(this.#context ? this.#context(defaultContext) : {}),
-		};
 	}
 
 	#registerHooksFromModule(instance: InstanceType<ModuleConstructor>) {
@@ -63,8 +49,52 @@ export class Yab {
 		}
 	}
 
+	#buildContext(request: Request, server: Server) {
+		const context: Context = {
+			requestId: request.headers.get("x-request-id") || uuid(),
+			logger: console as Logger,
+			container,
+			request,
+			serverUrl: server.url.toString(),
+			userIp: server.requestIP(request) || undefined,
+			useAgent: request.headers.get("user-agent") || undefined,
+		};
+		return {
+			...context,
+			...this.#customContext?.(context),
+		};
+	}
+
+	#runWithContext<T>(initContext: Context) {
+		return new Promise<Response>((resolve) => {
+			this.#context.runWithContext(initContext, async () => {
+				try {
+					const context = this.#context.context || initContext;
+
+					const response = await this.#hooks.invoke(
+						YabEvents.OnRequest,
+						[context],
+						{
+							breakOnResult: true,
+						},
+					);
+
+					return resolve(response || new Response("OK", { status: 200 }));
+				} catch (error) {
+					if (error instanceof HttpException) {
+						return resolve(error.toResponse());
+					}
+
+					return resolve(
+						new HttpException(500, (error as Error).message).toResponse(),
+					);
+				}
+			});
+		});
+	}
+
 	context<T extends Record<string, unknown>>(getContext: (ctx: Context) => T) {
-		this.#context = getContext;
+		this.#customContext = getContext;
 		return this;
 	}
 
@@ -109,32 +139,17 @@ export class Yab {
 		await this.#hooks.invoke(YabEvents.OnInit, [
 			{
 				config: this.#config,
-				container: container,
+				container,
 			},
 		]);
 
-		const hooks = this.#hooks;
-		const buildContext = this.#buildContext.bind(this);
+		const self = this;
 
 		const server = Bun.serve({
 			...this.#config.bunOptions,
 			async fetch(request, server): Promise<Response> {
-				const context = await buildContext(request);
-				context.serverUrl = server.url.toString();
-
-				try {
-					const response = await hooks.invoke(YabEvents.OnRequest, [context], {
-						breakOnResult: true,
-					});
-
-					return response || new Response("OK", { status: 200 });
-				} catch (error) {
-					if (error instanceof HttpException) {
-						return error.toResponse();
-					}
-
-					return new HttpException(500, (error as Error).message).toResponse();
-				}
+				const initContext = self.#buildContext(request, server);
+				return self.#runWithContext(initContext);
 			},
 		});
 		await this.#hooks.invoke(YabEvents.OnStarted, [server, this.#config]);

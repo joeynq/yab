@@ -4,6 +4,14 @@ import { type Logger, type LoggerOptions, pino } from "pino";
 export const createLogger = (options?: LoggerOptions): BaseLogger => {
 	return pino({
 		base: {},
+		formatters: {
+			bindings: (obj) => {
+				return {
+					...obj,
+					requestId: obj.requestId || "YAB",
+				};
+			},
+		},
 		transport: {
 			target: "pino-pretty",
 			options: {
@@ -11,7 +19,7 @@ export const createLogger = (options?: LoggerOptions): BaseLogger => {
 				colorize: true,
 				translateTime: "SYS:HH:MM:ss.l",
 				messageFormat: "{{requestId}} {msg}",
-				ignore: "requestId",
+				ignore: "requestId,userIp",
 			},
 		},
 		...options,
@@ -19,7 +27,10 @@ export const createLogger = (options?: LoggerOptions): BaseLogger => {
 };
 
 export const createChild = (logger: Logger, ctx: Context): BaseLogger => {
-	return logger.child({ requestId: ctx.requestId });
+	return logger.child({
+		requestId: ctx.requestId,
+		userIp: ctx.userIp?.address,
+	});
 };
 
 export { type Logger as PinoLogger } from "pino";

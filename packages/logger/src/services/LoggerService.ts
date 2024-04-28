@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from "node:async_hooks";
 import type { Context, Logger } from "@yab/core";
 
 export interface LoggerServiceOptions<L extends Logger>
@@ -8,18 +7,11 @@ export interface LoggerServiceOptions<L extends Logger>
 }
 
 export class LoggerService<L extends Logger> {
-	#context = new AsyncLocalStorage<Logger>();
 	#logger: L;
 	#createChild: (ctx: Context) => Logger;
 
 	get logger(): L {
-		const stored = this.#context.getStore();
-		return new Proxy(this.#logger, {
-			get(target, property, receiver) {
-				const returned = stored || target;
-				return Reflect.get(returned, property, receiver);
-			},
-		});
+		return this.#logger;
 	}
 
 	constructor(options: LoggerServiceOptions<L>) {
@@ -34,9 +26,6 @@ export class LoggerService<L extends Logger> {
 
 	async useRequestContext(context: Context) {
 		const child = this.#createChild(context);
-		await new Promise<void>((resolve) => {
-			this.#context.run(child, resolve);
-		});
 		context.logger = child;
 	}
 }
