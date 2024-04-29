@@ -20,7 +20,7 @@ export class LoggerModule<Adapter extends LoggerAdapter> extends Module<
 
 	@YabHook("app:init")
 	async init({ container }: InitContext) {
-		container.registerValue(LoggerKey.toString(), this.config.adapter);
+		container.registerValue(LoggerKey, this.config.adapter);
 
 		this.config.adapter.log.info(
 			`Logger initialized with ${this.config.adapter.constructor.name}`,

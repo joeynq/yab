@@ -9,11 +9,12 @@ import type {
 	InjectionToken,
 	ModuleConstructor,
 } from "./interfaces";
+import { getTokenName } from "./utils";
 
 const enhance = (container: AwilixContainer) => {
 	Object.defineProperty(container, "resolveClass", {
 		value: function <T>(token: InjectionToken<T>) {
-			const tokenName = typeof token === "string" ? token : token.name;
+			const tokenName = getTokenName(token);
 			return this.resolve(tokenName);
 		},
 	});
@@ -25,7 +26,7 @@ const enhance = (container: AwilixContainer) => {
 		) {
 			const instance = new module(...args);
 			this.register({
-				[module.name]: asValue(instance),
+				[`${module.name}:${instance.id}`]: asValue(instance),
 			});
 			return instance;
 		},
@@ -33,7 +34,7 @@ const enhance = (container: AwilixContainer) => {
 
 	Object.defineProperty(container, "registerValue", {
 		value: function <T>(token: InjectionToken<T>, value: T) {
-			const tokenName = typeof token === "string" ? token : token.name;
+			const tokenName = getTokenName(token);
 			this.register({
 				[tokenName]: asValue(value),
 			});

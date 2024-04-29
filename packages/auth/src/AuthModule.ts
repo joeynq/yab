@@ -35,7 +35,7 @@ export class AuthModule<S extends Strategy<any>> extends Module<
 
 	@YabHook("app:init")
 	async onInit({ container }: InitContext) {
-		container.registerValue(AuthModuleKey.toString(), this.config.strategy);
+		container.registerValue(AuthModuleKey, this.config.strategy);
 		try {
 			await this.config.strategy.init?.();
 		} catch (error) {

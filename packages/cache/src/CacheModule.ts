@@ -25,7 +25,7 @@ export class CacheModule<Adapter extends CacheAdapter> extends Module<
 
 	@YabHook("app:init")
 	async init({ container }: InitContext) {
-		container.registerValue(CacheModuleKey.toString(), this.config.adapter);
+		container.registerValue(CacheModuleKey, this.config.adapter);
 		this.logger.info(
 			`Cache module initialized with ${this.config.adapter.constructor.name}.`,
 		);

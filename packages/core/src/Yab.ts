@@ -1,7 +1,7 @@
 import { type AnyFunction, deepMerge, uuid } from "@yab/utils";
-import { asValue } from "awilix";
 import type { Server } from "bun";
 import { useContainerRef } from "./container";
+import { EnvKey } from "./decorators";
 import { type YabEventMap, YabEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
@@ -24,12 +24,10 @@ export class Yab {
 
 	constructor(options?: YabOptions) {
 		this.#config = new Configuration(options);
-		this.#container.registerValue(Configuration.name, this.#config);
+		this.#container.registerValue(Configuration, this.#config);
 		this.#container.registerValue(ContextService, this.#context);
-		this.#container.registerValue(
-			LoggerKey.toString(),
-			new ConsoleLogger("info"),
-		);
+		this.#container.registerValue(LoggerKey, new ConsoleLogger("info"));
+		this.#container.registerValue(EnvKey, options?.env || {});
 	}
 
 	#registerHooksFromModule(instance: InstanceType<ModuleConstructor>) {
