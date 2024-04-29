@@ -27,7 +27,7 @@ export class PinoLogger implements LoggerAdapter {
 					colorize: true,
 					translateTime: "SYS:HH:MM:ss.l",
 					messageFormat: "{{requestId}} {msg}",
-					ignore: "requestId,userIp",
+					ignore: "requestId,userIp,serverUrl,useAgent",
 				},
 			},
 			...options,

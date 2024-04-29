@@ -1,5 +1,5 @@
 import type { AnyClass } from "@yab/utils";
-import { useContainerRef } from "../container";
+import type { InitContext } from "../events";
 import { getTokenName } from "../utils";
 import { YabHook } from "./YabHook";
 
@@ -19,8 +19,8 @@ export const Inject = (
 
 		// define new property onInit
 		Object.defineProperty(target, OnInitSymbol, {
-			value() {
-				const value = useContainerRef().resolve(tokenName);
+			value({ container }: InitContext) {
+				const value = container.resolve(tokenName);
 				Object.defineProperty(this, key, {
 					value,
 					writable: false,

@@ -1,4 +1,8 @@
-import type { AnyFunction, EnumValues, MaybePromiseFunction } from "@yab/utils";
+import {
+	type EnumValues,
+	type MaybePromiseFunction,
+	isUndefined,
+} from "@yab/utils";
 import type { EventPayload, EventResult } from "../interfaces";
 
 type EventHandler<
@@ -11,6 +15,7 @@ type EventHandler<
 
 interface InvokeOptions {
 	breakOnResult?: boolean;
+	breakOnNull?: boolean;
 }
 
 export class Hooks<
@@ -44,13 +49,16 @@ export class Hooks<
 	async invoke<Event extends EnumValues<EventType>>(
 		event: Event,
 		args: EventPayload<EventType, Event, EventMap>,
-		{ breakOnResult = false }: InvokeOptions = {},
+		{ breakOnResult = false, breakOnNull = false }: InvokeOptions = {},
 	): Promise<EventResult<EventType, Event, EventMap> | undefined> {
 		const hooks = this.#hooks.get(event);
 		if (hooks) {
 			for (const hook of hooks) {
 				const result = await hook(...args);
-				if (breakOnResult && result) {
+				if (breakOnNull && result === null) {
+					break;
+				}
+				if (breakOnResult && !isUndefined(result)) {
 					return result;
 				}
 			}

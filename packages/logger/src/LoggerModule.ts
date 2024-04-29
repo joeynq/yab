@@ -1,6 +1,7 @@
 import {
 	type Context,
 	type EnhancedContainer,
+	type InitContext,
 	type LoggerAdapter,
 	LoggerKey,
 	Module,
@@ -19,7 +20,7 @@ export class LoggerModule<Adapter extends LoggerAdapter> extends Module<
 	}
 
 	@YabHook("app:init")
-	async init({ container }: { container: EnhancedContainer }) {
+	async init({ container }: InitContext) {
 		container.registerValue(LoggerKey.toString(), this.config.adapter);
 	}
 

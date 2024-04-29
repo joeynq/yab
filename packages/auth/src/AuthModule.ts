@@ -1,9 +1,4 @@
-import {
-	type Context,
-	type EnhancedContainer,
-	Module,
-	YabHook,
-} from "@yab/core";
+import { type Context, type InitContext, Module, YabHook } from "@yab/core";
 import type { Strategy } from "./strategies";
 import {
 	BasicAuth,
@@ -87,7 +82,7 @@ export class AuthModule extends Module<AuthModuleConfig> {
 	}
 
 	@YabHook("app:init")
-	async onInit({ container }: { container: EnhancedContainer }) {
+	async onInit({ container }: InitContext) {
 		container.registerValue(AuthModuleKey.toString(), this.#strategy);
 	}
 

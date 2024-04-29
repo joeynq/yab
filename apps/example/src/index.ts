@@ -1,15 +1,19 @@
 import { AuthModule } from "@yab/auth";
 import { CacheModule } from "@yab/cache";
 import { LruAdapter } from "@yab/cache/lru";
-import { Yab } from "@yab/core";
+import { InjectContext, type LoggerAdapter, Yab } from "@yab/core";
 import { LoggerModule } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
 import { Action, Controller, HttpMethod, RouterModule } from "@yab/router";
 
 @Controller("/users")
 class UserController {
+	@InjectContext("logger")
+	logger!: LoggerAdapter;
+
 	@Action(HttpMethod.GET, "/")
 	getUsers() {
+		this.logger.info("Getting users");
 		return { users: [] };
 	}
 }

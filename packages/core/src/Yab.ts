@@ -56,7 +56,7 @@ export class Yab {
 	#buildContext(request: Request, server: Server) {
 		const context: Context = {
 			requestId: request.headers.get("x-request-id") || uuid(),
-			logger: new ConsoleLogger("info"),
+			logger: new ConsoleLogger(this.#config.options.logLevel || "info"),
 			container: this.#container,
 			request,
 			serverUrl: server.url.toString(),

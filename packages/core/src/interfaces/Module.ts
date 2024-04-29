@@ -21,7 +21,7 @@ export interface ModuleConfig<Config extends Dictionary = Dictionary> {
 
 interface YabInternalOptions {
 	modules: ModuleConfig[];
-	logger?: any;
+	logLevel?: string;
 }
 
 export type YabOptions = YabInternalOptions & Omit<Serve, "fetch">;

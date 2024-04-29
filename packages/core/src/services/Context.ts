@@ -30,9 +30,13 @@ export class ContextService {
 		store.exit(cb);
 	}
 
-	runWithContext<T>(context: Context, cb: () => T, exitCb = () => {}): T {
+	async runWithContext<T>(
+		context: Context,
+		cb: () => T | Promise<T>,
+		exitCb = () => {},
+	): Promise<T> {
 		this.setContext(context);
-		const result = cb();
+		const result = await cb();
 		this.clearContext(exitCb);
 		return result;
 	}

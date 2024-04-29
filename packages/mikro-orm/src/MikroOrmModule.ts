@@ -2,12 +2,12 @@ import { MikroORM, type Options } from "@mikro-orm/core";
 import {
 	type Context,
 	ContextService,
+	type InitContext,
 	Inject,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	YabHook,
-	useContainerRef,
 } from "@yab/core";
 import { getToken } from "./utils/getToken";
 
@@ -33,7 +33,7 @@ export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 	}
 
 	@YabHook("app:init")
-	async init() {
+	async init({ container }: InitContext) {
 		this.#orm = await MikroORM.init({
 			...this.config,
 			context: () => this.contextService.context?.em,
@@ -43,10 +43,7 @@ export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 			`MikroORM connected to database: ${this.#orm.isConnected()}. Connection string: ${this.#orm.config.getClientUrl()}`,
 		);
 
-		useContainerRef().registerValue(
-			getToken(this.config.contextName),
-			this.#orm,
-		);
+		container.registerValue(getToken(this.config.contextName), this.#orm);
 	}
 
 	@YabHook("app:request")

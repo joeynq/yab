@@ -1,5 +1,6 @@
 import {
 	type EnhancedContainer,
+	type InitContext,
 	Logger,
 	type LoggerAdapter,
 	Module,
@@ -24,7 +25,7 @@ export class CacheModule<Adapter extends CacheAdapter> extends Module<
 	}
 
 	@YabHook("app:init")
-	async init({ container }: { container: EnhancedContainer }) {
+	async init({ container }: InitContext) {
 		container.registerValue(CacheModuleKey.toString(), this.config.adapter);
 		this.logger.info(
 			`Cache module initialized with ${this.config.adapter.constructor.name}.`,

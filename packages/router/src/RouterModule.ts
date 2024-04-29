@@ -1,6 +1,7 @@
 import type { TObject } from "@sinclair/typebox";
 import {
 	Hooks,
+	type InitContext,
 	Injectable,
 	Logger,
 	type LoggerAdapter,
@@ -83,7 +84,7 @@ export class RouterModule extends Module<RouterConfig> {
 	}
 
 	@YabHook("app:init")
-	initRoute({ container }: Parameters<YabEventMap["app:init"]>[0]) {
+	initRoute({ container }: InitContext) {
 		const table: ConsoleTable[] = [];
 		for (const [root, routes] of Object.entries(this.config)) {
 			for (const route of routes) {

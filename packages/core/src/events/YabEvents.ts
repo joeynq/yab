@@ -8,14 +8,16 @@ export enum YabEvents {
 	OnInit = "app:init",
 }
 
+export interface InitContext {
+	config: Configuration;
+	container: EnhancedContainer;
+}
+
 export type YabEventMap = {
 	[YabEvents.OnStarted]: (
 		server: Server,
 		config: Configuration,
 	) => Promise<void>;
-	[YabEvents.OnInit]: (initContext: {
-		config: Configuration;
-		container: EnhancedContainer;
-	}) => Promise<void>;
+	[YabEvents.OnInit]: (initContext: InitContext) => Promise<void>;
 	[YabEvents.OnRequest]: (context: Context) => Promise<Response>;
 };
