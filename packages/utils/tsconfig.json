@@ -9,6 +9,7 @@
 		"moduleDetection": "force",
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
+		"sourceMap": true,
 
 		// Bundler mode
 		"moduleResolution": "bundler",

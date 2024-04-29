@@ -1,8 +1,8 @@
-import { Entity, EntityManager, PrimaryKey } from "@mikro-orm/core";
+import { Entity, PrimaryKey } from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { AuthModule, BearerAuth } from "@yab/auth";
 import { CacheModule } from "@yab/cache";
-import { LruAdapter } from "@yab/cache/lru";
+import { RedisAdapter } from "@yab/cache/redis";
 import { InjectContext, type LoggerAdapter, Yab } from "@yab/core";
 import { LoggerModule } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
@@ -26,27 +26,35 @@ class TestEntity {
 	@PrimaryKey()
 	id!: string;
 }
+/*
+
+new Yap()
+	.use(DDDModule, {
+		mount: "/api",
+		domain: await import("@domain/users"), // inject user domain { entities, services, controllers }
+		controllers: await import("@app/users/controllers"), // inject user controllers, only if not provided by domain
+		repository: MikroOrmRepository,
+	})
+
+*/
 
 new Yab()
 	// yab is default to use ConsoleLogger
 	.use(LoggerModule, { adapter: new PinoLogger() })
 	.use(CacheModule, {
-		adapter: new LruAdapter({
-			max: 100,
-			ttl: 60 * 1000,
-		}),
+		adapter: new RedisAdapter({}),
 	})
 	.use(AuthModule, {
 		strategy: new BearerAuth({
 			options: {
-				issuer: "https://example.com",
+				issuer: String(import.meta.env.ISSUER),
 			},
 		}),
 	})
 	.use(RouterModule, "/api", [UserController])
 	.use(MikroOrmModule, {
 		driver: PostgreSqlDriver,
-		clientUrl: "postgresql://postgresql:postgresql@localhost:5432/comichub",
+		clientUrl: import.meta.env.DATABASE_URL,
 		entities: [TestEntity],
 	})
 	.start((server) => console.log(`Server started at ${server.port}`));

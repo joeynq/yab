@@ -41,8 +41,15 @@ export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 			context: () => this.contextService.context?.em,
 		});
 
+		const url = new URL(this.#orm.config.getClientUrl());
+		const isConnected = (await this.#orm.isConnected())
+			? "successfully"
+			: "unsuccessfully";
+
 		this.logger.info(
-			`MikroORM connected to database: ${this.#orm.isConnected()}. Connection string: ${this.#orm.config.getClientUrl()}`,
+			`MikroORM connected to database ${isConnected} to ${url.host
+				.split(":")
+				.join(":")}/${url.pathname.slice(1)}`,
 		);
 
 		container.registerValue(getToken(this.config.contextName), this.#orm);

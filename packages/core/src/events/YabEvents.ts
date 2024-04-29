@@ -1,4 +1,5 @@
 import type { Server } from "bun";
+import type { Yab } from "../Yab";
 import type { Context, EnhancedContainer } from "../interfaces";
 import type { Configuration } from "../services";
 
@@ -11,6 +12,7 @@ export enum YabEvents {
 export interface InitContext {
 	config: Configuration;
 	container: EnhancedContainer;
+	app: Yab;
 }
 
 export type YabEventMap = {

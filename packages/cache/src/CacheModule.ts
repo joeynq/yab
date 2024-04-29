@@ -1,5 +1,4 @@
 import {
-	type EnhancedContainer,
 	type InitContext,
 	Logger,
 	type LoggerAdapter,

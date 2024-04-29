@@ -143,6 +143,7 @@ export class Yab {
 			{
 				config: this.#config,
 				container: this.#container,
+				app: this,
 			},
 		]);
 

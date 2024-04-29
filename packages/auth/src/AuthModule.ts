@@ -36,6 +36,12 @@ export class AuthModule<S extends Strategy<any>> extends Module<
 	@YabHook("app:init")
 	async onInit({ container }: InitContext) {
 		container.registerValue(AuthModuleKey.toString(), this.config.strategy);
+		try {
+			await this.config.strategy.init?.();
+		} catch (error) {
+			this.logger.error(error as any, "Error initializing auth module");
+			throw error;
+		}
 		this.logger.info(
 			`Auth module initialized with ${this.config.strategy.constructor.name}. Issuer: ${this.config.strategy.config.options.issuer}`,
 		);

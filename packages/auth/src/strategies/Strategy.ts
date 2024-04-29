@@ -4,6 +4,8 @@ export abstract class Strategy<S> {
 	protected token: string | undefined;
 	abstract readonly tokenType: string;
 
+	init?: () => Promise<void>;
+
 	constructor(
 		public config: {
 			tokenFrom?: "header" | "query" | "body";
