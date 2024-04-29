@@ -6,13 +6,13 @@ import { type YabEventMap, YabEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
 	Context,
-	Logger,
 	ModuleConfig,
 	ModuleConstructor,
 	YabOptions,
 } from "./interfaces";
 import { Configuration, ContextService, Hooks } from "./services";
-import { HookMetadataKey } from "./symbols";
+import { ConsoleLogger } from "./services/ConsoleLogger";
+import { HookMetadataKey, LoggerKey } from "./symbols";
 
 export class Yab {
 	#config: Configuration;
@@ -24,10 +24,12 @@ export class Yab {
 
 	constructor(options?: YabOptions) {
 		this.#config = new Configuration(options);
-		this.#container.register({
-			[Configuration.name]: asValue(this.#config),
-		});
+		this.#container.registerValue(Configuration.name, this.#config);
 		this.#container.registerValue(ContextService, this.#context);
+		this.#container.registerValue(
+			LoggerKey.toString(),
+			new ConsoleLogger("info"),
+		);
 	}
 
 	#registerHooksFromModule(instance: InstanceType<ModuleConstructor>) {
@@ -54,7 +56,7 @@ export class Yab {
 	#buildContext(request: Request, server: Server) {
 		const context: Context = {
 			requestId: request.headers.get("x-request-id") || uuid(),
-			logger: console as Logger,
+			logger: new ConsoleLogger("info"),
 			container: this.#container,
 			request,
 			serverUrl: server.url.toString(),

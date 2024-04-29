@@ -29,6 +29,7 @@
 		"/packages/utils/src/internal",
 		"/packages/core/src/index.ts",
 		"/packages/logger/src/logger",
-		"/packages/cache/src/adapters"
+		"/packages/cache/src/adapters",
+		"/packages/logger/src/loggers"
 	]
 }

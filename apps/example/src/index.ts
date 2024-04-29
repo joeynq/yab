@@ -3,7 +3,7 @@ import { CacheModule } from "@yab/cache";
 import { LruAdapter } from "@yab/cache/lru";
 import { Yab } from "@yab/core";
 import { LoggerModule } from "@yab/logger";
-import { pinoLogger } from "@yab/logger/loggers";
+import { PinoLogger } from "@yab/logger/pino";
 import { Action, Controller, HttpMethod, RouterModule } from "@yab/router";
 
 @Controller("/users")
@@ -15,16 +15,13 @@ class UserController {
 }
 
 new Yab()
-	.use(LoggerModule, {
-		logger: pinoLogger.createLogger(),
-		createChild: pinoLogger.createChild,
-	})
+	// yab is default to use ConsoleLogger
+	.use(LoggerModule, { adapter: new PinoLogger() })
 	.use(CacheModule, {
-		adapter: LruAdapter,
-		options: {
+		adapter: new LruAdapter({
 			max: 100,
-			maxAge: 1000 * 60 * 60,
-		},
+			ttl: 60 * 1000,
+		}),
 	})
 	.use(AuthModule, {
 		authOptions: {

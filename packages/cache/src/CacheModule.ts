@@ -1,41 +1,33 @@
 import {
 	type EnhancedContainer,
-	Inject,
-	InjectLogger,
-	type Logger,
+	Logger,
+	type LoggerAdapter,
 	Module,
 	YabHook,
 } from "@yab/core";
-import type { AnyClass, Dictionary } from "../../utils/dist";
 import type { CacheAdapter } from "./interfaces/CacheAdapter";
 
 export const CacheModuleKey = Symbol("CacheModule");
 
-export interface CacheModuleOptions<Adapter extends CacheAdapter> {
-	adapter: AnyClass<Adapter>;
-	options: ConstructorParameters<AnyClass<Adapter>>[0] & Dictionary;
-}
+export type CacheModuleOptions<Adapter extends CacheAdapter> = {
+	adapter: Adapter;
+};
 
 export class CacheModule<Adapter extends CacheAdapter> extends Module<
-	CacheModuleOptions<Adapter>["options"]
+	CacheModuleOptions<Adapter>
 > {
-	#adapter: Adapter;
-	config: CacheModuleOptions<Adapter>["options"] & Dictionary;
+	@Logger()
+	logger!: LoggerAdapter;
 
-	@InjectLogger()
-	logger!: Logger;
-
-	constructor(options: CacheModuleOptions<Adapter>) {
+	constructor(public config: CacheModuleOptions<Adapter>) {
 		super();
-		this.#adapter = new options.adapter(options.options);
-		this.config = options.options;
 	}
 
 	@YabHook("app:init")
 	async init({ container }: { container: EnhancedContainer }) {
-		container.registerValue(CacheModuleKey.toString(), this.#adapter);
+		container.registerValue(CacheModuleKey.toString(), this.config.adapter);
 		this.logger.info(
-			`Cache module initialized with ${this.#adapter.constructor.name}.`,
+			`Cache module initialized with ${this.config.adapter.constructor.name}.`,
 		);
 	}
 }

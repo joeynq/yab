@@ -1,39 +1,30 @@
 import {
 	type Context,
 	type EnhancedContainer,
-	type Logger,
+	type LoggerAdapter,
 	LoggerKey,
 	Module,
 	YabHook,
 } from "@yab/core";
-import { asValue } from "awilix";
-import {
-	LoggerService,
-	type LoggerServiceOptions,
-} from "./services/LoggerService";
 
-export interface LoggerModuleConfig<L extends Logger = Logger>
-	extends LoggerServiceOptions<L> {}
+export type LoggerModuleConfig<Adapter extends LoggerAdapter> = {
+	adapter: Adapter;
+};
 
-export class LoggerModule<L extends Logger> extends Module<
-	LoggerModuleConfig<L>
+export class LoggerModule<Adapter extends LoggerAdapter> extends Module<
+	LoggerModuleConfig<Adapter>
 > {
-	service: LoggerService<L>;
-
-	constructor(public config: LoggerModuleConfig<L>) {
+	constructor(public config: LoggerModuleConfig<Adapter>) {
 		super();
-		this.service = new LoggerService(config);
 	}
 
 	@YabHook("app:init")
 	async init({ container }: { container: EnhancedContainer }) {
-		container.register({
-			[LoggerKey.toString()]: asValue(this.service.logger),
-		});
+		container.registerValue(LoggerKey.toString(), this.config.adapter);
 	}
 
 	@YabHook("app:request")
 	async applyContext(ctx: Context) {
-		await this.service.useRequestContext(ctx);
+		ctx.logger = this.config.adapter.useContext(ctx);
 	}
 }

@@ -1,8 +1,12 @@
-import type { Dictionary } from "@yab/utils";
 import type { SocketAddress } from "bun";
 import type { EnhancedContainer } from "./Container";
 
-export interface Logger extends Dictionary<any> {
+export interface LoggerAdapter<Logger = any> {
+	log: Logger;
+	level: string;
+
+	useContext(context: Context): Logger;
+
 	info(obj: object, message: string, ...args: unknown[]): void;
 	info(message: string, ...args: unknown[]): void;
 
@@ -24,7 +28,7 @@ export interface Context {
 	container: EnhancedContainer;
 	requestId: string;
 	serverUrl: string;
-	logger: Logger;
+	logger: LoggerAdapter;
 	userIp?: SocketAddress;
 	useAgent?: string;
 }

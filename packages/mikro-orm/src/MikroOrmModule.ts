@@ -3,8 +3,8 @@ import {
 	type Context,
 	ContextService,
 	Inject,
-	InjectLogger,
-	type Logger,
+	Logger,
+	type LoggerAdapter,
 	Module,
 	YabHook,
 	useContainerRef,
@@ -25,8 +25,8 @@ export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 	@Inject(ContextService)
 	contextService!: ContextService;
 
-	@InjectLogger()
-	logger!: Logger;
+	@Logger()
+	logger!: LoggerAdapter;
 
 	constructor(public config: MikroOrmModuleConfig) {
 		super();

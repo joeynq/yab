@@ -10,6 +10,14 @@
 		"./lru": {
 			"import": "./dist/adapters/LruAdapter.js",
 			"require": "./dist/adapters/LruAdapter.js"
+		},
+		"./sqlite": {
+			"import": "./dist/adapters/SqliteAdapter.js",
+			"require": "./dist/adapters/SqliteAdapter.js"
+		},
+		"./redis": {
+			"import": "./dist/adapters/RedisAdapter.js",
+			"require": "./dist/adapters/RedisAdapter.js"
 		}
 	},
 	"type": "module",
@@ -26,6 +34,7 @@
 		"typescript": "^5.0.0"
 	},
 	"dependencies": {
+		"ioredis": "^5.4.1",
 		"lru-cache": "^10.2.1"
 	}
 }

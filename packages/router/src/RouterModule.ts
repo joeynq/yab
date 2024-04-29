@@ -1,9 +1,9 @@
 import type { TObject } from "@sinclair/typebox";
 import {
 	Hooks,
-	InjectLogger,
 	Injectable,
-	type Logger,
+	Logger,
+	type LoggerAdapter,
 	Module,
 	type YabEventMap,
 	YabHook,
@@ -45,8 +45,8 @@ export class RouterModule extends Module<RouterConfig> {
 	config: RouterConfig;
 	hooks = new Hooks<typeof RouterEvent, RouterEventMap>();
 
-	@InjectLogger()
-	logger!: Logger;
+	@Logger()
+	logger!: LoggerAdapter;
 
 	constructor(prefix: SlashedPath, controllers: AnyClass<any>[]) {
 		super();
