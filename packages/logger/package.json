@@ -7,14 +7,15 @@
 			"import": "./dist/index.js",
 			"require": "./dist/index.js"
 		},
-		"./loggers": {
-			"import": "./dist/loggers/index.js",
-			"require": "./dist/loggers/index.js"
+		"./pino": {
+			"import": "./dist/loggers/pinoLogger.js",
+			"require": "./dist/loggers/pinoLogger.js"
 		}
 	},
 	"type": "module",
 	"scripts": {
-		"build": "tsc"
+		"build": "tsc",
+		"watch": "tsc -w"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",

@@ -4,7 +4,8 @@
 	"main": "dist/index.js",
 	"type": "module",
 	"scripts": {
-		"build": "tsc"
+		"build": "tsc",
+		"watch": "tsc -w"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",

@@ -16,6 +16,7 @@
 		"noEmit": false,
 		"outDir": "dist",
 		"declaration": true,
+		"preserveWatchOutput": true,
 
 		// Best practices
 		"strict": true,

@@ -3,8 +3,7 @@
 	"private": true,
 	"scripts": {
 		"build": "turbo build",
-		"dev": "turbo dev",
-		"lint": "turbo lint",
+		"watch": "turbo run watch",
 		"format": "bunx @biomejs/biome format --write \"**/*.{ts,tsx,md}\"",
 		"commit": "bunx cz"
 	},
@@ -13,7 +12,7 @@
 		"cz-conventional-changelog": "^3.3.0",
 		"lefthook": "^1.6.10",
 		"semantic-release": "^23.0.8",
-		"turbo": "latest"
+		"turbo": "^1.13.3"
 	},
 	"engines": {
 		"node": ">=18"
