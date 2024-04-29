@@ -48,7 +48,6 @@ export class Yab {
 		const moduleConfigs = this.#config.options.modules;
 		for (const { name } of moduleConfigs) {
 			const module = this.#container.resolve(name);
-
 			this.#registerHooksFromModule(module);
 		}
 	}

@@ -26,7 +26,6 @@ export class Hooks<
 		string,
 		Set<EventHandler<EventType, EnumValues<EventType>, EventMap>>
 	>();
-
 	register<Event extends EnumValues<EventType>>(
 		event: Event,
 		callback: EventHandler<EventType, Event, EventMap>,

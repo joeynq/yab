@@ -1,9 +1,10 @@
 import type { AnyClass } from "@yab/utils";
+import { useContainerRef } from "../container";
 import type { InitContext } from "../events";
 import { getTokenName } from "../utils";
 import { YabHook } from "./YabHook";
 
-const OnInitSymbol = Symbol("OnInit");
+const OnInitSymbol = Symbol("__OnInit__");
 
 export const Inject = (
 	token?: AnyClass | symbol | string,
@@ -17,19 +18,22 @@ export const Inject = (
 			tokenName = Reflect.getMetadata("design:type", target, key).name;
 		}
 
-		// define new property onInit
-		Object.defineProperty(target, OnInitSymbol, {
-			value({ container }: InitContext) {
-				const value = container.resolve(tokenName);
+		const funcName = `${OnInitSymbol.description}:${tokenName}`;
+
+		Object.defineProperty(target, funcName, {
+			value: function ({ container }: InitContext) {
 				Object.defineProperty(this, key, {
-					value,
-					writable: false,
+					get: () => {
+						const result = container.resolve(tokenName);
+						return result;
+					},
 				});
 			},
-			writable: false,
+			writable: true,
 		});
 
-		const descriptor = Object.getOwnPropertyDescriptor(target, OnInitSymbol);
-		descriptor && YabHook("app:init")(target, OnInitSymbol, descriptor);
+		const descriptor = Object.getOwnPropertyDescriptor(target, funcName);
+
+		descriptor && YabHook("app:init")(target, funcName, descriptor);
 	};
 };

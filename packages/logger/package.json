@@ -8,8 +8,8 @@
 			"require": "./dist/index.js"
 		},
 		"./pino": {
-			"import": "./dist/loggers/pinoLogger.js",
-			"require": "./dist/loggers/pinoLogger.js"
+			"import": "./dist/loggers/PinoLogger.js",
+			"require": "./dist/loggers/PinoLogger.js"
 		}
 	},
 	"type": "module",
@@ -20,13 +20,11 @@
 	"devDependencies": {
 		"@types/bun": "latest",
 		"@yab/core": "link:@yab/core",
-		"@yab/utils": "link:@yab/utils",
-		"awilix": "^10.0.2"
+		"@yab/utils": "link:@yab/utils"
 	},
 	"peerDependencies": {
 		"@yab/core": "^0.0.0",
 		"@yab/utils": "^0.0.0",
-		"awilix": "^10.0.2",
 		"typescript": "^5.0.0"
 	},
 	"dependencies": {

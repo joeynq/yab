@@ -11,6 +11,7 @@ export type BearerTokenAuthorize = {
 
 @Injectable()
 export class BearerAuth extends Strategy<BearerTokenAuthorize> {
+	tokenType = "Bearer";
 	async #createJwkSet() {
 		const discoveryUrl = `${this.config.options.issuer}/.well-known/openid-configuration`;
 		const response = await fetch(discoveryUrl);
