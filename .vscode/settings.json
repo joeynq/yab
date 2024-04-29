@@ -17,12 +17,8 @@
 		"Proxify",
 		"typebox"
 	],
-	"[javascript]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
 	"editor.codeActionsOnSave": {
-		"quickfix.biome": "explicit",
-		"source.organizeImports.biome": "explicit"
+		"source.organizeImports.biome": "always"
 	},
 	"editor.tabSize": 2,
 	"exportall.config.relExclusion": [
@@ -31,5 +27,7 @@
 		"/packages/logger/src/logger",
 		"/packages/cache/src/adapters",
 		"/packages/logger/src/loggers"
-	]
+	],
+	"editor.defaultFormatter": "biomejs.biome",
+	"biome.rename": true
 }

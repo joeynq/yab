@@ -28,6 +28,7 @@ export class Yab {
 		this.#container.registerValue(ContextService, this.#context);
 		this.#container.registerValue(LoggerKey, new ConsoleLogger("info"));
 		this.#container.registerValue(EnvKey, options?.env || {});
+		this.#container.registerValue(Hooks, this.#hooks);
 	}
 
 	#registerHooksFromModule(instance: InstanceType<ModuleConstructor>) {

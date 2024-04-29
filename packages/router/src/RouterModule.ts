@@ -2,6 +2,7 @@ import type { TObject } from "@sinclair/typebox";
 import {
 	Hooks,
 	type InitContext,
+	Inject,
 	Injectable,
 	Logger,
 	type LoggerAdapter,
@@ -44,7 +45,9 @@ export class RouterModule extends Module<RouterConfig> {
 	#routeMatcher = new Memoirist<RouteMatch>();
 
 	config: RouterConfig;
-	hooks = new Hooks<typeof RouterEvent, RouterEventMap>();
+
+	@Inject(Hooks)
+	hooks!: Hooks<typeof RouterEvent, RouterEventMap>;
 
 	@Logger()
 	logger!: LoggerAdapter;
