@@ -1,5 +1,4 @@
 import type { AnyClass } from "@yab/utils";
-import { useContainerRef } from "../container";
 import type { InitContext } from "../events";
 import { getTokenName } from "../utils";
 import { YabHook } from "./YabHook";

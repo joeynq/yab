@@ -28,12 +28,17 @@ class TestEntity {
 }
 /*
 
-new Yap()
+new Yab()
 	.use(DDDModule, {
 		mount: "/api",
 		domain: await import("@domain/users"), // inject user domain { entities, services, controllers }
 		controllers: await import("@app/users/controllers"), // inject user controllers, only if not provided by domain
 		repository: MikroOrmRepository,
+	})
+
+new Yab()
+	.use(WorkerModule, {
+		workers: [Worker1, Worker2],
 	})
 
 */

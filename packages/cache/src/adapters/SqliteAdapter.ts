@@ -11,6 +11,7 @@ type PreparedStatements = {
 	get: Statement<CacheRow, [string]>;
 	set: Statement<CacheRow, [string, string, number | null]>;
 	delete: Statement<null, [string]>;
+	clear: Statement<null, []>;
 };
 
 export class SqliteAdapter implements CacheAdapter {
@@ -45,6 +46,7 @@ export class SqliteAdapter implements CacheAdapter {
         INSERT INTO ${this.#table} (key, value, ttl) VALUES (?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET value = EXCLUDED.value, ttl = EXCLUDED.ttl`),
 			delete: this.#db.prepare(`DELETE FROM ${this.#table} WHERE key = ?`),
+			clear: this.#db.prepare(`DROP TABLE ${this.#table}`),
 		};
 	}
 
@@ -63,5 +65,10 @@ export class SqliteAdapter implements CacheAdapter {
 
 	async delete(key: string) {
 		this.#prepared.delete.run(key);
+	}
+
+	async clear() {
+		this.#prepared.clear.run();
+		this.#createTable();
 	}
 }

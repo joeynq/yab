@@ -59,4 +59,10 @@ export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 	async request(context: Context) {
 		context.em = this.#orm.em.fork({ useContext: true });
 	}
+
+	@YabHook("app:exit")
+	async exit() {
+		await this.#orm.close();
+		this.logger.info("MikroORM connection closed.");
+	}
 }

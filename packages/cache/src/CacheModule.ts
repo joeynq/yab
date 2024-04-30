@@ -11,6 +11,7 @@ export const CacheModuleKey = Symbol("CacheModule");
 
 export type CacheModuleOptions<Adapter extends CacheAdapter> = {
 	adapter: Adapter;
+	clearOnStart?: boolean;
 };
 
 export class CacheModule<Adapter extends CacheAdapter> extends Module<
@@ -25,6 +26,10 @@ export class CacheModule<Adapter extends CacheAdapter> extends Module<
 
 	@YabHook("app:init")
 	async init({ container }: InitContext) {
+		if (this.config.clearOnStart) {
+			this.logger.info("Clearing cache on start.");
+			await this.config.adapter.clear();
+		}
 		container.registerValue(CacheModuleKey, this.config.adapter);
 		this.logger.info(
 			`Cache module initialized with ${this.config.adapter.constructor.name}.`,

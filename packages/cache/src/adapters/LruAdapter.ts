@@ -21,4 +21,8 @@ export class LruAdapter implements CacheAdapter {
 	async delete(key: string) {
 		this.#cache.delete(key);
 	}
+
+	async clear() {
+		this.#cache.clear();
+	}
 }

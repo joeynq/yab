@@ -4,6 +4,7 @@ import type { Context, EnhancedContainer } from "../interfaces";
 import type { Configuration } from "../services";
 
 export enum YabEvents {
+	OnExit = "app:exit",
 	OnStarted = "app:started",
 	OnRequest = "app:request",
 	OnInit = "app:init",
@@ -16,6 +17,7 @@ export interface InitContext {
 }
 
 export type YabEventMap = {
+	[YabEvents.OnExit]: (server: Server) => Promise<void>;
 	[YabEvents.OnStarted]: (
 		server: Server,
 		config: Configuration,

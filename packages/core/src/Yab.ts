@@ -6,6 +6,7 @@ import { type YabEventMap, YabEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
 	Context,
+	LoggerAdapter,
 	ModuleConfig,
 	ModuleConstructor,
 	YabOptions,
@@ -144,6 +145,7 @@ export class Yab {
 
 	async start(onStarted: (server: Server, config: Configuration) => void) {
 		this.#initModules();
+
 		await this.#hooks.invoke(YabEvents.OnInit, [
 			{
 				config: this.#config,
@@ -151,6 +153,8 @@ export class Yab {
 				app: this,
 			},
 		]);
+
+		const logger = this.#container.resolveValue<LoggerAdapter>(LoggerKey);
 
 		const self = this;
 
@@ -162,6 +166,21 @@ export class Yab {
 			},
 		});
 		await this.#hooks.invoke(YabEvents.OnStarted, [server, this.#config]);
+
+		const exitHandler = async () => {
+			logger.info("Shutting down server...");
+			await this.#hooks.invoke(YabEvents.OnExit, [server]);
+			server.stop();
+		};
+
+		process.on("SIGINT", exitHandler);
+		process.on("SIGTERM", exitHandler);
+		process.on("SIGKILL", exitHandler);
+		process.on("uncaughtException", (error) => {
+			logger.error("Uncaught exception", error);
+			exitHandler();
+		});
+
 		onStarted(server, this.#config);
 	}
 }

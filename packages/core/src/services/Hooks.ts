@@ -16,6 +16,7 @@ type EventHandler<
 interface InvokeOptions {
 	breakOnResult?: boolean;
 	breakOnNull?: boolean;
+	breakOnError?: boolean;
 }
 
 export class Hooks<
@@ -48,17 +49,27 @@ export class Hooks<
 	async invoke<Event extends EnumValues<EventType>>(
 		event: Event,
 		args: EventPayload<EventType, Event, EventMap>,
-		{ breakOnResult = false, breakOnNull = false }: InvokeOptions = {},
+		{
+			breakOnResult = false,
+			breakOnNull = false,
+			breakOnError = true,
+		}: InvokeOptions = {},
 	): Promise<EventResult<EventType, Event, EventMap> | undefined> {
 		const hooks = this.#hooks.get(event);
 		if (hooks) {
 			for (const hook of hooks) {
-				const result = await hook(...args);
-				if (breakOnNull && result === null) {
-					break;
-				}
-				if (breakOnResult && !isUndefined(result)) {
-					return result;
+				try {
+					const result = await hook(...args);
+					if (breakOnNull && result === null) {
+						break;
+					}
+					if (breakOnResult && !isUndefined(result)) {
+						return result;
+					}
+				} catch (error) {
+					if (breakOnError) {
+						throw error;
+					}
 				}
 			}
 		}

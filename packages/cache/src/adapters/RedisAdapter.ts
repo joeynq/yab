@@ -24,4 +24,8 @@ export class RedisAdapter implements CacheAdapter {
 	async delete(key: string) {
 		await this.#client.del(key);
 	}
+
+	async clear() {
+		await this.#client.flushall();
+	}
 }
