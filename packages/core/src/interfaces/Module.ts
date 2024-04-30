@@ -1,5 +1,5 @@
 import { type AnyFunction, type Dictionary, uuid } from "@yab/utils";
-import type { Serve } from "bun";
+import type { TLSOptions } from "bun";
 
 export interface ModuleConstructor<Config extends Dictionary = Dictionary> {
 	new (...args: any[]): Module<Config>;
@@ -19,10 +19,12 @@ export interface ModuleConfig<Config extends Dictionary = Dictionary> {
 	};
 }
 
-interface YabInternalOptions {
+export interface YabOptions {
+	port?: string | number;
+	hostname?: string;
 	modules: ModuleConfig[];
 	logLevel?: string;
 	env?: Dictionary;
+	reusePort?: boolean;
+	tls?: TLSOptions;
 }
-
-export type YabOptions = YabInternalOptions & Omit<Serve, "fetch">;

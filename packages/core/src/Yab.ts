@@ -22,8 +22,11 @@ export class Yab {
 
 	#customContext?: (ctx: Context) => Record<string, unknown>;
 
-	constructor(options?: YabOptions) {
-		this.#config = new Configuration(options);
+	constructor(options?: Partial<YabOptions>) {
+		this.#config = new Configuration({
+			...options,
+			modules: options?.modules || [],
+		});
 		this.#container.registerValue(Configuration, this.#config);
 		this.#container.registerValue(ContextService, this.#context);
 		this.#container.registerValue(LoggerKey, new ConsoleLogger("info"));

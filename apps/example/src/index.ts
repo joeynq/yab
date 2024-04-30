@@ -2,7 +2,7 @@ import { Entity, PrimaryKey } from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { AuthModule, BearerAuth } from "@yab/auth";
 import { CacheModule } from "@yab/cache";
-import { RedisAdapter } from "@yab/cache/redis";
+import { SqliteAdapter } from "@yab/cache/sqlite";
 import { InjectContext, type LoggerAdapter, Yab } from "@yab/core";
 import { LoggerModule } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
@@ -38,11 +38,11 @@ new Yap()
 
 */
 
-new Yab()
+new Yab({ port: 5000 })
 	// yab is default to use ConsoleLogger
 	.use(LoggerModule, { adapter: new PinoLogger() })
 	.use(CacheModule, {
-		adapter: new RedisAdapter({}),
+		adapter: new SqliteAdapter(),
 	})
 	.use(AuthModule, {
 		strategy: new BearerAuth({
