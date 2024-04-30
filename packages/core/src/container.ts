@@ -33,7 +33,7 @@ const enhance = (container: AwilixContainer) => {
 		) {
 			const instance = new module(...args);
 			this.register({
-				[module.name]: asValue(instance),
+				[`${module.name}:${instance.id}`]: asValue(instance),
 			});
 			return instance;
 		},

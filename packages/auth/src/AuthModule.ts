@@ -38,13 +38,13 @@ export class AuthModule<S extends Strategy<any>> extends Module<
 		container.registerValue(AuthModuleKey, this.config.strategy);
 		try {
 			await this.config.strategy.init?.();
+			this.logger.info(
+				`Auth module initialized with ${this.config.strategy.constructor.name}. Issuer: ${this.config.strategy.config.options.issuer}`,
+			);
 		} catch (error) {
 			this.logger.error(error as any, "Error initializing auth module");
 			throw error;
 		}
-		this.logger.info(
-			`Auth module initialized with ${this.config.strategy.constructor.name}. Issuer: ${this.config.strategy.config.options.issuer}`,
-		);
 	}
 
 	@YabHook("app:request")

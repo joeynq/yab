@@ -7,8 +7,8 @@ export enum RouterEvent {
 
 export type RouterEventMap = {
 	[RouterEvent.BeforeRoute]: (context: Context) => Promise<void>;
-	[RouterEvent.AfterRoute]: (
+	[RouterEvent.AfterRoute]: <T = unknown>(
 		context: Context,
-		result: unknown,
+		result: T,
 	) => Promise<void>;
 };

@@ -1,6 +1,6 @@
 import { URL } from "node:url";
 import { UseCache } from "@yab/cache";
-import { Injectable, YabHook } from "@yab/core";
+import { Injectable } from "@yab/core";
 import { ensure } from "@yab/utils";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { Strategy } from "./Strategy";

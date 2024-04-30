@@ -13,6 +13,7 @@ import type {
 import { Configuration, ContextService, Hooks } from "./services";
 import { ConsoleLogger } from "./services/ConsoleLogger";
 import { HookMetadataKey, LoggerKey } from "./symbols";
+import { getModuleToken } from "./utils/moduleToken";
 
 export class Yab {
 	#config: Configuration;
@@ -48,8 +49,10 @@ export class Yab {
 
 	#initModules() {
 		const moduleConfigs = this.#config.options.modules;
-		for (const { name } of moduleConfigs) {
-			const module = this.#container.resolve(name);
+		for (const config of moduleConfigs) {
+			const module = this.#container.resolve(
+				getModuleToken(config.name, config.id),
+			);
 			this.#registerHooksFromModule(module);
 		}
 	}

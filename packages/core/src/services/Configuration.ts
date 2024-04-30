@@ -1,12 +1,11 @@
 import { type Dictionary, deepMerge } from "@yab/utils";
-import type { Serve } from "bun";
 import type { Module, ModuleConfig, YabOptions } from "../interfaces";
 
 export class Configuration {
 	options!: YabOptions;
 
-	get bunOptions(): Omit<Serve, "fetch"> {
-		const { modules, ...options } = this.options;
+	get bunOptions() {
+		const { modules, env, logLevel, ...options } = this.options;
 		return options;
 	}
 

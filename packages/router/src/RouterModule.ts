@@ -15,8 +15,8 @@ import { asClass } from "awilix";
 import Memoirist from "memoirist";
 import { RouterEvent, type RouterEventMap } from "./event";
 import { NotFound } from "./exceptions";
-import type { RouteObject, RouterConfig, SlashedPath } from "./interfaces";
-import { Res, getControllerMetadata } from "./utils";
+import type { RouterConfig, SlashedPath } from "./interfaces";
+import { Res, extractMetadata } from "./utils";
 
 type ConsoleTable = {
 	method: string;
@@ -57,7 +57,7 @@ export class RouterModule extends Module<RouterConfig> {
 		ensure(controllers.length > 0, "No controllers provided");
 		this.config = {
 			[prefix]: controllers.flatMap((controller) =>
-				this.#extractMetadata(controller).map((action) => ({
+				extractMetadata(controller).map((action) => ({
 					prefix: action.prefix,
 					method: action.method,
 					path: action.path,
@@ -68,22 +68,6 @@ export class RouterModule extends Module<RouterConfig> {
 				})),
 			),
 		};
-	}
-
-	#extractMetadata(controller: AnyClass): RouteObject[] {
-		const metadata = getControllerMetadata(controller);
-
-		ensure(metadata, `Controller metadata not found for ${controller.name}`);
-
-		return Object.entries(metadata.routes).map(([actionName, route]) => ({
-			controller: metadata.controller,
-			prefix: metadata.prefix,
-			method: route.method,
-			path: route.path,
-			actionName,
-			payload: route.payload,
-			response: route.response,
-		}));
 	}
 
 	@YabHook("app:init")
