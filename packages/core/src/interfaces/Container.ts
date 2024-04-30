@@ -12,4 +12,6 @@ export interface EnhancedContainer extends AwilixContainer {
 	registerValue<T>(token: InjectionToken<T>, value: T): void;
 
 	resolveClass<T>(token: InjectionToken<T>): T;
+
+	resolveValue<T>(token: InjectionToken<T>): T;
 }

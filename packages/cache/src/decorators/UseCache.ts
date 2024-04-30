@@ -18,7 +18,7 @@ export function UseCache(options?: UseCacheOptions): MethodDecorator {
 			const cacheKey = `${
 				target.constructor.name
 			}:${key.toString()}:${JSON.stringify(args)}`;
-			const cache = container.resolve<CacheAdapter>(CacheModuleKey);
+			const cache = container.resolveValue<CacheAdapter>(CacheModuleKey);
 			const cached = await cache.get(cacheKey);
 
 			if (cached) {

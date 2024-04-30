@@ -19,6 +19,13 @@ const enhance = (container: AwilixContainer) => {
 		},
 	});
 
+	Object.defineProperty(container, "resolveValue", {
+		value: function <T>(token: InjectionToken<T>) {
+			const tokenName = getTokenName(token);
+			return this.resolve(tokenName);
+		},
+	});
+
 	Object.defineProperty(container, "registerModule", {
 		value: function <M extends ModuleConstructor>(
 			module: M,
@@ -26,7 +33,7 @@ const enhance = (container: AwilixContainer) => {
 		) {
 			const instance = new module(...args);
 			this.register({
-				[`${module.name}:${instance.id}`]: asValue(instance),
+				[module.name]: asValue(instance),
 			});
 			return instance;
 		},
