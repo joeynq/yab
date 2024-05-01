@@ -1,5 +1,7 @@
 import { type AnyClass, ensure } from "@yab/utils";
 import type { ControllerMetadata, RouteObject } from "../interfaces";
+import { Hooks } from "@yab/core";
+import type { RouterEvent, RouterEventMap } from "../event";
 
 export const RouteMetadataKey = Symbol("Router:Routes");
 
@@ -30,5 +32,6 @@ export const extractMetadata = (controller: AnyClass): RouteObject[] => {
 		actionName,
 		payload: route.payload,
 		response: route.response,
+		hook: route.hook || new Hooks<typeof RouterEvent, RouterEventMap>()
 	}));
 };
