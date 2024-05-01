@@ -26,6 +26,7 @@ type ConsoleTable = {
 
 type RouteMatch = {
 	handler: AnyFunction;
+	hook: Hooks<typeof RouterEvent, RouterEventMap>;
 	payload?: {
 		query?: TObject;
 		body?: TObject;
@@ -65,6 +66,7 @@ export class RouterModule extends Module<RouterConfig> {
 					actionName: action.actionName,
 					payload: action.payload,
 					response: action.response,
+					hook: action.hook,
 				})),
 			),
 		};
@@ -83,6 +85,7 @@ export class RouterModule extends Module<RouterConfig> {
 					actionName,
 					payload,
 					response,
+					hook,
 				} = route;
 				const ctrl = container
 					.register(controller.name, asClass(controller))
@@ -108,6 +111,7 @@ export class RouterModule extends Module<RouterConfig> {
 					handler,
 					payload,
 					response,
+					hook,
 				});
 				table.push({
 					method,
@@ -136,16 +140,10 @@ export class RouterModule extends Module<RouterConfig> {
 				new NotFound(`${request.method} ${request.url} not found`),
 			);
 		}
-
 		context.logger.info(`${request.method} ${request.url}`);
-
-		await this.hooks.invoke(RouterEvent.BeforeRoute, [context]);
-
+		await match.store.hook.invoke(RouterEvent.BeforeRoute, [context]);
 		const result = await match.store.handler(context);
-
-		await this.hooks.invoke(RouterEvent.AfterRoute, [context, result], {
-			breakOnResult: true,
-		});
+		await match.store.hook.invoke(RouterEvent.AfterRoute, [context, result]);
 
 		if (result instanceof Response) {
 			return result;

@@ -1,6 +1,8 @@
 import type { TObject } from "@sinclair/typebox";
+import type { Hooks } from "@yab/core";
 import type { AnyClass } from "@yab/utils";
 import type { HttpMethod } from "../enums";
+import type { RouterEvent, RouterEventMap } from "../event";
 
 export type SlashedPath = `/${string}`;
 
@@ -14,6 +16,7 @@ export type RouteObject = {
 	path: string;
 	controller: AnyClass<any>;
 	actionName: string;
+	hook: Hooks<typeof RouterEvent, RouterEventMap>;
 	payload?: {
 		query?: TObject;
 		body?: TObject;
@@ -52,4 +55,5 @@ export type RouteMetadata = {
 			schema: TObject;
 		};
 	};
+	hook?: Hooks<typeof RouterEvent, RouterEventMap>;
 };
