@@ -14,6 +14,7 @@
 	},
 	"type": "module",
 	"scripts": {
+		"link": "bun link",
 		"build": "tsc",
 		"watch": "tsc -w"
 	},
@@ -23,8 +24,6 @@
 		"@yab/utils": "link:@yab/utils"
 	},
 	"peerDependencies": {
-		"@yab/core": "^0.0.0",
-		"@yab/utils": "^0.0.0",
 		"typescript": "^5.0.0"
 	},
 	"dependencies": {

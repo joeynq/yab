@@ -26,6 +26,7 @@ class TestEntity {
 	@PrimaryKey()
 	id!: string;
 }
+
 /*
 
 new Yab()
@@ -35,16 +36,10 @@ new Yab()
 		controllers: await import("@app/users/controllers"), // inject user controllers, only if not provided by domain
 		repository: MikroOrmRepository,
 	})
-
-new Yab()
-	.use(WorkerModule, {
-		workers: [Worker1, Worker2],
-	})
-
 */
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 new Yab({ port: 5000 })
-	// yab is default to use ConsoleLogger
 	.use(LoggerModule, { adapter: new PinoLogger() })
 	.use(CacheModule, {
 		adapter: new SqliteAdapter(),
@@ -56,10 +51,10 @@ new Yab({ port: 5000 })
 			},
 		}),
 	})
-	.use(RouterModule, "/api", [UserController])
 	.use(MikroOrmModule, {
 		driver: PostgreSqlDriver,
 		clientUrl: import.meta.env.DATABASE_URL,
 		entities: [TestEntity],
 	})
+	.use(RouterModule, "/api", [UserController])
 	.start((server) => console.log(`Server started at ${server.port}`));

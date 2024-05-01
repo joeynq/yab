@@ -9,6 +9,9 @@
 		"watch": {
 			"cache": false,
 			"persistent": true
+		},
+		"link": {
+			"cache": false
 		}
 	}
 }

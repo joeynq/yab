@@ -167,19 +167,22 @@ export class Yab {
 		});
 		await this.#hooks.invoke(YabEvents.OnStarted, [server, this.#config]);
 
-		const exitHandler = async () => {
-			logger.info("Shutting down server...");
-			await this.#hooks.invoke(YabEvents.OnExit, [server]);
-			server.stop();
-		};
-
-		process.on("SIGINT", exitHandler);
-		process.on("SIGTERM", exitHandler);
-		process.on("SIGKILL", exitHandler);
-		process.on("uncaughtException", (error) => {
-			logger.error("Uncaught exception", error);
-			exitHandler();
-		});
+		for (const eventType of [
+			"SIGINT",
+			"SIGUSR1",
+			"SIGUSR2",
+			"uncaughtException",
+			"SIGTERM",
+		]) {
+			process.on(eventType, async (exitCode) => {
+				logger.info("Shutting down server...");
+				await self.#hooks.invoke(YabEvents.OnExit, [server]);
+				server.stop();
+				setTimeout(() => {
+					process.exit(exitCode);
+				}, 500);
+			});
+		}
 
 		onStarted(server, this.#config);
 	}

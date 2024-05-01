@@ -35,6 +35,7 @@ type ExpressMiddleware = (
  *    // Your code here
  *  }
  * }
+ * ```
  */
 export const fromExpressMiddleware = (
 	expressMiddleware: ExpressMiddleware,

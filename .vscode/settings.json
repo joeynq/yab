@@ -14,6 +14,7 @@
 		"lefthook",
 		"Mergeable",
 		"mikro",
+		"notifme",
 		"pino",
 		"Proxify",
 		"typebox"
@@ -30,5 +31,8 @@
 		"/packages/logger/src/loggers"
 	],
 	"editor.defaultFormatter": "biomejs.biome",
-	"biome.rename": true
+	"biome.rename": true,
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	}
 }
