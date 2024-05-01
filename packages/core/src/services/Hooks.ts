@@ -25,25 +25,20 @@ export class Hooks<
 > {
 	#hooks = new Map<
 		string,
-		Set<EventHandler<EventType, EnumValues<EventType>, EventMap>>
+		Array<EventHandler<EventType, EnumValues<EventType>, EventMap>>
 	>();
+
 	register<Event extends EnumValues<EventType>>(
 		event: Event,
 		callback: EventHandler<EventType, Event, EventMap>,
 	) {
-		const handlers = this.#hooks.get(event);
+		let handlers = this.#hooks.get(event);
 		if (handlers) {
-			handlers.add(
-				callback as EventHandler<EventType, EnumValues<EventType>, EventMap>,
-			);
+			handlers.push(callback);
 		} else {
-			this.#hooks.set(
-				event,
-				new Set([
-					callback as EventHandler<EventType, EnumValues<EventType>, EventMap>,
-				]),
-			);
+			handlers = [callback];
 		}
+		this.#hooks.set(event, handlers);
 	}
 
 	async invoke<Event extends EnumValues<EventType>>(

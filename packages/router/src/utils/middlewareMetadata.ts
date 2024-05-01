@@ -13,18 +13,18 @@ export type MiddlewareMetadata = {
 	};
 };
 
-export const MiddlewreMetadataKey = Symbol("middleware:handler");
+const MiddlewareMetadataKey = Symbol("middleware:handler");
 
-export const getMiddlewareMetadata = (middilewareClass: AnyClass) => {
+export const getMiddlewareMetadata = (target: AnyClass) => {
 	return Reflect.getMetadata(
-		MiddlewreMetadataKey,
-		middilewareClass,
+		MiddlewareMetadataKey,
+		target,
 	) as MiddlewareMetadata;
 };
 
 export const setMiddlewareMetadata = (
-	middilewareClass: AnyClass,
+	target: AnyClass,
 	metadata: MiddlewareMetadata,
 ) => {
-	Reflect.defineMetadata(MiddlewreMetadataKey, metadata, middilewareClass);
+	Reflect.defineMetadata(MiddlewareMetadataKey, metadata, target);
 };

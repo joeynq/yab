@@ -3,36 +3,38 @@ import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { AuthModule, BearerAuth } from "@yab/auth";
 import { CacheModule } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
-import { type Context, InjectContext, type LoggerAdapter, Yab } from "@yab/core";
+import {
+	type Context,
+	InjectContext,
+	Injectable,
+	type LoggerAdapter,
+	Yab,
+} from "@yab/core";
 import { LoggerModule } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
 import { MikroOrmModule } from "@yab/mikro-orm";
 import {
-	Action,
 	AfterRoute,
 	BeforeRoute,
 	Controller,
-	HttpMethod,
+	Get,
 	RouterModule,
 	Use,
 } from "@yab/router";
 
+@Injectable()
 class AnyMiddleware {
-	public id = 1;
+	@InjectContext("logger")
+	logger!: LoggerAdapter;
 
 	@BeforeRoute()
 	public test(_: Context) {
-		return 2;
-	}
-
-	@BeforeRoute()
-	public test2(_: Context) {
-		return 3;
+		this.logger.info(`Before route ${_.request.url}`);
 	}
 
 	@AfterRoute()
 	public test3(_: Context) {
-		return 3;
+		this.logger.info(`After route ${_.request.url}`);
 	}
 }
 
@@ -42,7 +44,7 @@ class UserController {
 	logger!: LoggerAdapter;
 
 	@Use(AnyMiddleware)
-	@Action(HttpMethod.GET, "/")
+	@Get("/")
 	getUsers() {
 		this.logger.info("Getting users");
 		return { users: [] };

@@ -1,13 +1,13 @@
 import { Hooks } from "@yab/core";
 import { type AnyClass, deepMerge } from "@yab/utils";
-import { RouterEvent, type RouterEventMap } from "../event";
+import type { RouterEvent, RouterEventMap } from "../event";
 import {
 	getControllerMetadata,
 	getMiddlewareMetadata,
 	setControllerMetadata,
 } from "../utils";
 
-export const Use = (middleware: AnyClass): MethodDecorator => {
+export const Use = (middleware: AnyClass<any>): MethodDecorator => {
 	return (target: any, propertyKey: string | symbol) => {
 		const middlewareData = getMiddlewareMetadata(middleware);
 
@@ -20,14 +20,9 @@ export const Use = (middleware: AnyClass): MethodDecorator => {
 		const route = existing.routes[String(propertyKey)];
 		const hook = route.hook || new Hooks<typeof RouterEvent, RouterEventMap>();
 
-		const middlewareInstance = new middleware() as any;
+		const instance = new middleware();
 		for (const [key, value] of Object.entries(middlewareData.handler || {})) {
-			if (value.event === RouterEvent.BeforeRoute) {
-				hook.register(RouterEvent.BeforeRoute, middlewareInstance[key]);
-			}
-			if (value.event === RouterEvent.AfterRoute) {
-				hook.register(RouterEvent.AfterRoute, middlewareInstance[key]);
-			}
+			hook.register(value.event, instance[key].bind(instance));
 		}
 
 		const merged = deepMerge(existing, {
