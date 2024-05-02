@@ -1,7 +1,7 @@
 import { type Context, Module, YabHook } from "@yab/core";
 import { generateETag, isCached } from "./utils";
 
-type SlashedPath = `/${string}`;
+export type SlashedPath = `/${string}`;
 
 export type StaticModuleOptions = {
 	prefix: SlashedPath;

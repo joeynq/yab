@@ -4,4 +4,5 @@ export * from "./enums";
 export * from "./event";
 export * from "./exceptions";
 export * from "./interfaces";
+export * from "./router";
 export * from "./utils";

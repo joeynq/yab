@@ -1,7 +1,7 @@
 import { Entity, PrimaryKey } from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { AuthModule, BearerAuth } from "@yab/auth";
-import { CacheModule } from "@yab/cache";
+import { BearerAuth, auth } from "@yab/auth";
+import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
 import {
 	type Context,
@@ -10,18 +10,18 @@ import {
 	type LoggerAdapter,
 	Yab,
 } from "@yab/core";
-import { LoggerModule } from "@yab/logger";
+import { logger } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
-import { MikroOrmModule } from "@yab/mikro-orm";
+import { mikroOrm } from "@yab/mikro-orm";
 import {
 	AfterRoute,
 	BeforeRoute,
 	Controller,
 	Get,
-	RouterModule,
 	Use,
+	router,
 } from "@yab/router";
-import { StaticModule } from "@yab/static";
+import { statics } from "@yab/static";
 
 @Injectable()
 class AnyMiddleware {
@@ -68,25 +68,27 @@ new Yab()
 		repository: MikroOrmRepository,
 	})
 */
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+if (import.meta.env.NODE_ENV !== "production") {
+	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
 
 new Yab({ port: 5000 })
-	.use(LoggerModule, { adapter: new PinoLogger() })
-	.use(CacheModule, {
-		adapter: new SqliteAdapter(),
-	})
-	.use(AuthModule, {
-		strategy: new BearerAuth({
-			options: {
-				issuer: String(import.meta.env.ISSUER),
-			},
+	.use(logger(PinoLogger))
+	.use(cache({}, SqliteAdapter))
+	.use(
+		auth(BearerAuth, {
+			options: { issuer: String(import.meta.env.ISSUER) },
 		}),
-	})
-	.use(MikroOrmModule, {
-		driver: PostgreSqlDriver,
-		clientUrl: import.meta.env.DATABASE_URL,
-		entities: [TestEntity],
-	})
-	.use(StaticModule, { prefix: "/public", assetsDir: "./public" })
-	.use(RouterModule, "/api", [UserController])
+	)
+	.use(
+		mikroOrm({
+			driver: PostgreSqlDriver,
+			clientUrl: import.meta.env.DATABASE_URL,
+			entities: [TestEntity],
+		}),
+	)
+	.use(statics("/public", { assetsDir: "./public" }))
+	.use(router("/api", [UserController]))
+	// .use(notification({ email: {} }, {}))
 	.start((server) => console.log(`Server started at ${server.port}`));

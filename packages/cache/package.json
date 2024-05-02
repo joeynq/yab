@@ -28,7 +28,8 @@
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
-		"@yab/core": "link:@yab/core"
+		"@yab/core": "link:@yab/core",
+		"@yab/utils": "link:@yab/utils"
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"

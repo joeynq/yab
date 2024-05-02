@@ -16,6 +16,11 @@ import { ConsoleLogger } from "./services/ConsoleLogger";
 import { HookMetadataKey, LoggerKey } from "./symbols";
 import { getModuleToken } from "./utils/moduleToken";
 
+export interface YabUse<M extends ModuleConstructor> {
+	module: M;
+	args: ConstructorParameters<M>;
+}
+
 export class Yab {
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
@@ -107,10 +112,7 @@ export class Yab {
 		return this;
 	}
 
-	use<M extends ModuleConstructor>(
-		module: M,
-		...args: ConstructorParameters<M>
-	): this {
+	use<M extends ModuleConstructor>({ module, args }: YabUse<M>): this {
 		const instance = this.#container.registerModule(module, ...args);
 		const config: ModuleConfig = {
 			name: module.name,
