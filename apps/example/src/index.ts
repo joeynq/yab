@@ -24,7 +24,7 @@ import {
 } from "@yab/router";
 // import { cors, helmet } from "@yab/security";
 import { statics } from "@yab/static";
-// import { yoga } from "@yab/yoga";
+import { yoga } from "@yab/yoga";
 
 @Injectable()
 class AnyMiddleware {
@@ -94,7 +94,7 @@ new Yab({ port: 5000 })
 		}),
 	)
 	.use(statics("/public", { assetsDir: "./public" }))
-	// .use(yoga("/graphql"))
+	.use(yoga("/graphql", {}))
 	.use(router("/api", [UserController]))
 	// .use(notification({ email: {} }, {}))
 	.start((server) => console.log(`Server started at ${server.port}`));

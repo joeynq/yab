@@ -34,7 +34,7 @@ export class YogaModule<UserContext extends Record<string, any>> extends Module<
 	@YabHook("app:request")
 	async init(context: Context) {
 		const url = new URL(context.request.url, context.serverUrl);
-		if (url.pathname === this.#yoga.graphqlEndpoint) {
+		if (url.pathname.startsWith(this.#yoga.graphqlEndpoint)) {
 			return this.#yoga.handleRequest(context.request, context);
 		}
 	}
@@ -42,7 +42,7 @@ export class YogaModule<UserContext extends Record<string, any>> extends Module<
 	@YabHook("app:started")
 	async onStarted(server: Server) {
 		this.logger.info(
-			`Server is running on ${new URL(
+			`Yoga server is running on ${new URL(
 				this.#yoga.graphqlEndpoint,
 				`http://${server.hostname}:${server.port}`,
 			)}`,
