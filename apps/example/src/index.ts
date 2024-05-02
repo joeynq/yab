@@ -13,6 +13,7 @@ import {
 import { logger } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
 import { mikroOrm } from "@yab/mikro-orm";
+// import { notification } from "@yab/notification";
 import {
 	AfterRoute,
 	BeforeRoute,
@@ -21,6 +22,7 @@ import {
 	Use,
 	router,
 } from "@yab/router";
+// import { cors, helmet } from "@yab/security";
 import { statics } from "@yab/static";
 
 @Injectable()
@@ -75,6 +77,8 @@ if (import.meta.env.NODE_ENV !== "production") {
 
 new Yab({ port: 5000 })
 	.use(logger(PinoLogger))
+	// .use(cors())
+	// .use(helmet())
 	.use(cache({}, SqliteAdapter))
 	.use(
 		auth(BearerAuth, {

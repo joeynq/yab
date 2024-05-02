@@ -82,26 +82,36 @@ export class Yab {
 	#runWithContext(initContext: Context) {
 		return new Promise<Response>((resolve) => {
 			this.#context.runWithContext(initContext, async () => {
+				let response = new Response("OK", { status: 200 });
 				try {
 					const context = this.#context.context || initContext;
 
-					const response = await this.#hooks.invoke(
+					const result = await this.#hooks.invoke(
 						YabEvents.OnRequest,
 						[context],
 						{
 							breakOnResult: true,
 						},
 					);
-
-					return resolve(response || new Response("OK", { status: 200 }));
+					if (result) {
+						response = result;
+					}
 				} catch (error) {
 					if (error instanceof HttpException) {
-						return resolve(error.toResponse());
+						response = error.toResponse();
+						// return resolve(error.toResponse());
+					} else {
+						response = new HttpException(
+							500,
+							(error as Error).message,
+						).toResponse();
 					}
-
-					return resolve(
-						new HttpException(500, (error as Error).message).toResponse(),
-					);
+				} finally {
+					await this.#hooks.invoke(YabEvents.OnResponse, [
+						initContext,
+						response,
+					]);
+					resolve(response);
 				}
 			});
 		});

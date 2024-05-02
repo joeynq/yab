@@ -7,6 +7,7 @@ export enum YabEvents {
 	OnExit = "app:exit",
 	OnStarted = "app:started",
 	OnRequest = "app:request",
+	OnResponse = "app:response",
 	OnInit = "app:init",
 }
 
@@ -24,4 +25,8 @@ export type YabEventMap = {
 	) => Promise<void>;
 	[YabEvents.OnInit]: (initContext: InitContext) => Promise<void>;
 	[YabEvents.OnRequest]: (context: Context) => Promise<Response>;
+	[YabEvents.OnResponse]: (
+		context: Context,
+		response: Response,
+	) => Promise<Response>;
 };
