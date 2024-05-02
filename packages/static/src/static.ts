@@ -1,5 +1,5 @@
 import type { YabUse } from "@yab/core";
-import type { AnyClass } from "../../utils/dist";
+import type { AnyClass } from "@yab/utils";
 import {
 	type SlashedPath,
 	StaticModule,

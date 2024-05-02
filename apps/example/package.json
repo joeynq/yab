@@ -13,6 +13,7 @@
 		"@yab/router": "link:@yab/router",
 		"@yab/security": "link:@yab/security",
 		"@yab/static": "link:@yab/static",
+		"@yab/yoga": "link:@yab/yoga",
 		"awilix": "^10.0.2",
 		"reflect-metadata": "^0.2.2"
 	},
