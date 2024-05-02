@@ -16,7 +16,7 @@ import Memoirist from "memoirist";
 import { RouterEvent, type RouterEventMap } from "./event";
 import { NotFound } from "./exceptions";
 import type { RouterConfig, SlashedPath } from "./interfaces";
-import { Res, extractMetadata } from "./utils";
+import { Res, extractMetadata, getMiddlewareMetadata } from "./utils";
 
 type ConsoleTable = {
 	method: string;
@@ -66,7 +66,7 @@ export class RouterModule extends Module<RouterConfig> {
 					actionName: action.actionName,
 					payload: action.payload,
 					response: action.response,
-					hook: action.hook,
+					middlewares: action.middlewares,
 				})),
 			),
 		};
@@ -85,8 +85,9 @@ export class RouterModule extends Module<RouterConfig> {
 					actionName,
 					payload,
 					response,
-					hook,
+					middlewares = [],
 				} = route;
+
 				const ctrl = container
 					.register(controller.name, asClass(controller))
 					.resolveClass(controller);
@@ -97,6 +98,18 @@ export class RouterModule extends Module<RouterConfig> {
 					handler,
 					`Method ${actionName} not found in controller ${controller.name}`,
 				);
+
+				const hook = new Hooks<typeof RouterEvent, RouterEventMap>();
+
+				for (const middleware of middlewares) {
+					const middlewareData = getMiddlewareMetadata(middleware);
+					const instance = new middleware();
+					for (const [key, value] of Object.entries(
+						middlewareData.handler || {},
+					)) {
+						hook.register(value.event, instance[key].bind(instance));
+					}
+				}
 
 				const method = httpMethod.toLowerCase();
 				const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
