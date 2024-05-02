@@ -1,13 +1,43 @@
-import { Entity, type EntityManager, PrimaryKey } from "@mikro-orm/core";
+import {
+	Entity,
+	type EntityManager,
+	PrimaryKey,
+	type RequestContext,
+} from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { Authorized, BearerAuth, auth } from "@yab/auth";
+import { BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
 import { Logger, type LoggerAdapter, Yab } from "@yab/core";
 import { PinoLogger } from "@yab/logger/pino";
 import { Em, mikroOrm } from "@yab/mikro-orm";
-import { Controller, Get, router } from "@yab/router";
+import {
+	AfterRoute,
+	BeforeRoute,
+	Body,
+	Controller,
+	Get,
+	Params,
+	Post,
+	Query,
+	Use,
+	router,
+} from "@yab/router";
 import { statics } from "@yab/static";
+import {
+	type UserParamDto,
+	UserParamSchema,
+	UserQuerySchema,
+	type UserQuerySchemaDto,
+} from "./models";
+
+class AnyMiddleware {
+	@BeforeRoute()
+	public test(ctx: RequestContext) {}
+
+	@AfterRoute()
+	public test3(ctx: RequestContext) {}
+}
 
 @Controller("/users")
 class UserController {
@@ -17,17 +47,32 @@ class UserController {
 	@Em()
 	em!: EntityManager;
 
+	@Post("/")
+	createUser(@Body(UserQuerySchema) user: UserQuerySchemaDto) {
+		this.logger.info("Create users");
+		return { user };
+	}
+
 	@Get("/")
 	getUsers() {
 		this.logger.info("Get users");
 		return { users: [] };
 	}
 
-	@Authorized()
+	@Use(AnyMiddleware)
+	// @Authorized()
 	@Get("/:id")
-	getUser() {
+	getUser(
+		@Query(UserQuerySchema) userQuery: UserQuerySchemaDto,
+		@Params(UserParamSchema) param: UserParamDto,
+	) {
 		this.logger.info("Get user");
-		return { user: {} };
+		return {
+			user: {
+				userQuery,
+				param,
+			},
+		};
 	}
 }
 
@@ -73,7 +118,12 @@ new Yab()
 	)
 	.use(statics("/public", { assetsDir: "./public" }))
 	// .use(rateLimit("redis", {}))
-	.use(router("/api", [UserController]))
+	.use(
+		router("/api", [UserController], {
+			customValidation: async (schema: any, payload: any) => {},
+			middlewares: [AnyMiddleware],
+		}),
+	)
 	.start((context, { port }) => {
 		context.store.logger.info(`Server started at ${port}`);
 	});

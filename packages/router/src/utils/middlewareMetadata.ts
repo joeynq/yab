@@ -13,7 +13,7 @@ export type MiddlewareMetadata = {
 	};
 };
 
-const MiddlewareMetadataKey = Symbol("middleware:handler");
+export const MiddlewareMetadataKey = Symbol("middleware:handler");
 
 export const getMiddlewareMetadata = (target: AnyClass) => {
 	return Reflect.getMetadata(
@@ -27,4 +27,8 @@ export const setMiddlewareMetadata = (
 	metadata: MiddlewareMetadata,
 ) => {
 	Reflect.defineMetadata(MiddlewareMetadataKey, metadata, target);
+};
+
+export const getEventName = (event: string, method: string, path: string) => {
+	return `${event}-${method.toLowerCase()}-${path}`;
 };

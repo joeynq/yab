@@ -10,3 +10,6 @@ export * from "./Patch";
 export * from "./Post";
 export * from "./Put";
 export * from "./Use";
+export * from "./Query";
+export * from "./Param";
+export * from "./Body";

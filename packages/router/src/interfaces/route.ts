@@ -1,13 +1,25 @@
-import type { TObject } from "@sinclair/typebox";
+import type { TObject, TSchema } from "@sinclair/typebox";
 import type { Hooks } from "@yab/core";
 import type { AnyClass, AnyFunction } from "@yab/utils";
 import type { HttpMethod } from "../enums";
-import type { RouterEvent, RouterEventMap } from "../event";
 
 export type SlashedPath = `/${string}`;
 
+export type ParameterType = "query" | "params" | "body" | "headers";
+
+export type RouteParameter = {
+	index: number;
+	schema?: TObject;
+	in: ParameterType;
+};
+
+export type ValidationMetadata = {
+	schema?: TObject;
+};
+
 export type RouterConfig = {
 	middlewares?: AnyClass<any>[];
+	customValidation?: (schema: TSchema, payload: unknown) => Promise<void>;
 	errorHandler?: (
 		error: Error,
 		responseConfig?: RouteObject["response"],
@@ -26,6 +38,7 @@ export type RouteObject = {
 	controller: AnyClass<any>;
 	actionName: string;
 	middlewares?: AnyClass<any>[];
+	parameters?: RouteParameter[];
 	payload?: {
 		query?: TObject;
 		body?: TObject;
@@ -52,6 +65,7 @@ export type ControllerMetadata = {
 export type RouteMetadata = {
 	method: HttpMethod;
 	path: string;
+	parameters?: RouteParameter[];
 	payload?: {
 		query?: TObject;
 		body?: TObject;
@@ -69,13 +83,16 @@ export type RouteMetadata = {
 
 export type RouteMatch = {
 	handler: AnyFunction;
-	hooks: Hooks<typeof RouterEvent, RouterEventMap>;
+	hooks: Hooks<{ [key: string]: string }, any>;
+	path: string;
 	payload?: {
 		query?: TObject;
 		body?: TObject;
 		params?: TObject;
 		headers?: TObject;
 	};
+	parameters?: RouteParameter[];
+	route: RouteObject;
 	response?: {
 		[statusCode: number]: {
 			contentType: string;

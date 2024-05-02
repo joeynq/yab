@@ -31,5 +31,6 @@ export const extractMetadata = (controller: AnyClass): RouteObject[] => {
 		payload: route.payload,
 		response: route.response,
 		middlewares: route.middlewares,
+		parameters: route.parameters,
 	}));
 };

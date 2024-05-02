@@ -1,6 +1,8 @@
+import type { TSchema } from "@sinclair/typebox";
 import {
 	type AppContext,
 	Hooks,
+	HttpException,
 	Inject,
 	Logger,
 	type LoggerAdapter,
@@ -15,15 +17,18 @@ import {
 import { type AnyClass, ensure } from "@yab/utils";
 import Memoirist from "memoirist";
 import { RouterEvent, type RouterEventMap } from "./event";
-import { NotFound } from "./exceptions";
+import { BadRequest, NotFound, ValidationError } from "./exceptions";
 import type { RouteMatch, RouterConfig, SlashedPath } from "./interfaces";
 import {
 	defaultErrorHandler,
 	defaultResponseHandler,
 	extractMetadata,
 	getRouteHandler,
-	registerMiddlewares,
 } from "./utils";
+import {
+	getPayloadRequest,
+	validatePayloadRequest,
+} from "./utils/handlePayloadRequest";
 
 type ConsoleTable = {
 	method: string;
@@ -32,7 +37,6 @@ type ConsoleTable = {
 };
 
 export type RouterOptions = Omit<RouterConfig, "routes">;
-
 @Module()
 export class RouterModule extends YabModule<RouterConfig> {
 	#routeMatcher = new Memoirist<RouteMatch>();
@@ -56,18 +60,35 @@ export class RouterModule extends YabModule<RouterConfig> {
 			middlewares: options?.middlewares,
 			errorHandler: options?.errorHandler,
 			responseHandler: options?.responseHandler,
+			customValidation: async (schema: TSchema, value: unknown) => {
+				const validate = options?.customValidation || validatePayloadRequest;
+				try {
+					await validate(schema, value);
+				} catch (e) {
+					if (e instanceof HttpException) {
+						// if users want to throw HttpRequest, let them do it
+						throw e;
+					}
+					if (e instanceof ValidationError) {
+						throw new BadRequest(e.message, e.toJSON().errors);
+					}
+					throw new BadRequest((e as Error).message);
+				}
+			},
 			routes: {
 				[prefix]: controllers.flatMap((controller) =>
-					extractMetadata(controller).map((action) => ({
-						prefix: action.prefix,
-						method: action.method,
-						path: action.path,
-						controller: controller,
-						actionName: action.actionName,
-						payload: action.payload,
-						response: action.response,
-						middlewares: action.middlewares,
-					})),
+					extractMetadata(controller).map((action) => {
+						return {
+							prefix: action.prefix,
+							method: action.method,
+							path: action.path,
+							controller: controller,
+							actionName: action.actionName,
+							payload: action.payload,
+							response: action.response,
+							parameters: action.parameters,
+						};
+					}),
 				),
 			},
 		};
@@ -88,8 +109,27 @@ export class RouterModule extends YabModule<RouterConfig> {
 	@YabHook("app:init")
 	initRoute(context: AppContext) {
 		const table: ConsoleTable[] = [];
+		const registeringMiddlewares: Record<
+			string,
+			ReturnType<typeof asClass>
+		> = {};
 
-		const registering: Record<string, ReturnType<typeof asClass>> = {};
+		for (const mid of this.config.middlewares || []) {
+			const midResolver = asClass(mid).transient();
+			registeringMiddlewares[mid.name] = midResolver;
+		}
+
+		context.register(registeringMiddlewares);
+
+		const registering: Record<
+			string,
+			{
+				resolver: ReturnType<typeof asClass>;
+				instance: any;
+			}
+		> = {};
+		const hooks =
+			context.resolve<Hooks<{ [x: string]: any }, RouterEventMap>>("hooks");
 
 		for (const [root, routes] of Object.entries(this.config.routes)) {
 			for (const route of routes) {
@@ -100,33 +140,30 @@ export class RouterModule extends YabModule<RouterConfig> {
 					controller,
 					payload,
 					response,
-					middlewares = [],
 				} = route;
-
-				const resolver = asClass(controller).singleton();
-				const instance = context.build(resolver);
-
-				registering[controller.name] = resolver;
-
-				const handler = getRouteHandler(instance, route);
-
-				const hooks = new Hooks<typeof RouterEvent, RouterEventMap>();
-
-				hooks.registerFromMetadata(instance);
-
-				registerMiddlewares(hooks, [
-					...(this.config.middlewares || []),
-					...middlewares,
-				]);
 
 				const method = httpMethod.toLowerCase();
 				const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
+
+				let instance: any;
+
+				if (registering[controller.name]) {
+					instance = registering[controller.name].instance;
+				} else {
+					const resolver = asClass(controller);
+					instance = context.build(resolver);
+
+					registering[controller.name] = { resolver, instance };
+				}
+				const handler = getRouteHandler(instance, route);
 
 				this.#routeMatcher.add(method, routePath, {
 					handler,
 					payload,
 					response,
 					hooks,
+					path,
+					route,
 				});
 
 				table.push({
@@ -137,7 +174,19 @@ export class RouterModule extends YabModule<RouterConfig> {
 			}
 		}
 
-		context.register(registering);
+		for (const { instance } of Object.values(registering)) {
+			context.store.hooks.registerFromMetadata(instance);
+		}
+
+		context.register(
+			Object.keys(registering).reduce(
+				(acc, key) => {
+					acc[key] = registering[key].resolver;
+					return acc;
+				},
+				{} as Record<string, ReturnType<typeof asClass>>,
+			),
+		);
 
 		console.table(table);
 		this.logger.info(`${table.length} routes initialized`);
@@ -149,24 +198,39 @@ export class RouterModule extends YabModule<RouterConfig> {
 		const {
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
+			customValidation,
 		} = this.config;
 
 		try {
 			logger.info(`Incoming request: ${request.method} ${request.url}`);
 
 			const match = this.#match(request, serverUrl);
-
 			logger.info(`${request.method} ${request.url}`);
 
-			const { hooks, handler, response } = match.store;
+			const {
+				handler,
+				response,
+				path,
+				route: { prefix },
+			} = match.store;
+
+			const args = getPayloadRequest(request, match);
+			if (customValidation) {
+				for (const arg of args) {
+					if (arg.schema) {
+						customValidation(arg.schema, arg.payload);
+					}
+				}
+			}
+			const relativePath = `${prefix}${path}`.replace(/\/$/, "");
+			const beforeRouteName = `${RouterEvent.BeforeRoute}:${request.method}${relativePath}`;
+			const afterRouteName = `${RouterEvent.AfterRoute}:${request.method}${relativePath}`;
 
 			await hooks.invoke(RouterEvent.Init, [context]);
+			await hooks.invoke(beforeRouteName as any, [context]);
 
-			await hooks.invoke(RouterEvent.BeforeRoute, [context]);
-
-			const result = await handler(context);
-
-			await hooks.invoke(RouterEvent.AfterRoute, [context, result]);
+			const result = await handler(...args.map((el) => el.payload));
+			await hooks.invoke(afterRouteName as any, [context]);
 
 			return responseHandler(result, response);
 		} catch (error) {
