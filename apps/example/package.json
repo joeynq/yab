@@ -6,11 +6,12 @@
 		"@mikro-orm/core": "^6.2.3",
 		"@mikro-orm/postgresql": "^6.2.3",
 		"@yab/auth": "link:@yab/auth",
-		"@yab/core": "link:@yab/core*",
+		"@yab/core": "link:@yab/core",
 		"@yab/logger": "link:@yab/logger",
 		"@yab/mikro-orm": "link:@yab/mikro-orm",
 		"@yab/notification": "link:@yab/notification",
 		"@yab/router": "link:@yab/router",
+		"@yab/static": "link:@yab/static",
 		"awilix": "^10.0.2",
 		"reflect-metadata": "^0.2.2"
 	},

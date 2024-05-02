@@ -21,6 +21,7 @@ import {
 	RouterModule,
 	Use,
 } from "@yab/router";
+import { StaticModule } from "@yab/static";
 
 @Injectable()
 class AnyMiddleware {
@@ -86,5 +87,6 @@ new Yab({ port: 5000 })
 		clientUrl: import.meta.env.DATABASE_URL,
 		entities: [TestEntity],
 	})
+	.use(StaticModule, { prefix: "/public", assetsDir: "./public" })
 	.use(RouterModule, "/api", [UserController])
 	.start((server) => console.log(`Server started at ${server.port}`));

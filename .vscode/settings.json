@@ -9,7 +9,9 @@
 		"deburr",
 		"deburred",
 		"deepmerge",
+		"dotfiles",
 		"flushall",
+		"Hasher",
 		"jwks",
 		"lefthook",
 		"Mergeable",
@@ -28,7 +30,8 @@
 		"/packages/core/src/index.ts",
 		"/packages/logger/src/logger",
 		"/packages/cache/src/adapters",
-		"/packages/logger/src/loggers"
+		"/packages/logger/src/loggers",
+		"/packages/static/src/utils.ts"
 	],
 	"editor.defaultFormatter": "biomejs.biome",
 	"biome.rename": true,
