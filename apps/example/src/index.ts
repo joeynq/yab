@@ -1,19 +1,13 @@
-import { Entity, PrimaryKey } from "@mikro-orm/core";
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
 import {
 	type Context,
 	InjectContext,
-	Injectable,
 	type LoggerAdapter,
 	Yab,
 } from "@yab/core";
 import { logger } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
-import { mikroOrm } from "@yab/mikro-orm";
-// import { notification } from "@yab/notification";
 import {
 	AfterRoute,
 	BeforeRoute,
@@ -22,11 +16,8 @@ import {
 	Use,
 	router,
 } from "@yab/router";
-// import { cors, helmet } from "@yab/security";
 import { statics } from "@yab/static";
-import { yoga } from "@yab/yoga";
 
-@Injectable()
 class AnyMiddleware {
 	@InjectContext("logger")
 	logger!: LoggerAdapter;
@@ -55,12 +46,6 @@ class UserController {
 	}
 }
 
-@Entity()
-class TestEntity {
-	@PrimaryKey()
-	id!: string;
-}
-
 /*
 
 new Yab()
@@ -78,23 +63,9 @@ if (import.meta.env.NODE_ENV !== "production") {
 
 new Yab({ port: 5000 })
 	.use(logger(PinoLogger))
-	// .use(cors())
-	// .use(helmet())
 	.use(cache({}, SqliteAdapter))
-	.use(
-		auth(BearerAuth, {
-			options: { issuer: String(import.meta.env.ISSUER) },
-		}),
-	)
-	.use(
-		mikroOrm({
-			driver: PostgreSqlDriver,
-			clientUrl: import.meta.env.DATABASE_URL,
-			entities: [TestEntity],
-		}),
-	)
 	.use(statics("/public", { assetsDir: "./public" }))
-	.use(yoga("/graphql", {}))
 	.use(router("/api", [UserController]))
-	// .use(notification({ email: {} }, {}))
-	.start((server, app) => app.logger.info(`Server started at ${server.port}`));
+	.start((server, { logger }) =>
+		logger.info(`Server started at ${server.port}`),
+	);
