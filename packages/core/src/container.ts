@@ -1,21 +1,15 @@
-import type { AnyClass } from "@yab/utils";
+import { isClass } from "@yab/utils";
 import {
 	type AwilixContainer,
 	InjectionMode,
+	asClass,
 	asValue,
 	createContainer,
 } from "awilix";
-import type { EnhancedContainer, InjectionToken, Module } from "./interfaces";
+import type { EnhancedContainer, InjectionToken } from "./interfaces";
 import { getTokenName } from "./utils";
 
 const enhance = (container: AwilixContainer) => {
-	Object.defineProperty(container, "resolveClass", {
-		value: function <T>(token: InjectionToken<T>) {
-			const tokenName = getTokenName(token);
-			return this.resolve(tokenName);
-		},
-	});
-
 	Object.defineProperty(container, "resolveValue", {
 		value: function <T>(token: InjectionToken<T>) {
 			const tokenName = getTokenName(token);
@@ -23,24 +17,12 @@ const enhance = (container: AwilixContainer) => {
 		},
 	});
 
-	Object.defineProperty(container, "registerModule", {
-		value: function <M extends AnyClass<Module>>(
-			module: M,
-			...args: ConstructorParameters<M>
-		) {
-			const instance = new module(...args);
-			this.register({
-				[`${module.name}:${instance.id}`]: asValue(instance),
-			});
-			return instance;
-		},
-	});
-
 	Object.defineProperty(container, "registerValue", {
 		value: function <T>(token: InjectionToken<T>, value: T) {
 			const tokenName = getTokenName(token);
+
 			this.register({
-				[tokenName]: asValue(value),
+				[tokenName]: isClass(value) ? asClass(value) : asValue(value),
 			});
 		},
 	});
@@ -55,4 +37,6 @@ const container = enhance(
 	}),
 );
 
-export const useContainerRef = () => container;
+export const resolveValue = container.resolveValue.bind(container);
+
+export const registerValue = container.registerValue.bind(container);

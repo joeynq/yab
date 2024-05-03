@@ -1,6 +1,6 @@
 import type { Server } from "bun";
 import type { Yab } from "../Yab";
-import type { Context, EnhancedContainer } from "../interfaces";
+import type { Context, InjectionToken } from "../interfaces";
 
 export enum YabEvents {
 	OnExit = "app:exit",
@@ -10,8 +10,13 @@ export enum YabEvents {
 	OnInit = "app:init",
 }
 
+type ContainerUtils = {
+	resolveValue: <T>(token: InjectionToken<T>) => T;
+	registerValue: <T>(token: InjectionToken<T>, value: T) => void;
+};
+
 export interface InitContext {
-	container: EnhancedContainer;
+	container: ContainerUtils;
 	app: Yab;
 }
 

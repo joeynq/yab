@@ -10,7 +10,6 @@ import {
 	YabHook,
 } from "@yab/core";
 import { type AnyClass, type AnyFunction, ensure } from "@yab/utils";
-import { asClass } from "awilix";
 import Memoirist from "memoirist";
 import { RouterEvent, type RouterEventMap } from "./event";
 import { NotFound } from "./exceptions";
@@ -86,9 +85,8 @@ export class RouterModule extends Module<RouterConfig> {
 					middlewares = [],
 				} = route;
 
-				const ctrl = container
-					.register(controller.name, asClass(controller))
-					.resolveClass(controller);
+				container.registerValue(controller.name, controller);
+				const ctrl = container.resolveValue(controller);
 
 				const handler = ctrl[actionName]?.bind(ctrl);
 

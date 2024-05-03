@@ -1,6 +1,6 @@
 import { type AnyClass, type AnyFunction, deepMerge, uuid } from "@yab/utils";
 import type { Server } from "bun";
-import { useContainerRef } from "./container";
+import { registerValue, resolveValue } from "./container";
 import { EnvKey } from "./decorators";
 import { type YabEventMap, YabEvents } from "./events";
 import { HttpException } from "./exceptions";
@@ -24,12 +24,11 @@ export class Yab {
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
 	#context = new ContextService();
-	#container = useContainerRef();
 
 	#customContext?: (ctx: Context) => Record<string, unknown>;
 
 	get logger() {
-		return this.#container.resolveValue<LoggerAdapter>(LoggerKey);
+		return resolveValue<LoggerAdapter>(LoggerKey);
 	}
 
 	constructor(options?: Partial<YabOptions>) {
@@ -42,11 +41,11 @@ export class Yab {
 	}
 
 	#registerServices() {
-		this.#container.registerValue(Configuration, this.#config);
-		this.#container.registerValue(ContextService, this.#context);
-		this.#container.registerValue(LoggerKey, new ConsoleLogger("info"));
-		this.#container.registerValue(EnvKey, {});
-		this.#container.registerValue(Hooks, this.#hooks);
+		registerValue(Configuration, this.#config);
+		registerValue(ContextService, this.#context);
+		registerValue(LoggerKey, new ConsoleLogger("info"));
+		registerValue(EnvKey, {});
+		registerValue(Hooks, this.#hooks);
 	}
 
 	#registerHooksFromModule(instance: Module) {
@@ -161,7 +160,7 @@ export class Yab {
 
 		await this.#hooks.invoke(YabEvents.OnInit, [
 			{
-				container: this.#container,
+				container: { registerValue, resolveValue },
 				app: this,
 			},
 		]);

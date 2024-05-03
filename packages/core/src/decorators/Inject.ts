@@ -23,7 +23,7 @@ export const Inject = (
 			value: function ({ container }: InitContext) {
 				Object.defineProperty(this, key, {
 					get: () => {
-						const result = container.resolve(tokenName);
+						const result = container.resolveValue(tokenName);
 						return result;
 					},
 				});
