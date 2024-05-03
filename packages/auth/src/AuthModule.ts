@@ -1,7 +1,6 @@
 import {
 	type Context,
 	type InitContext,
-	Injectable,
 	Logger,
 	type LoggerAdapter,
 	Module,
@@ -22,7 +21,6 @@ export type AuthModuleConfig<S extends Strategy<any>> = {
 
 export const AuthModuleKey = "auth:strategy";
 
-@Injectable()
 export class AuthModule<S extends Strategy<any>> extends Module<
 	AuthModuleConfig<S>
 > {

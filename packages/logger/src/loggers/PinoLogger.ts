@@ -1,7 +1,6 @@
-import { type Context, Injectable, type LoggerAdapter } from "@yab/core";
+import type { Context, LoggerAdapter } from "@yab/core";
 import Pino, { type Logger, type LoggerOptions } from "pino";
 
-@Injectable()
 export class PinoLogger implements LoggerAdapter {
 	#log: Logger;
 

@@ -1,8 +1,6 @@
-import { Injectable } from "@yab/core";
 import { Redis, type RedisOptions } from "ioredis";
 import type { CacheAdapter } from "../interfaces";
 
-@Injectable()
 export class RedisAdapter implements CacheAdapter {
 	#client: Redis;
 	constructor(options: RedisOptions) {

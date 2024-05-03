@@ -1,6 +1,5 @@
 import { URL } from "node:url";
 import { UseCache } from "@yab/cache";
-import { Injectable } from "@yab/core";
 import { ensure } from "@yab/utils";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { Strategy } from "./Strategy";
@@ -10,7 +9,6 @@ export type BearerTokenAuthorize = {
 	issuer: string;
 };
 
-@Injectable()
 export class BearerAuth extends Strategy<BearerTokenAuthorize> {
 	tokenType = "Bearer";
 	openIdConfig:

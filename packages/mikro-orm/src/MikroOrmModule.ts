@@ -4,7 +4,6 @@ import {
 	ContextService,
 	type InitContext,
 	Inject,
-	Injectable,
 	Logger,
 	type LoggerAdapter,
 	Module,
@@ -20,7 +19,6 @@ declare module "@yab/core" {
 
 export type MikroOrmModuleConfig = Options;
 
-@Injectable()
 export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 	#orm!: MikroORM;
 

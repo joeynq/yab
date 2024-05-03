@@ -54,8 +54,7 @@ export class Yab {
 		if (hookMetadata) {
 			for (const [event, handlers] of Object.entries(hookMetadata)) {
 				for (const handler of handlers) {
-					// @ts-expect-error
-					this.#hooks.register(event, handler);
+					this.#hooks.register(event as any, handler);
 				}
 			}
 		}

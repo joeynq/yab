@@ -3,7 +3,6 @@ import {
 	Hooks,
 	type InitContext,
 	Inject,
-	Injectable,
 	Logger,
 	type LoggerAdapter,
 	Module,
@@ -41,7 +40,6 @@ type RouteMatch = {
 	};
 };
 
-@Injectable()
 export class RouterModule extends Module<RouterConfig> {
 	#routeMatcher = new Memoirist<RouteMatch>();
 

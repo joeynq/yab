@@ -1,7 +1,5 @@
-import { Injectable } from "../decorators";
 import type { LoggerAdapter } from "../interfaces";
 
-@Injectable()
 export class ConsoleLogger implements LoggerAdapter {
 	log = console;
 	level: string;
