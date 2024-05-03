@@ -11,8 +11,12 @@ import type {
 	ModuleConfig,
 	YabOptions,
 } from "./interfaces";
-import { Configuration, ContextService, Hooks } from "./services";
-import { ConsoleLogger } from "./services/ConsoleLogger";
+import {
+	Configuration,
+	ConsoleLogger,
+	ContextService,
+	Hooks,
+} from "./services";
 import { HookMetadataKey, LoggerKey } from "./symbols";
 
 export interface YabUse<M extends AnyClass<Module>> {
@@ -84,7 +88,6 @@ export class Yab {
 	#runWithContext(initContext: Context) {
 		return new Promise<Response>((resolve) => {
 			this.#context.runWithContext(initContext, async () => {
-				let response = new Response("OK", { status: 200 });
 				try {
 					const context = this.#context.context || initContext;
 
@@ -95,25 +98,21 @@ export class Yab {
 							breakOnResult: true,
 						},
 					);
-					if (result) {
-						response = result;
-					}
-				} catch (error) {
-					if (error instanceof HttpException) {
-						response = error.toResponse();
-						// return resolve(error.toResponse());
-					} else {
-						response = new HttpException(
-							500,
-							(error as Error).message,
-						).toResponse();
-					}
-				} finally {
+
+					const response = result || new Response("OK", { status: 200 });
+
 					await this.#hooks.invoke(YabEvents.OnResponse, [
 						initContext,
 						response,
 					]);
 					resolve(response);
+				} catch (error) {
+					if (error instanceof HttpException) {
+						return resolve(error.toResponse());
+					}
+					resolve(
+						new HttpException(500, (error as Error).message).toResponse(),
+					);
 				}
 			});
 		});

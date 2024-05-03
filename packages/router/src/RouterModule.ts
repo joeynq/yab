@@ -1,22 +1,25 @@
-import type { TObject } from "@sinclair/typebox";
 import {
+	type Context,
 	Hooks,
 	type InitContext,
 	Inject,
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type YabEventMap,
 	YabHook,
 } from "@yab/core";
-import { type AnyClass, type AnyFunction, ensure } from "@yab/utils";
+import { type AnyClass, ensure } from "@yab/utils";
 import Memoirist from "memoirist";
 import { RouterEvent, type RouterEventMap } from "./event";
 import { NotFound } from "./exceptions";
-import type { RouterConfig, SlashedPath } from "./interfaces";
-import { extractMetadata, handleError, handleResponse } from "./utils";
-import { getRouteHandler } from "./utils/getRouteHandler";
-import { registerMiddlewares } from "./utils/registerMiddleware";
+import type { RouteMatch, RouterConfig, SlashedPath } from "./interfaces";
+import {
+	defaultErrorHandler,
+	defaultResponseHandler,
+	extractMetadata,
+	getRouteHandler,
+	registerMiddlewares,
+} from "./utils";
 
 type ConsoleTable = {
 	method: string;
@@ -24,26 +27,7 @@ type ConsoleTable = {
 	handler: string;
 };
 
-type RouteMatch = {
-	handler: AnyFunction;
-	hooks: Hooks<typeof RouterEvent, RouterEventMap>;
-	payload?: {
-		query?: TObject;
-		body?: TObject;
-		params?: TObject;
-		headers?: TObject;
-	};
-	response?: {
-		[statusCode: number]: {
-			contentType: string;
-			schema: TObject;
-		};
-	};
-};
-
-export type RouterOptions = {
-	middlewares?: AnyClass<any>[];
-};
+export type RouterOptions = Omit<RouterConfig, "routes">;
 
 export class RouterModule extends Module<RouterConfig> {
 	#routeMatcher = new Memoirist<RouteMatch>();
@@ -65,6 +49,8 @@ export class RouterModule extends Module<RouterConfig> {
 		ensure(controllers.length > 0, "No controllers provided");
 		this.config = {
 			middlewares: options?.middlewares,
+			errorHandler: options?.errorHandler,
+			responseHandler: options?.responseHandler,
 			routes: {
 				[prefix]: controllers.flatMap((controller) =>
 					extractMetadata(controller).map((action) => ({
@@ -82,6 +68,18 @@ export class RouterModule extends Module<RouterConfig> {
 		};
 	}
 
+	#match(request: Request, serverUrl: string) {
+		const url = new URL(request.url, serverUrl);
+		const match = this.#routeMatcher.find(
+			request.method.toLowerCase(),
+			url.pathname,
+		);
+
+		ensure(match, new NotFound(`${request.method} ${request.url} not found`));
+
+		return match;
+	}
+
 	@YabHook("app:init")
 	initRoute({ container }: InitContext) {
 		const table: ConsoleTable[] = [];
@@ -92,7 +90,6 @@ export class RouterModule extends Module<RouterConfig> {
 					method: httpMethod,
 					path,
 					controller,
-					actionName,
 					payload,
 					response,
 					middlewares = [],
@@ -132,39 +129,33 @@ export class RouterModule extends Module<RouterConfig> {
 	}
 
 	@YabHook("app:request")
-	async onRequest(context: Parameters<YabEventMap["app:request"]>[0]) {
+	async onRequest(context: Context) {
 		const { request, serverUrl } = context;
-
-		const match = this.#routeMatcher.find(
-			request.method.toLowerCase(),
-			request.url.replace(serverUrl, "/"),
-		);
-
-		if (!match) {
-			context.logger.error(`${request.method} ${request.url} not found`);
-
-			return handleError(
-				new NotFound(`${request.method} ${request.url} not found`),
-			);
-		}
-		context.logger.info(`${request.method} ${request.url}`);
-
-		const { hooks, handler, response } = match.store;
+		const {
+			errorHandler = defaultErrorHandler,
+			responseHandler = defaultResponseHandler,
+		} = this.config;
 
 		try {
+			const match = this.#match(request, serverUrl);
+
+			context.logger.info(`${request.method} ${request.url}`);
+
+			const { hooks, handler, response } = match.store;
+
 			await hooks.invoke(RouterEvent.BeforeRoute, [context]);
 
 			const result = await handler(context);
 
 			await hooks.invoke(RouterEvent.AfterRoute, [context, result]);
 
-			return handleResponse(result, response);
+			return responseHandler(result, response);
 		} catch (error) {
 			context.logger.error(
 				error as Error,
 				`${request.method} ${request.url} failed`,
 			);
-			return handleError(error as Error);
+			return errorHandler(error as Error);
 		}
 	}
 }

@@ -3,15 +3,15 @@ import { InternalServerError } from "../exceptions";
 import type { RouteObject } from "../interfaces";
 import { Res } from "./Res";
 
-export const handleError = (error: Error) => {
+export const defaultErrorHandler = (error: Error) => {
 	if (error instanceof HttpException) {
-		return error.toResponse();
+		return Res.error(error);
 	}
 
-	return new InternalServerError(error.message).toResponse();
+	return Res.error(new InternalServerError(error.message));
 };
 
-export const handleResponse = <T>(
+export const defaultResponseHandler = <T>(
 	result: T,
 	responseConfig: RouteObject["response"],
 ) => {
