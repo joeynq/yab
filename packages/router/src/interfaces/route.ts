@@ -5,7 +5,8 @@ import type { HttpMethod } from "../enums";
 export type SlashedPath = `/${string}`;
 
 export type RouterConfig = {
-	[key: SlashedPath]: RouteObject[];
+	middlewares?: AnyClass<any>[];
+	routes: { [key: SlashedPath]: RouteObject[] };
 };
 
 export type RouteObject = {

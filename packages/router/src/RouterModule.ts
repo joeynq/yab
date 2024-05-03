@@ -14,7 +14,9 @@ import Memoirist from "memoirist";
 import { RouterEvent, type RouterEventMap } from "./event";
 import { NotFound } from "./exceptions";
 import type { RouterConfig, SlashedPath } from "./interfaces";
-import { Res, extractMetadata, getMiddlewareMetadata } from "./utils";
+import { extractMetadata, handleError, handleResponse } from "./utils";
+import { getRouteHandler } from "./utils/getRouteHandler";
+import { registerMiddlewares } from "./utils/registerMiddleware";
 
 type ConsoleTable = {
 	method: string;
@@ -24,7 +26,7 @@ type ConsoleTable = {
 
 type RouteMatch = {
 	handler: AnyFunction;
-	hook: Hooks<typeof RouterEvent, RouterEventMap>;
+	hooks: Hooks<typeof RouterEvent, RouterEventMap>;
 	payload?: {
 		query?: TObject;
 		body?: TObject;
@@ -39,6 +41,10 @@ type RouteMatch = {
 	};
 };
 
+export type RouterOptions = {
+	middlewares?: AnyClass<any>[];
+};
+
 export class RouterModule extends Module<RouterConfig> {
 	#routeMatcher = new Memoirist<RouteMatch>();
 
@@ -50,29 +56,36 @@ export class RouterModule extends Module<RouterConfig> {
 	@Logger()
 	logger!: LoggerAdapter;
 
-	constructor(prefix: SlashedPath, controllers: AnyClass<any>[]) {
+	constructor(
+		prefix: SlashedPath,
+		controllers: AnyClass<any>[],
+		options?: RouterOptions,
+	) {
 		super();
 		ensure(controllers.length > 0, "No controllers provided");
 		this.config = {
-			[prefix]: controllers.flatMap((controller) =>
-				extractMetadata(controller).map((action) => ({
-					prefix: action.prefix,
-					method: action.method,
-					path: action.path,
-					controller: controller,
-					actionName: action.actionName,
-					payload: action.payload,
-					response: action.response,
-					middlewares: action.middlewares,
-				})),
-			),
+			middlewares: options?.middlewares,
+			routes: {
+				[prefix]: controllers.flatMap((controller) =>
+					extractMetadata(controller).map((action) => ({
+						prefix: action.prefix,
+						method: action.method,
+						path: action.path,
+						controller: controller,
+						actionName: action.actionName,
+						payload: action.payload,
+						response: action.response,
+						middlewares: action.middlewares,
+					})),
+				),
+			},
 		};
 	}
 
 	@YabHook("app:init")
 	initRoute({ container }: InitContext) {
 		const table: ConsoleTable[] = [];
-		for (const [root, routes] of Object.entries(this.config)) {
+		for (const [root, routes] of Object.entries(this.config.routes)) {
 			for (const route of routes) {
 				const {
 					prefix,
@@ -85,47 +98,31 @@ export class RouterModule extends Module<RouterConfig> {
 					middlewares = [],
 				} = route;
 
-				container.registerValue(controller.name, controller);
-				const ctrl = container.resolveValue(controller);
+				container.registerValue(controller, controller);
 
-				const handler = ctrl[actionName]?.bind(ctrl);
+				const handler = getRouteHandler(route);
 
-				ensure(
-					handler,
-					`Method ${actionName} not found in controller ${controller.name}`,
-				);
+				const hooks = new Hooks<typeof RouterEvent, RouterEventMap>();
 
-				const hook = new Hooks<typeof RouterEvent, RouterEventMap>();
-
-				for (const middleware of middlewares) {
-					const middlewareData = getMiddlewareMetadata(middleware);
-					const instance = new middleware();
-					for (const [key, value] of Object.entries(
-						middlewareData.handler || {},
-					)) {
-						hook.register(value.event, instance[key].bind(instance));
-					}
-				}
+				registerMiddlewares(hooks, [
+					...(this.config.middlewares || []),
+					...middlewares,
+				]);
 
 				const method = httpMethod.toLowerCase();
 				const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
-				const handlerName = `${controller.name}.${actionName}`;
-
-				Object.defineProperty(handler, "name", {
-					value: handlerName,
-					writable: false,
-				});
 
 				this.#routeMatcher.add(method, routePath, {
 					handler,
 					payload,
 					response,
-					hook,
+					hooks,
 				});
+
 				table.push({
 					method,
 					path: routePath,
-					handler: handlerName,
+					handler: handler.name,
 				});
 			}
 		}
@@ -145,33 +142,29 @@ export class RouterModule extends Module<RouterConfig> {
 
 		if (!match) {
 			context.logger.error(`${request.method} ${request.url} not found`);
-			return Res.error(
+
+			return handleError(
 				new NotFound(`${request.method} ${request.url} not found`),
 			);
 		}
 		context.logger.info(`${request.method} ${request.url}`);
-		await match.store.hook.invoke(RouterEvent.BeforeRoute, [context]);
-		const result = await match.store.handler(context);
-		await match.store.hook.invoke(RouterEvent.AfterRoute, [context, result]);
 
-		if (result instanceof Response) {
-			return result;
-		}
+		const { hooks, handler, response } = match.store;
 
-		if (match.store.response?.[204]) {
-			return Res.empty();
-		}
+		try {
+			await hooks.invoke(RouterEvent.BeforeRoute, [context]);
 
-		const successStatus = 200;
-		if (match.store.response?.[201]) {
-			const { contentType } = match.store.response[successStatus];
-			return Res.created(result, { "Content-Type": contentType });
-		}
-		if (match.store.response?.[200]) {
-			const { contentType } = match.store.response[successStatus];
-			return Res.ok(result, { "Content-Type": contentType });
-		}
+			const result = await handler(context);
 
-		return Res.ok(result);
+			await hooks.invoke(RouterEvent.AfterRoute, [context, result]);
+
+			return handleResponse(result, response);
+		} catch (error) {
+			context.logger.error(
+				error as Error,
+				`${request.method} ${request.url} failed`,
+			);
+			return handleError(error as Error);
+		}
 	}
 }

@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { deburr } from "./internal/deburr";
 import { getVal } from "./object";
 

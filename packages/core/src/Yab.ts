@@ -73,7 +73,7 @@ export class Yab {
 			request,
 			serverUrl: server.url.toString(),
 			userIp: server.requestIP(request) || undefined,
-			useAgent: request.headers.get("user-agent") || undefined,
+			userAgent: request.headers.get("user-agent") || undefined,
 		};
 		return {
 			...context,

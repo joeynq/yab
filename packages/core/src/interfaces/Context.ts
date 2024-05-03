@@ -28,5 +28,5 @@ export interface Context {
 	serverUrl: string;
 	logger: LoggerAdapter;
 	userIp?: SocketAddress;
-	useAgent?: string;
+	userAgent?: string;
 }
