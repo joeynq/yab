@@ -1,4 +1,4 @@
-import { type Dictionary, deepMerge } from "@yab/utils";
+import type { Dictionary } from "@yab/utils";
 import type { Module, ModuleConfig, YabOptions } from "../interfaces";
 
 export class Configuration {
@@ -7,10 +7,6 @@ export class Configuration {
 	get bunOptions() {
 		const { modules, env, logLevel, ...options } = this.options;
 		return options;
-	}
-
-	get #modulesConfig() {
-		return this.options.modules;
 	}
 
 	constructor(options?: YabOptions) {
@@ -25,22 +21,14 @@ export class Configuration {
 	getModuleConfig<Config extends Dictionary = Dictionary>(
 		instance: Module<Config>,
 	) {
-		return this.#modulesConfig.find((config) => config.id === instance.id);
+		return this.options.modules.find(
+			(config) => config.moduleInstance.id === instance.id,
+		);
 	}
 
 	setModuleConfig<Config extends Dictionary = Dictionary>(
-		instance: Module<Config>,
-		extended: ModuleConfig<Config>,
+		config: ModuleConfig<Config>,
 	) {
-		this.options.modules.push(
-			deepMerge(
-				{
-					name: instance.constructor.name,
-					id: instance.id,
-					config: instance.config,
-				},
-				extended,
-			),
-		);
+		this.options.modules.push(config);
 	}
 }

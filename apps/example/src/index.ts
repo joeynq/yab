@@ -97,4 +97,4 @@ new Yab({ port: 5000 })
 	.use(yoga("/graphql", {}))
 	.use(router("/api", [UserController]))
 	// .use(notification({ email: {} }, {}))
-	.start((server) => console.log(`Server started at ${server.port}`));
+	.start((server, app) => app.logger.info(`Server started at ${server.port}`));

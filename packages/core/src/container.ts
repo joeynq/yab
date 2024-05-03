@@ -1,14 +1,11 @@
+import type { AnyClass } from "@yab/utils";
 import {
 	type AwilixContainer,
 	InjectionMode,
 	asValue,
 	createContainer,
 } from "awilix";
-import type {
-	EnhancedContainer,
-	InjectionToken,
-	ModuleConstructor,
-} from "./interfaces";
+import type { EnhancedContainer, InjectionToken, Module } from "./interfaces";
 import { getTokenName } from "./utils";
 
 const enhance = (container: AwilixContainer) => {
@@ -27,7 +24,7 @@ const enhance = (container: AwilixContainer) => {
 	});
 
 	Object.defineProperty(container, "registerModule", {
-		value: function <M extends ModuleConstructor>(
+		value: function <M extends AnyClass<Module>>(
 			module: M,
 			...args: ConstructorParameters<M>
 		) {

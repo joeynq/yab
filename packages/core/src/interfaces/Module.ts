@@ -1,19 +1,13 @@
 import { type AnyFunction, type Dictionary, uuid } from "@yab/utils";
 import type { TLSOptions } from "bun";
 
-export interface ModuleConstructor<Config extends Dictionary = Dictionary> {
-	new (...args: any[]): Module<Config>;
-}
-
 export abstract class Module<Config extends Dictionary = Dictionary> {
 	abstract config: Config;
 	id = uuid();
 }
 
 export interface ModuleConfig<Config extends Dictionary = Dictionary> {
-	name: string;
-	id: string;
-	config?: Config;
+	moduleInstance: Module<Config>;
 	hooks?: {
 		[key: string]: AnyFunction[];
 	};

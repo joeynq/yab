@@ -1,5 +1,4 @@
 import type { SocketAddress } from "bun";
-import type { EnhancedContainer } from "./Container";
 
 export interface LoggerAdapter<Logger = any> {
 	log: Logger;
@@ -25,7 +24,6 @@ export interface LoggerAdapter<Logger = any> {
 
 export interface Context {
 	request: Request;
-	container: EnhancedContainer;
 	requestId: string;
 	serverUrl: string;
 	logger: LoggerAdapter;
