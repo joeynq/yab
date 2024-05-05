@@ -1,15 +1,12 @@
-import type { Context, LoggerAdapter } from "@yab/core";
+import type { LoggerAdapter, _RequestContext } from "@yab/core";
+import { clone } from "@yab/utils";
 import Pino, { type Logger, type LoggerOptions } from "pino";
 
 export class PinoLogger implements LoggerAdapter {
-	#log: Logger;
-
-	get log(): Logger {
-		return this.#log;
-	}
+	log: Logger;
 
 	constructor(options?: LoggerOptions) {
-		this.#log = Pino({
+		this.log = Pino({
 			base: {},
 			formatters: {
 				bindings: (obj) => {
@@ -37,12 +34,14 @@ export class PinoLogger implements LoggerAdapter {
 		return this.log.level;
 	}
 
-	useContext(context: Context) {
-		return this.log.child({
-			requestId: context.requestId,
-			serverUrl: context.serverUrl,
-			userIp: context.userIp,
-			userAgent: context.userAgent,
+	createChild(context: _RequestContext) {
+		return clone(this, {
+			log: this.log.child({
+				requestId: context.requestId,
+				serverUrl: context.serverUrl,
+				userIp: context.userIp,
+				userAgent: context.userAgent,
+			}),
 		});
 	}
 

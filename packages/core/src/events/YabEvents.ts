@@ -1,32 +1,31 @@
 import type { Server } from "bun";
-import type { Yab } from "../Yab";
-import type { Context, InjectionToken } from "../interfaces";
+import type { AppContext, RequestContext } from "../services";
 
 export enum YabEvents {
 	OnExit = "app:exit",
 	OnStarted = "app:started",
+	OnEnterContext = "app:enter-context",
+	OnExitContext = "app:exit-context",
 	OnRequest = "app:request",
 	OnResponse = "app:response",
 	OnInit = "app:init",
 }
 
-type ContainerUtils = {
-	resolveValue: <T>(token: InjectionToken<T>) => T;
-	registerValue: <T>(token: InjectionToken<T>, value: T) => void;
-};
-
-export interface InitContext {
-	container: ContainerUtils;
-	app: Yab;
-}
-
 export type YabEventMap = {
-	[YabEvents.OnExit]: (server: Server, app: Yab) => Promise<void>;
-	[YabEvents.OnStarted]: (server: Server, app: Yab) => Promise<void>;
-	[YabEvents.OnInit]: (initContext: InitContext) => Promise<void>;
-	[YabEvents.OnRequest]: (context: Context) => Promise<Response>;
+	[YabEvents.OnExit]: (context: AppContext, server: Server) => Promise<void>;
+
+	[YabEvents.OnStarted]: (context: AppContext, server: Server) => Promise<void>;
+
+	[YabEvents.OnEnterContext]: (context: RequestContext) => Promise<void>;
+
+	[YabEvents.OnExitContext]: (context: RequestContext) => Promise<void>;
+
+	[YabEvents.OnInit]: (context: AppContext) => Promise<void>;
+
+	[YabEvents.OnRequest]: (context: RequestContext) => Promise<Response>;
+
 	[YabEvents.OnResponse]: (
-		context: Context,
+		context: RequestContext,
 		response: Response,
 	) => Promise<Response>;
 };

@@ -1,13 +1,11 @@
 import {
-	type InitContext,
+	type AppContext,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	YabHook,
 } from "@yab/core";
 import type { CacheAdapter } from "./interfaces/CacheAdapter";
-
-export const CacheModuleKey = Symbol("CacheModule");
 
 export type CacheModuleOptions<Adapter extends CacheAdapter> = {
 	adapter: Adapter;
@@ -25,12 +23,12 @@ export class CacheModule<Adapter extends CacheAdapter> extends Module<
 	}
 
 	@YabHook("app:init")
-	async init({ container }: InitContext) {
+	async init(container: AppContext) {
 		if (this.config.clearOnStart) {
 			this.logger.info("Clearing cache on start.");
 			await this.config.adapter.clear();
 		}
-		container.registerValue(CacheModuleKey, this.config.adapter);
+		container.registerValue("cache", this.config.adapter);
 		this.logger.info(
 			`Cache module initialized with ${this.config.adapter.constructor.name}.`,
 		);

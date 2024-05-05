@@ -25,15 +25,19 @@ export const mergeMetadata = <T extends object = object>(
 	key: string | symbol,
 	value: DeepPartial<T>,
 	target: any,
+	position: "before" | "after" = "after",
 ): void => {
 	const existing = getMetadata<T>(key, target) ?? {};
-	setMetadata(key, deepMerge(existing, value), target);
+	setMetadata(
+		key,
+		position === "after"
+			? deepMerge(existing, value)
+			: deepMerge(value, existing),
+		target,
+	);
 };
 
-export const getTokenName = (token: string | symbol | AnyClass): string => {
-	if (typeof token === "symbol") {
-		return token.toString();
-	}
+export const getTokenName = (token: string | AnyClass): string => {
 	if (isClass(token)) {
 		return token.name;
 	}

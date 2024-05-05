@@ -1,4 +1,4 @@
-import type { Context } from "@yab/core";
+import type { RequestContext } from "@yab/core";
 
 export enum RouterEvent {
 	BeforeRoute = "router:beforeRoute",
@@ -6,9 +6,9 @@ export enum RouterEvent {
 }
 
 export type RouterEventMap = {
-	[RouterEvent.BeforeRoute]: (context: Context) => Promise<void>;
+	[RouterEvent.BeforeRoute]: (context: RequestContext) => Promise<void>;
 	[RouterEvent.AfterRoute]: <T = unknown>(
-		context: Context,
+		context: RequestContext,
 		result: T,
 	) => Promise<void>;
 };

@@ -1,3 +1,4 @@
+import { clone } from "@yab/utils";
 import type { LoggerAdapter } from "../interfaces";
 
 export class ConsoleLogger implements LoggerAdapter {
@@ -8,8 +9,8 @@ export class ConsoleLogger implements LoggerAdapter {
 		this.level = level;
 	}
 
-	useContext() {
-		return this.log;
+	createChild() {
+		return clone(this, {});
 	}
 
 	info(obj: unknown, message?: unknown, ...args: unknown[]): void {

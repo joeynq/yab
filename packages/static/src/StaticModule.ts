@@ -1,4 +1,4 @@
-import { type Context, Module, YabHook } from "@yab/core";
+import { Module, type RequestContext, YabHook } from "@yab/core";
 import { generateETag, isCached } from "./utils";
 
 export type SlashedPath = `/${string}`;
@@ -39,8 +39,8 @@ export class StaticModule extends Module<StaticModuleOptions> {
 	}
 
 	@YabHook("app:request")
-	public async onRequest(context: Context) {
-		const { request, serverUrl } = context;
+	public async onRequest(context: RequestContext) {
+		const { request, serverUrl } = context.cradle;
 
 		// remove slash from serverUrl
 		const prefix = `${serverUrl.slice(0, -1)}${this.config.prefix}`;

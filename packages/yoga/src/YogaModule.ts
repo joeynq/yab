@@ -1,9 +1,10 @@
 import {
-	type Context,
+	type AppContext,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	YabHook,
+	type _AppContext,
 } from "@yab/core";
 import type { Server } from "bun";
 import {
@@ -13,14 +14,14 @@ import {
 } from "graphql-yoga";
 
 export type YogaModuleConfig<UserContext> = YogaServerOptions<
-	Context,
+	_AppContext,
 	UserContext
 >;
 
 export class YogaModule<UserContext extends Record<string, any>> extends Module<
 	YogaModuleConfig<UserContext>
 > {
-	#yoga: YogaServerInstance<Context, UserContext>;
+	#yoga: YogaServerInstance<_AppContext, UserContext>;
 
 	@Logger()
 	logger!: LoggerAdapter;
@@ -32,15 +33,17 @@ export class YogaModule<UserContext extends Record<string, any>> extends Module<
 	}
 
 	@YabHook("app:request")
-	async init(context: Context) {
-		const url = new URL(context.request.url, context.serverUrl);
+	async init(context: AppContext) {
+		const request = context.resolve<Request>("request");
+		const serverUrl = context.resolve("serverUrl") as string;
+		const url = new URL(request.url, serverUrl);
 		if (url.pathname.startsWith(this.#yoga.graphqlEndpoint)) {
-			return this.#yoga.handleRequest(context.request, context);
+			return this.#yoga.handleRequest(request, context.cradle);
 		}
 	}
 
 	@YabHook("app:started")
-	async onStarted(server: Server) {
+	async onStarted(_: AppContext, server: Server) {
 		this.logger.info(
 			`Yoga server is running on ${new URL(
 				this.#yoga.graphqlEndpoint,

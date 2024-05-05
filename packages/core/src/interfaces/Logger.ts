@@ -1,10 +1,15 @@
-import type { SocketAddress } from "bun";
+import type { _RequestContext } from "../services";
 
 export interface LoggerAdapter<Logger = any> {
 	log: Logger;
 	level: string;
 
-	useContext(context: Context): Logger;
+	createChild(
+		context: Pick<
+			_RequestContext,
+			"requestId" | "serverUrl" | "userIp" | "userAgent"
+		>,
+	): LoggerAdapter<Logger>;
 
 	info(obj: object, message: string, ...args: unknown[]): void;
 	info(message: string, ...args: unknown[]): void;
@@ -20,13 +25,4 @@ export interface LoggerAdapter<Logger = any> {
 
 	trace(obj: object, message: string, ...args: unknown[]): void;
 	trace(message: string, ...args: unknown[]): void;
-}
-
-export interface Context {
-	request: Request;
-	requestId: string;
-	serverUrl: string;
-	logger: LoggerAdapter;
-	userIp?: SocketAddress;
-	userAgent?: string;
 }

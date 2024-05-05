@@ -1,4 +1,4 @@
-import { type Context, Module, YabHook } from "@yab/core";
+import { Module, type RequestContext, YabHook } from "@yab/core";
 
 export type CorsConfig = {
 	origin?: string[];
@@ -17,7 +17,7 @@ export class CorsModule extends Module<CorsConfig> {
 	}
 
 	@YabHook("app:response")
-	async corsHook(_: Context, response: Response) {
+	async corsHook(_: RequestContext, response: Response) {
 		if (this.config.origin) {
 			response.headers.set(
 				"Access-Control-Allow-Origin",

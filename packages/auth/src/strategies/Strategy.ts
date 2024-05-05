@@ -1,7 +1,6 @@
-import type { Context } from "@yab/core";
+import { type RequestContext, asValue } from "@yab/core";
 
 export abstract class Strategy<S> {
-	protected token: string | undefined;
 	abstract readonly tokenType: string;
 
 	init?: () => Promise<void>;
@@ -14,9 +13,17 @@ export abstract class Strategy<S> {
 		},
 	) {}
 
-	async useContext(ctx: Context) {
-		ctx.token = await this.extractToken(ctx.request);
-		ctx.verifyToken = this.verify.bind(this);
+	async useContext(ctx: RequestContext) {
+		ctx.register({
+			token: asValue(await this.extractToken(ctx.resolve("request"))),
+			verifyToken: {
+				resolve: (c) => {
+					const token = c.resolve<string>("token");
+					return this.verify.bind(this, token);
+				},
+				lifetime: "SCOPED",
+			},
+		});
 	}
 
 	protected async extractToken(request: Request) {
@@ -47,5 +54,5 @@ export abstract class Strategy<S> {
 		}
 		return undefined;
 	}
-	abstract verify(): Promise<any>;
+	abstract verify(token: string): Promise<any>;
 }

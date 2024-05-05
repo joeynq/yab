@@ -1,18 +1,20 @@
 import { MikroORM, type Options } from "@mikro-orm/core";
 import {
-	type Context,
+	type AppContext,
 	ContextService,
-	type InitContext,
 	Inject,
+	InjectionScope,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	YabHook,
+	asValue,
+	getContextRef,
 } from "@yab/core";
-import { getToken } from "./utils/getToken";
+import { getToken } from "./utils";
 
 declare module "@yab/core" {
-	interface Context {
+	interface _AppContext {
 		em: MikroORM["em"];
 	}
 }
@@ -33,10 +35,11 @@ export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 	}
 
 	@YabHook("app:init")
-	async init({ container }: InitContext) {
+	async init(container: AppContext) {
 		this.#orm = await MikroORM.init({
 			...this.config,
-			context: () => this.contextService.context?.em,
+			context: () =>
+				container.hasRegistration("em") ? container.resolve("em") : undefined,
 		});
 
 		const url = new URL(this.#orm.config.getClientUrl());
@@ -50,12 +53,19 @@ export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
 				.join(":")}/${url.pathname.slice(1)}`,
 		);
 
-		container.registerValue(getToken(this.config.contextName), this.#orm);
-	}
-
-	@YabHook("app:request")
-	async request(context: Context) {
-		context.em = this.#orm.em.fork({ useContext: true });
+		const contextName = this.#orm.config.get("contextName");
+		getContextRef()
+			.get()
+			.register({
+				[`${getToken(contextName)}.orm`]: asValue(this.#orm),
+				[`${getToken(contextName)}.em`]: {
+					lifetime: InjectionScope.Scoped,
+					resolve: (c) =>
+						c
+							.resolve<MikroORM>(`${getToken(contextName)}.orm`)
+							.em.fork({ useContext: true }),
+				},
+			});
 	}
 
 	@YabHook("app:exit")

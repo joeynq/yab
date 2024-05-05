@@ -1,4 +1,4 @@
-import type { Context } from "@yab/core";
+import type { RequestContext } from "@yab/core";
 import type { AnyClass } from "@yab/utils";
 import { RouterEvent } from "../event";
 import type { Middleware } from "../interfaces/Middleware";
@@ -46,15 +46,19 @@ export const fromExpressMiddleware = (
 		someProp?: string | undefined;
 		#expressMiddleware = expressMiddleware;
 
-		async run(context: Context) {
+		async run(context: RequestContext) {
 			return new Promise<void>((resolve, reject) => {
-				this.#expressMiddleware(context.request, undefined, (err) => {
-					if (err) {
-						reject(err);
-					} else {
-						resolve();
-					}
-				});
+				this.#expressMiddleware(
+					context.resolveValue("request"),
+					undefined,
+					(err) => {
+						if (err) {
+							reject(err);
+						} else {
+							resolve();
+						}
+					},
+				);
 			});
 		}
 	}

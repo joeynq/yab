@@ -3,13 +3,20 @@ import {
 	type AwilixContainer,
 	InjectionMode,
 	asClass,
+	asFunction,
 	asValue,
 	createContainer,
 } from "awilix";
-import type { EnhancedContainer, InjectionToken } from "./interfaces";
+import {
+	type EnhancedContainer,
+	InjectionScope,
+	type InjectionToken,
+} from "./interfaces";
 import { getTokenName } from "./utils";
 
-const enhance = (container: AwilixContainer) => {
+export { asClass, asValue, asFunction };
+
+const enhance = <T extends object>(container: AwilixContainer<T>) => {
 	Object.defineProperty(container, "resolveValue", {
 		value: function <T>(token: InjectionToken<T>) {
 			const tokenName = getTokenName(token);
@@ -18,16 +25,22 @@ const enhance = (container: AwilixContainer) => {
 	});
 
 	Object.defineProperty(container, "registerValue", {
-		value: function <T>(token: InjectionToken<T>, value: T) {
+		value: function <T>(
+			token: InjectionToken<T>,
+			value: T,
+			scope = InjectionScope.Singleton,
+		) {
 			const tokenName = getTokenName(token);
 
 			this.register({
-				[tokenName]: isClass(value) ? asClass(value) : asValue(value),
+				[tokenName]: isClass(value)
+					? asClass(value, { lifetime: scope })
+					: asValue(value),
 			});
 		},
 	});
 
-	return container as EnhancedContainer;
+	return container as EnhancedContainer<T>;
 };
 
 const container = enhance(
@@ -36,6 +49,12 @@ const container = enhance(
 		strict: true,
 	}),
 );
+
+export const containerRef = () => container;
+
+export const scopedContainer = <T extends object>(
+	container: EnhancedContainer<T>,
+) => enhance(container.createScope());
 
 export const resolveValue = container.resolveValue.bind(container);
 

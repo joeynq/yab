@@ -1,9 +1,11 @@
 import {
+	type Dictionary,
 	type EnumValues,
 	type MaybePromiseFunction,
 	isUndefined,
 } from "@yab/utils";
 import type { EventPayload, EventResult } from "../interfaces";
+import { HookMetadataKey } from "../symbols";
 
 type EventHandler<
 	EventType extends { [key: string]: string },
@@ -27,6 +29,26 @@ export class Hooks<
 		string,
 		Array<EventHandler<EventType, EnumValues<EventType>, EventMap>>
 	>();
+
+	get debug() {
+		return this.#hooks;
+	}
+
+	registerFromMetadata(instance: any) {
+		const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
+			string[]
+		>;
+		if (hooks) {
+			for (const [event, handlers] of Object.entries(hooks)) {
+				for (const handler of handlers) {
+					this.register(
+						event as EnumValues<EventType>,
+						instance[handler].bind(instance),
+					);
+				}
+			}
+		}
+	}
 
 	register<Event extends EnumValues<EventType>>(
 		event: Event,

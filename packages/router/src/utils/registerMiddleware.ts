@@ -9,6 +9,9 @@ export const registerMiddlewares = (
 	for (const middleware of middlewares) {
 		const middlewareData = getMiddlewareMetadata(middleware);
 		const instance = new middleware();
+
+		hooks.registerFromMetadata(instance);
+
 		for (const [key, value] of Object.entries(middlewareData.handler)) {
 			hooks.register(value.event, instance[key].bind(instance));
 		}

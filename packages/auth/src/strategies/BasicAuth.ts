@@ -15,8 +15,9 @@ export class BasicAuth extends Strategy<BasicTokenAuthorize> {
 		);
 	}
 
-	async verify() {
-		ensure(this.token === this.#encodeCredentials(), "Invalid credentials");
+	async verify(token?: string) {
+		ensure(token, "Token is required");
+		ensure(token === this.#encodeCredentials(), "Invalid credentials");
 		return true;
 	}
 }

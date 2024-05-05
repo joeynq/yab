@@ -6,6 +6,7 @@ import type {
 	PathValue,
 	Primitive,
 } from "./internal/object";
+import { isUndefined } from "./nullish";
 
 export const isObject = (value: unknown): value is object => {
 	return Object(value) !== value;
@@ -82,6 +83,28 @@ export const deepMerge = deepmerge;
 
 export const hasOwn = <T extends object>(obj: T, key: string) => {
 	return obj && Object.prototype.hasOwnProperty.call(obj, key);
+};
+
+export const clone = <T extends object>(obj: T, newPropertyValues: any): T => {
+	const clone = new (obj.constructor as { new (): T })();
+
+	const nestedClones = Object.getOwnPropertyNames(clone).reduce(
+		(partial, propertyName) => {
+			const property = Object.getOwnPropertyDescriptor(clone, propertyName);
+			const isNotProvided = isUndefined(
+				Object.getOwnPropertyDescriptor(newPropertyValues, propertyName),
+			);
+
+			if (isNotProvided) {
+				partial[propertyName as keyof T] = property?.value;
+			}
+
+			return partial;
+		},
+		{} as Partial<T>,
+	);
+
+	return Object.assign(clone, this, nestedClones, newPropertyValues);
 };
 
 export const flatten = <T extends Dictionary>(obj: unknown): T => {

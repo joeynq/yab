@@ -4,8 +4,9 @@ import { mergeMetadata } from "../utils";
 
 export function Hook<EventType extends { [key: string]: string }>(
 	event: EnumValues<EventType>,
+	position: "before" | "after" = "after",
 ): MethodDecorator {
 	return (target, key) => {
-		mergeMetadata(HookMetadataKey, { [event]: [key] }, target);
+		mergeMetadata(HookMetadataKey, { [event]: [key] }, target, position);
 	};
 }

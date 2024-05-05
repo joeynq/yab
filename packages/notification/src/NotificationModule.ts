@@ -1,5 +1,5 @@
 import {
-	type InitContext,
+	type AppContext,
 	Logger,
 	type LoggerAdapter,
 	Module,
@@ -8,8 +8,6 @@ import {
 import type { AdapterConfigMap } from "./interfaces/channelMap";
 import type { Templates } from "./interfaces/interface";
 import { NotificationService } from "./services";
-
-export const NotificationModuleKey = Symbol("NotificationModuleKey");
 
 export type NotificationModuleConfig<T extends Templates> = {
 	channels: Partial<AdapterConfigMap>;
@@ -35,8 +33,8 @@ export class NotificationModule<T extends Templates> extends Module<
 	}
 
 	@YabHook("app:init")
-	async init({ container }: InitContext) {
-		container.registerValue(NotificationModuleKey, this.#service);
+	async init(container: AppContext) {
+		container.registerValue("notification", this.#service);
 
 		this.#service.onError((message) => {
 			this.logger.error(message);

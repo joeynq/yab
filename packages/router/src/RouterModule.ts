@@ -1,12 +1,15 @@
 import {
-	type Context,
+	type AppContext,
 	Hooks,
-	type InitContext,
 	Inject,
 	Logger,
 	type LoggerAdapter,
 	Module,
+	type RequestContext,
+	type YabEventMap,
+	type YabEvents,
 	YabHook,
+	registerValue,
 } from "@yab/core";
 import { type AnyClass, ensure } from "@yab/utils";
 import Memoirist from "memoirist";
@@ -35,7 +38,7 @@ export class RouterModule extends Module<RouterConfig> {
 	config: RouterConfig;
 
 	@Inject(Hooks)
-	hooks!: Hooks<typeof RouterEvent, RouterEventMap>;
+	hooks!: Hooks<typeof YabEvents, YabEventMap>;
 
 	@Logger()
 	logger!: LoggerAdapter;
@@ -81,7 +84,7 @@ export class RouterModule extends Module<RouterConfig> {
 	}
 
 	@YabHook("app:init")
-	initRoute({ container }: InitContext) {
+	initRoute(container: AppContext) {
 		const table: ConsoleTable[] = [];
 		for (const [root, routes] of Object.entries(this.config.routes)) {
 			for (const route of routes) {
@@ -95,11 +98,14 @@ export class RouterModule extends Module<RouterConfig> {
 					middlewares = [],
 				} = route;
 
-				container.registerValue(controller, controller);
+				registerValue(controller.name, controller);
+				const instance = container.resolve(controller.name);
 
 				const handler = getRouteHandler(route);
 
 				const hooks = new Hooks<typeof RouterEvent, RouterEventMap>();
+
+				hooks.registerFromMetadata(instance);
 
 				registerMiddlewares(hooks, [
 					...(this.config.middlewares || []),
@@ -129,19 +135,25 @@ export class RouterModule extends Module<RouterConfig> {
 	}
 
 	@YabHook("app:request")
-	async onRequest(context: Context) {
-		const { request, serverUrl } = context;
+	async onRequest(context: RequestContext) {
+		const { request, serverUrl } = context.cradle;
 		const {
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
 		} = this.config;
 
+		const logger = context.resolve("logger");
+
 		try {
+			logger.info(`Incoming request: ${request.method} ${request.url}`);
+
 			const match = this.#match(request, serverUrl);
 
-			context.logger.info(`${request.method} ${request.url}`);
+			logger.info(`${request.method} ${request.url}`);
 
 			const { hooks, handler, response } = match.store;
+
+			await hooks.invoke("app:init" as any, [context]);
 
 			await hooks.invoke(RouterEvent.BeforeRoute, [context]);
 
@@ -151,10 +163,7 @@ export class RouterModule extends Module<RouterConfig> {
 
 			return responseHandler(result, response);
 		} catch (error) {
-			context.logger.error(
-				error as Error,
-				`${request.method} ${request.url} failed`,
-			);
+			logger.error(error as Error, `${request.method} ${request.url} failed`);
 			return errorHandler(error as Error);
 		}
 	}

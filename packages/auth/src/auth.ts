@@ -3,9 +3,9 @@ import type { AnyClass } from "@yab/utils";
 import { AuthModule } from "./AuthModule";
 import type { Strategy } from "./strategies";
 
-export const auth = <S extends Strategy<any>>(
-	strategy: AnyClass<S>,
-	...args: ConstructorParameters<AnyClass<S>>
+export const auth = <S extends Strategy<any>, Class extends AnyClass<S>>(
+	strategy: Class,
+	...args: ConstructorParameters<Class>
 ): YabUse<AnyClass<AuthModule<S>>> => {
 	return {
 		module: AuthModule,

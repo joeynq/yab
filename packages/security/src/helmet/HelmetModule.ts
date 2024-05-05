@@ -1,4 +1,4 @@
-import { type Context, Module, YabHook } from "@yab/core";
+import { Module, type RequestContext, YabHook } from "@yab/core";
 
 export type HelmetOptions = {
 	contentSecurityPolicy?: boolean | Record<string, any>;
@@ -20,7 +20,7 @@ export class HelmetModule extends Module<HelmetOptions> {
 	}
 
 	@YabHook("app:response")
-	async helmetHook(_: Context, response: Response) {
+	async helmetHook(_: RequestContext, response: Response) {
 		if (this.config.contentSecurityPolicy) {
 			response.headers.set("Content-Security-Policy", "default-src 'self';");
 		}

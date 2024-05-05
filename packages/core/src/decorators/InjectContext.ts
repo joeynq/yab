@@ -1,11 +1,14 @@
-import type { Context } from "../interfaces";
-import { getContextRef } from "../services";
+import { type RequestContext, getContextRef } from "../services";
 
-export const InjectContext = (prop?: keyof Context): PropertyDecorator => {
+export const InjectContext = <T>(
+	prop?: keyof RequestContext | string | symbol,
+): PropertyDecorator => {
 	return (target: any, key: string | symbol) => {
 		Object.defineProperty(target, key, {
 			get() {
-				return getContextRef().get(prop);
+				return prop
+					? getContextRef().get<T>(prop.toString())
+					: getContextRef().get();
 			},
 		});
 	};

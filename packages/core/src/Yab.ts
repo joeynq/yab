@@ -1,23 +1,25 @@
 import { type AnyClass, type AnyFunction, deepMerge, uuid } from "@yab/utils";
+import { Lifetime, asValue } from "awilix";
 import type { Server } from "bun";
-import { registerValue, resolveValue } from "./container";
-import { EnvKey } from "./decorators";
+import { containerRef, resolveValue, scopedContainer } from "./container";
 import { type YabEventMap, YabEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
-	Context,
 	LoggerAdapter,
 	Module,
 	ModuleConfig,
 	YabOptions,
 } from "./interfaces";
 import {
+	type AppContext,
 	Configuration,
 	ConsoleLogger,
 	ContextService,
 	Hooks,
+	type RequestContext,
+	type _RequestContext,
 } from "./services";
-import { HookMetadataKey, LoggerKey } from "./symbols";
+import { HookMetadataKey } from "./symbols";
 
 export interface YabUse<M extends AnyClass<Module>> {
 	module: M;
@@ -29,10 +31,10 @@ export class Yab {
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
 	#context = new ContextService();
 
-	#customContext?: (ctx: Context) => Record<string, unknown>;
+	#customContext?: (ctx: _RequestContext) => Record<string, unknown>;
 
 	get logger() {
-		return resolveValue<LoggerAdapter>(LoggerKey);
+		return resolveValue<LoggerAdapter>("logger");
 	}
 
 	constructor(options?: Partial<YabOptions>) {
@@ -40,27 +42,36 @@ export class Yab {
 			...options,
 			modules: options?.modules || [],
 		});
-
-		this.#registerServices();
 	}
 
-	#registerServices() {
-		registerValue(Configuration, this.#config);
-		registerValue(ContextService, this.#context);
-		registerValue(LoggerKey, new ConsoleLogger("info"));
-		registerValue(EnvKey, {});
-		registerValue(Hooks, this.#hooks);
+	#registerServices(context: AppContext) {
+		context.register({
+			_logger: asValue(new ConsoleLogger("info")),
+			env: asValue(this.#config.options.env || {}),
+			app: asValue(this),
+			logger: {
+				resolve: (c) => {
+					const _logger = c.resolve<LoggerAdapter>("_logger");
+
+					if (c.hasRegistration("requestId")) {
+						return _logger.createChild({
+							requestId: c.resolve("requestId"),
+							serverUrl: c.resolve("serverUrl"),
+							userIp: c.resolve("userIp"),
+							userAgent: c.resolve("userAgent"),
+						});
+					}
+					return _logger;
+				},
+				lifetime: Lifetime.SCOPED,
+			},
+			Configuration: asValue(this.#config),
+			Hooks: asValue(this.#hooks),
+		});
 	}
 
 	#registerHooksFromModule(instance: Module) {
-		const hookMetadata = this.#config.getModuleConfig(instance)?.hooks;
-		if (hookMetadata) {
-			for (const [event, handlers] of Object.entries(hookMetadata)) {
-				for (const handler of handlers) {
-					this.#hooks.register(event as any, handler);
-				}
-			}
-		}
+		this.#hooks.registerFromMetadata(instance);
 	}
 
 	#initModules() {
@@ -70,55 +81,60 @@ export class Yab {
 		}
 	}
 
-	#buildContext(request: Request, server: Server) {
-		const context: Context = {
-			requestId: request.headers.get("x-request-id") || uuid(),
-			logger: this.logger,
-			request,
-			serverUrl: server.url.toString(),
-			userIp: server.requestIP(request) || undefined,
-			userAgent: request.headers.get("user-agent") || undefined,
-		};
-		return {
-			...context,
-			...this.#customContext?.(context),
-		};
-	}
-
-	#runWithContext(initContext: Context) {
+	#runInRequestContext(context: AppContext, request: Request, server: Server) {
 		return new Promise<Response>((resolve) => {
-			this.#context.runWithContext(initContext, async () => {
-				try {
-					const context = this.#context.context || initContext;
+			this.#context.runInContext<_RequestContext, void>(
+				scopedContainer(context),
+				async (stored: RequestContext) => {
+					try {
+						stored.register({
+							requestId: asValue(request.headers.get("x-request-id") || uuid()),
+							request: asValue(request),
+							serverUrl: asValue(server.url.toJSON()),
+							userIp: asValue(server.requestIP(request) || undefined),
+							userAgent: asValue(
+								request.headers.get("user-agent") || undefined,
+							),
+						});
 
-					const result = await this.#hooks.invoke(
-						YabEvents.OnRequest,
-						[context],
-						{
-							breakOnResult: true,
-						},
-					);
+						for (const [key, value] of Object.entries(
+							this.#customContext?.(stored.cradle) || {},
+						)) {
+							stored.registerValue(key, value);
+						}
 
-					const response = result || new Response("OK", { status: 200 });
+						await this.#hooks.invoke(YabEvents.OnEnterContext, [stored]);
 
-					await this.#hooks.invoke(YabEvents.OnResponse, [
-						initContext,
-						response,
-					]);
-					resolve(response);
-				} catch (error) {
-					if (error instanceof HttpException) {
-						return resolve(error.toResponse());
+						const result = await this.#hooks.invoke(
+							YabEvents.OnRequest,
+							[stored],
+							{
+								breakOnResult: true,
+							},
+						);
+
+						const response = result || new Response("OK", { status: 200 });
+
+						await this.#hooks.invoke(YabEvents.OnResponse, [stored, response]);
+						resolve(response);
+					} catch (error) {
+						if (error instanceof HttpException) {
+							return resolve(error.toResponse());
+						}
+						resolve(
+							new HttpException(500, (error as Error).message).toResponse(),
+						);
+					} finally {
+						await this.#hooks.invoke(YabEvents.OnExitContext, [stored]);
 					}
-					resolve(
-						new HttpException(500, (error as Error).message).toResponse(),
-					);
-				}
-			});
+				},
+			);
 		});
 	}
 
-	context<T extends Record<string, unknown>>(getContext: (ctx: Context) => T) {
+	useContext<T extends Record<string, unknown>>(
+		getContext: (ctx: _RequestContext) => T,
+	) {
 		this.#customContext = getContext;
 		return this;
 	}
@@ -154,44 +170,31 @@ export class Yab {
 		return this;
 	}
 
-	async start(onStarted: (server: Server, app: Yab) => void) {
-		this.#initModules();
+	async start(onStarted: (context: AppContext, server: Server) => void) {
+		this.#context.runInContext(containerRef(), async (context) => {
+			this.#registerServices(context);
+			this.#initModules();
 
-		await this.#hooks.invoke(YabEvents.OnInit, [
-			{
-				container: { registerValue, resolveValue },
-				app: this,
-			},
-		]);
+			await this.#hooks.invoke(YabEvents.OnInit, [context]);
 
-		const self = this;
-
-		const server = Bun.serve({
-			...this.#config.bunOptions,
-			async fetch(request, server): Promise<Response> {
-				const initContext = self.#buildContext(request, server);
-				return self.#runWithContext(initContext);
-			},
-		});
-		await this.#hooks.invoke(YabEvents.OnStarted, [server, this]);
-
-		for (const eventType of [
-			"SIGINT",
-			"SIGUSR1",
-			"SIGUSR2",
-			"uncaughtException",
-			"SIGTERM",
-		]) {
-			process.on(eventType, async (exitCode) => {
-				this.logger.info("Shutting down server...");
-				await self.#hooks.invoke(YabEvents.OnExit, [server, this]);
-				server.stop();
-				setTimeout(() => {
-					process.exit(exitCode);
-				}, 500);
+			const server = Bun.serve({
+				...this.#config.bunOptions,
+				fetch: this.#runInRequestContext.bind(this, context),
 			});
-		}
+			await this.#hooks.invoke(YabEvents.OnStarted, [context, server]);
 
-		onStarted(server, this);
+			for (const eventType of ["SIGTERM"]) {
+				process.on(eventType, async (exitCode) => {
+					this.logger.info("Shutting down server...");
+					await this.#hooks.invoke(YabEvents.OnExit, [context, server]);
+					server.stop();
+					setTimeout(() => {
+						process.exit(exitCode);
+					}, 500);
+				});
+			}
+
+			onStarted(context, server);
+		});
 	}
 }

@@ -1,8 +1,6 @@
 import {
-	type Context,
-	type InitContext,
+	type AppContext,
 	type LoggerAdapter,
-	LoggerKey,
 	Module,
 	YabHook,
 } from "@yab/core";
@@ -19,16 +17,11 @@ export class LoggerModule<Adapter extends LoggerAdapter> extends Module<
 	}
 
 	@YabHook("app:init")
-	async init({ container }: InitContext) {
-		container.registerValue(LoggerKey, this.config.adapter);
+	async init(container: AppContext) {
+		container.registerValue("_logger", this.config.adapter);
 
 		this.config.adapter.log.info(
 			`Logger initialized with ${this.config.adapter.constructor.name}`,
 		);
-	}
-
-	@YabHook("app:request")
-	async applyContext(ctx: Context) {
-		ctx.logger = this.config.adapter.useContext(ctx);
 	}
 }

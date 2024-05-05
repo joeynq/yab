@@ -1,9 +1,9 @@
 import {
-	type Context,
-	type InitContext,
+	type AppContext,
 	Logger,
 	type LoggerAdapter,
 	Module,
+	type RequestContext,
 	YabHook,
 } from "@yab/core";
 import type { Strategy } from "./strategies";
@@ -32,7 +32,7 @@ export class AuthModule<S extends Strategy<any>> extends Module<
 	}
 
 	@YabHook("app:init")
-	async onInit({ container }: InitContext) {
+	async onInit(container: AppContext) {
 		container.registerValue(AuthModuleKey, this.config.strategy);
 		try {
 			await this.config.strategy.init?.();
@@ -45,8 +45,8 @@ export class AuthModule<S extends Strategy<any>> extends Module<
 		}
 	}
 
-	@YabHook("app:request")
-	async onRequest(ctx: Context) {
+	@YabHook("app:enter-context")
+	async onRequest(ctx: RequestContext) {
 		await this.config.strategy.useContext(ctx);
 	}
 }

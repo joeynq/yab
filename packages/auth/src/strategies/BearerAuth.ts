@@ -34,11 +34,11 @@ export class BearerAuth extends Strategy<BearerTokenAuthorize> {
 		return createRemoteJWKSet(new URL(this.openIdConfig?.jwks_uri));
 	}
 
-	async verify() {
-		ensure(this.token, "Token is required");
+	async verify(token?: string) {
+		ensure(token, "Token is required");
 		const jwks = await this.createJwkSet();
 
-		return jwtVerify(this.token, jwks, {
+		return jwtVerify(token, jwks, {
 			audience: this.config.options.audience,
 			issuer: this.config.options.issuer,
 		});
