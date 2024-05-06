@@ -54,7 +54,11 @@ export class Yab {
 
 	#registerServices() {
 		this.#container.register({
-			_logger: asValue(new ConsoleLogger("info")),
+			_logger: asValue(
+				new ConsoleLogger({
+					level: this.#config.options.logLevel || "info",
+				}),
+			),
 			env: asValue(this.#config.options.env || {}),
 			app: asValue(this),
 			logger: {

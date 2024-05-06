@@ -1,28 +1,50 @@
 import type { _RequestContext } from "./Container";
 
+export type LogLevel =
+	| "info"
+	| "error"
+	| "warn"
+	| "debug"
+	| "trace"
+	| "fatal"
+	| "silent";
+
+export type LoggerContext = Pick<
+	_RequestContext,
+	"requestId" | "serverUrl" | "userIp" | "userAgent"
+>;
+
+interface LogFn {
+	<T extends object>(obj: T, msg?: string, ...args: any[]): void;
+	(obj: unknown, msg?: string, ...args: any[]): void;
+	(msg: string, ...args: any[]): void;
+}
+
 export interface LoggerAdapter<Logger = any> {
 	log: Logger;
-	level: string;
+	level: LogLevel;
 
-	createChild(
-		context: Pick<
-			_RequestContext,
-			"requestId" | "serverUrl" | "userIp" | "userAgent"
-		>,
-	): LoggerAdapter<Logger>;
+	createChild(context: LoggerContext): LoggerAdapter<Logger>;
 
-	info(obj: object, message: string, ...args: unknown[]): void;
-	info(message: string, ...args: unknown[]): void;
+	/**
+	 * Write a 'log' level log.
+	 */
+	info: LogFn;
 
-	error(obj: object, message: string, ...args: unknown[]): void;
-	error(message: string, ...args: unknown[]): void;
+	/**
+	 * Write an 'error' level log.
+	 */
+	error: LogFn;
 
-	warn(obj: object, message: string, ...args: unknown[]): void;
-	warn(message: string, ...args: unknown[]): void;
+	/**
+	 * Write a 'warn' level log.
+	 */
+	warn: LogFn;
 
-	debug(obj: object, message: string, ...args: unknown[]): void;
-	debug(message: string, ...args: unknown[]): void;
+	/**
+	 * Write a 'debug' level log.
+	 */
+	debug: LogFn;
 
-	trace(obj: object, message: string, ...args: unknown[]): void;
-	trace(message: string, ...args: unknown[]): void;
+	trace: LogFn;
 }

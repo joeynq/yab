@@ -1,5 +1,6 @@
 import { type AnyFunction, type Dictionary, uuid } from "@yab/utils";
 import type { TLSOptions } from "bun";
+import type { LogLevel } from "./LoggerAdapter";
 
 export abstract class Module<Config extends Dictionary = Dictionary> {
 	abstract config: Config;
@@ -17,7 +18,7 @@ export interface YabOptions {
 	port?: string | number;
 	hostname?: string;
 	modules: ModuleConfig[];
-	logLevel?: string;
+	logLevel?: LogLevel;
 	env?: Dictionary;
 	reusePort?: boolean;
 	tls?: TLSOptions;

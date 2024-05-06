@@ -1,9 +1,18 @@
-import type { LoggerAdapter, _RequestContext } from "@yab/core";
+import type { LogLevel, LoggerAdapter, LoggerContext } from "@yab/core";
 import { clone } from "@yab/utils";
-import Pino, { type Logger, type LoggerOptions } from "pino";
+import Pino, { type LogFn, type Logger, type LoggerOptions } from "pino";
 
-export class PinoLogger implements LoggerAdapter {
+export class PinoLogger implements LoggerAdapter<Logger> {
 	log: Logger;
+	get level() {
+		return this.log.level as LogLevel;
+	}
+
+	info: LogFn;
+	error: LogFn;
+	warn: LogFn;
+	debug: LogFn;
+	trace: LogFn;
 
 	constructor(options?: LoggerOptions) {
 		this.log = Pino({
@@ -28,13 +37,15 @@ export class PinoLogger implements LoggerAdapter {
 			},
 			...options,
 		});
+
+		this.info = this.log.info.bind(this.log);
+		this.error = this.log.error.bind(this.log);
+		this.warn = this.log.warn.bind(this.log);
+		this.debug = this.log.debug.bind(this.log);
+		this.trace = this.log.trace.bind(this.log);
 	}
 
-	get level(): string {
-		return this.log.level;
-	}
-
-	createChild(context: _RequestContext) {
+	createChild(context: LoggerContext) {
 		return clone(this, {
 			log: this.log.child({
 				requestId: context.requestId,
@@ -42,26 +53,6 @@ export class PinoLogger implements LoggerAdapter {
 				userIp: context.userIp,
 				userAgent: context.userAgent,
 			}),
-		});
-	}
-
-	info(obj: object | string, message?: string, ...args: unknown[]): void {
-		this.log.info(obj, message, ...args);
-	}
-
-	error(obj: object | string, message?: string, ...args: unknown[]): void {
-		this.log.error(obj, message, ...args);
-	}
-
-	warn(obj: object | string, message?: string, ...args: unknown[]): void {
-		this.log.warn(obj, message, ...args);
-	}
-
-	debug(obj: object | string, message?: string, ...args: unknown[]): void {
-		this.log.debug(obj, message, ...args);
-	}
-
-	trace(obj: object | string, message?: string, ...args: unknown[]): void {
-		this.log.trace(obj, message, ...args);
+		}) as LoggerAdapter<Logger>;
 	}
 }
