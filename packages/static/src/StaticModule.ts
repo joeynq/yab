@@ -40,7 +40,7 @@ export class StaticModule extends Module<StaticModuleOptions> {
 
 	@YabHook("app:request")
 	public async onRequest(context: RequestContext) {
-		const { request, serverUrl } = context.cradle;
+		const { request, serverUrl } = context.store;
 
 		// remove slash from serverUrl
 		const prefix = `${serverUrl.slice(0, -1)}${this.config.prefix}`;

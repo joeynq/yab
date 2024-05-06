@@ -1,4 +1,4 @@
-import { resolveValue } from "@yab/core";
+import { containerRef } from "@yab/core";
 import type { CacheAdapter } from "../interfaces/CacheAdapter";
 
 export interface UseCacheOptions {
@@ -16,7 +16,7 @@ export function UseCache(options?: UseCacheOptions): MethodDecorator {
 			const cacheKey = `${
 				target.constructor.name
 			}:${key.toString()}:${JSON.stringify(args)}`;
-			const cache = resolveValue<CacheAdapter>("cache");
+			const cache = containerRef().resolveValue<CacheAdapter>("cache");
 			const cached = await cache.get(cacheKey);
 
 			if (cached) {

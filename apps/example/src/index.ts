@@ -32,12 +32,12 @@ class AnyMiddleware {
 
 	@BeforeRoute()
 	public test(ctx: RequestContext) {
-		this.logger.info(`Before route ${ctx.cradle.requestId}`);
+		this.logger.info(`Before route ${ctx.store.requestId}`);
 	}
 
 	@AfterRoute()
 	public test3(ctx: RequestContext) {
-		this.logger.info(`After route ${ctx.cradle.requestId}`);
+		this.logger.info(`After route ${ctx.store.requestId}`);
 	}
 }
 
@@ -104,5 +104,5 @@ new Yab({ port: 5000 })
 	.use(statics("/public", { assetsDir: "./public" }))
 	.use(router("/api", [UserController]))
 	.start((context, { port }) =>
-		context.cradle.logger.info(`Server started at ${port}`),
+		context.store.logger.info(`Server started at ${port}`),
 	);

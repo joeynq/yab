@@ -1,20 +1,20 @@
-import { resolveValue } from "@yab/core";
 import { ensure } from "@yab/utils";
 import type { RouteObject } from "../interfaces";
 
-export const getRouteHandler = (route: RouteObject) => {
-	const { controller, actionName } = route;
-
-	const ctrl = resolveValue(controller);
+export const getRouteHandler = (
+	ctrl: InstanceType<any>,
+	route: RouteObject,
+) => {
+	const { actionName } = route;
 
 	const handler = ctrl[actionName]?.bind(ctrl);
 
 	ensure(
 		handler,
-		`Method ${actionName} not found in controller ${controller.name}`,
+		`Method ${actionName} not found in controller ${ctrl.constructor.name}`,
 	);
 
-	const handlerName = `${controller.name}.${actionName}`;
+	const handlerName = `${ctrl.constructor.name}.${actionName}`;
 
 	Object.defineProperty(handler, "name", {
 		value: handlerName,

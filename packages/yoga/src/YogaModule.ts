@@ -3,6 +3,7 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
+	type RequestContext,
 	YabHook,
 	type _AppContext,
 } from "@yab/core";
@@ -33,12 +34,11 @@ export class YogaModule<UserContext extends Record<string, any>> extends Module<
 	}
 
 	@YabHook("app:request")
-	async init(context: AppContext) {
-		const request = context.resolve<Request>("request");
-		const serverUrl = context.resolve("serverUrl") as string;
+	async init(context: RequestContext) {
+		const { request, serverUrl } = context.store;
 		const url = new URL(request.url, serverUrl);
 		if (url.pathname.startsWith(this.#yoga.graphqlEndpoint)) {
-			return this.#yoga.handleRequest(request, context.cradle);
+			return this.#yoga.handleRequest(request, context.store);
 		}
 	}
 

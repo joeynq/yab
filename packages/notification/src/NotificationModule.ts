@@ -4,6 +4,7 @@ import {
 	type LoggerAdapter,
 	Module,
 	YabHook,
+	asValue,
 } from "@yab/core";
 import type { AdapterConfigMap } from "./interfaces/channelMap";
 import type { Templates } from "./interfaces/interface";
@@ -34,7 +35,7 @@ export class NotificationModule<T extends Templates> extends Module<
 
 	@YabHook("app:init")
 	async init(container: AppContext) {
-		container.registerValue("notification", this.#service);
+		container.register("notification", asValue(this.#service));
 
 		this.#service.onError((message) => {
 			this.logger.error(message);

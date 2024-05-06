@@ -1,5 +1,5 @@
 import type { AnyClass } from "@yab/utils";
-import type { RequestContext } from "../services";
+import type { RequestContext } from "../interfaces";
 import { getTokenName } from "../utils";
 import { YabHook } from "./YabHook";
 
@@ -18,9 +18,9 @@ export const Inject = (token?: AnyClass | string): PropertyDecorator => {
 		const funcName = `${OnInitSymbol.description}:${String(tokenName)}`;
 
 		Object.defineProperty(target, funcName, {
-			value: function (container: RequestContext) {
+			value: function (context: RequestContext) {
 				Object.defineProperty(this, key, {
-					get: () => container.resolve(tokenName),
+					get: () => context.store[tokenName],
 					configurable: true,
 				});
 			},

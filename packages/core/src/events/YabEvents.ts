@@ -1,5 +1,5 @@
 import type { Server } from "bun";
-import type { AppContext, RequestContext } from "../services";
+import type { AppContext, RequestContext } from "../interfaces";
 
 export enum YabEvents {
 	OnExit = "app:exit",

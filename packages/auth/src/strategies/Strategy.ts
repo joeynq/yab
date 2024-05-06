@@ -15,7 +15,7 @@ export abstract class Strategy<S> {
 
 	async useContext(ctx: RequestContext) {
 		ctx.register({
-			token: asValue(await this.extractToken(ctx.resolve("request"))),
+			token: asValue(await this.extractToken(ctx.store.request)),
 			verifyToken: {
 				resolve: (c) => {
 					const token = c.resolve<string>("token");

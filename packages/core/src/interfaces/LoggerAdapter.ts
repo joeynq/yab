@@ -1,4 +1,4 @@
-import type { _RequestContext } from "../services";
+import type { _RequestContext } from "./Container";
 
 export interface LoggerAdapter<Logger = any> {
 	log: Logger;

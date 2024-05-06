@@ -1,4 +1,4 @@
 export * from "./Container";
-export * from "./Logger";
+export * from "./LoggerAdapter";
 export * from "./Event";
 export * from "./Module";

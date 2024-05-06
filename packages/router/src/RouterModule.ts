@@ -9,7 +9,7 @@ import {
 	type YabEventMap,
 	type YabEvents,
 	YabHook,
-	registerValue,
+	asClass,
 } from "@yab/core";
 import { type AnyClass, ensure } from "@yab/utils";
 import Memoirist from "memoirist";
@@ -84,8 +84,11 @@ export class RouterModule extends Module<RouterConfig> {
 	}
 
 	@YabHook("app:init")
-	initRoute(container: AppContext) {
+	initRoute(context: AppContext) {
 		const table: ConsoleTable[] = [];
+
+		const registering: Record<string, ReturnType<typeof asClass>> = {};
+
 		for (const [root, routes] of Object.entries(this.config.routes)) {
 			for (const route of routes) {
 				const {
@@ -98,10 +101,12 @@ export class RouterModule extends Module<RouterConfig> {
 					middlewares = [],
 				} = route;
 
-				registerValue(controller.name, controller);
-				const instance = container.resolve(controller.name);
+				const resolver = asClass(controller).singleton();
+				const instance = context.build(resolver);
 
-				const handler = getRouteHandler(route);
+				registering[controller.name] = resolver;
+
+				const handler = getRouteHandler(instance, route);
 
 				const hooks = new Hooks<typeof RouterEvent, RouterEventMap>();
 
@@ -130,19 +135,19 @@ export class RouterModule extends Module<RouterConfig> {
 			}
 		}
 
+		context.register(registering);
+
 		console.table(table);
-		this.logger.info(`${table.length} routes initialized`);
+		context.store.logger.info(`${table.length} routes initialized`);
 	}
 
 	@YabHook("app:request")
 	async onRequest(context: RequestContext) {
-		const { request, serverUrl } = context.cradle;
+		const { request, serverUrl, logger } = context.store;
 		const {
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
 		} = this.config;
-
-		const logger = context.resolve("logger");
 
 		try {
 			logger.info(`Incoming request: ${request.method} ${request.url}`);
