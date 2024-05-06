@@ -72,11 +72,11 @@ export class Hooks<
 			breakOnError = true,
 		}: InvokeOptions = {},
 	): Promise<EventResult<EventType, Event, EventMap> | undefined> {
-		const hooks = this.#hooks.get(event);
-		if (hooks) {
-			for (const hook of hooks) {
+		const handlers = this.#hooks.get(event);
+		if (handlers) {
+			for (const handler of handlers) {
 				try {
-					const result = await hook(...args);
+					const result = await handler(...args);
 					if (breakOnNull && result === null) {
 						break;
 					}

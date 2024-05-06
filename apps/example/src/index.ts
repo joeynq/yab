@@ -4,42 +4,13 @@ import {
 	PostgreSqlDriver,
 	PrimaryKey,
 } from "@mikro-orm/postgresql";
-import { BearerAuth, auth } from "@yab/auth";
+import { Authorized, BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
-import {
-	Logger,
-	type LoggerAdapter,
-	type RequestContext,
-	Yab,
-} from "@yab/core";
+import { Logger, type LoggerAdapter, Yab } from "@yab/core";
 import { Em, mikroOrm } from "@yab/mikro-orm";
-import {
-	AfterRoute,
-	BeforeRoute,
-	Controller,
-	Get,
-	Middleware,
-	Use,
-	router,
-} from "@yab/router";
+import { Controller, Get, router } from "@yab/router";
 import { statics } from "@yab/static";
-
-@Middleware()
-class AnyMiddleware {
-	@Logger()
-	logger!: LoggerAdapter;
-
-	@BeforeRoute()
-	public test(ctx: RequestContext) {
-		this.logger.info(`Before route ${ctx.store.requestId}`);
-	}
-
-	@AfterRoute()
-	public test3(ctx: RequestContext) {
-		this.logger.info(`After route ${ctx.store.requestId}`);
-	}
-}
 
 @Controller("/users")
 class UserController {
@@ -49,7 +20,7 @@ class UserController {
 	@Em()
 	em!: EntityManager;
 
-	@Use(AnyMiddleware)
+	@Authorized()
 	@Get("/")
 	getUsers() {
 		this.logger.info("Get users");
@@ -84,7 +55,7 @@ if (import.meta.env.NODE_ENV !== "production") {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-new Yab({ port: 5000 })
+new Yab({ port: 3000 })
 	.use(cache({}, SqliteAdapter))
 	.use(
 		auth(BearerAuth, {

@@ -8,12 +8,14 @@ import {
 	YabModule,
 	asValue,
 } from "@yab/core";
+import type { JWTVerifyResult } from "jose";
 import type { Strategy } from "./strategies";
 
 declare module "@yab/core" {
-	interface Context {
+	interface _RequestContext {
 		token: string | undefined;
-		verifyToken(): Promise<any>;
+		verifyToken<T>(): Promise<JWTVerifyResult<T>>;
+		userId: string | undefined;
 	}
 }
 
