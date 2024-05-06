@@ -1,4 +1,4 @@
-import { Module, type RequestContext, YabHook } from "@yab/core";
+import { Module, type RequestContext, YabHook, YabModule } from "@yab/core";
 import { generateETag, isCached } from "./utils";
 
 export type SlashedPath = `/${string}`;
@@ -33,7 +33,8 @@ const defaultStaticExtensions = [
 	".otf",
 ];
 
-export class StaticModule extends Module<StaticModuleOptions> {
+@Module()
+export class StaticModule extends YabModule<StaticModuleOptions> {
 	constructor(public config: StaticModuleOptions) {
 		super();
 	}

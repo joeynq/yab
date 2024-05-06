@@ -7,8 +7,8 @@ import type {
 	AppContext,
 	EnhancedContainer,
 	LoggerAdapter,
-	Module,
 	ModuleConfig,
+	YabModule,
 	YabOptions,
 	_AppContext,
 	_RequestContext,
@@ -23,7 +23,7 @@ import {
 import { HookMetadataKey } from "./symbols";
 import { enhance } from "./utils";
 
-export interface YabUse<M extends AnyClass<Module>> {
+export interface YabUse<M extends AnyClass<YabModule>> {
 	module: M;
 	args: ConstructorParameters<M>;
 }
@@ -77,12 +77,12 @@ export class Yab {
 				},
 				lifetime: Lifetime.SCOPED,
 			},
-			Configuration: asValue(this.#config),
-			Hooks: asValue(this.#hooks),
+			configuration: asValue(this.#config),
+			hooks: asValue(this.#hooks),
 		});
 	}
 
-	#registerHooksFromModule(instance: Module) {
+	#registerHooksFromModule(instance: YabModule) {
 		this.#hooks.registerFromMetadata(instance);
 	}
 
@@ -162,7 +162,7 @@ export class Yab {
 		return this;
 	}
 
-	use<M extends AnyClass<Module>>({ module, args }: YabUse<M>): this {
+	use<M extends AnyClass<YabModule>>({ module, args }: YabUse<M>): this {
 		const config: ModuleConfig = {
 			moduleInstance: new module(...args),
 			hooks: {},

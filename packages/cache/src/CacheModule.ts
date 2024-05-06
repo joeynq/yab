@@ -4,6 +4,7 @@ import {
 	type LoggerAdapter,
 	Module,
 	YabHook,
+	YabModule,
 	asValue,
 } from "@yab/core";
 import type { CacheAdapter } from "./interfaces/CacheAdapter";
@@ -13,7 +14,8 @@ export type CacheModuleOptions<Adapter extends CacheAdapter> = {
 	clearOnStart?: boolean;
 };
 
-export class CacheModule<Adapter extends CacheAdapter> extends Module<
+@Module()
+export class CacheModule<Adapter extends CacheAdapter> extends YabModule<
 	CacheModuleOptions<Adapter>
 > {
 	@Logger()
@@ -29,9 +31,8 @@ export class CacheModule<Adapter extends CacheAdapter> extends Module<
 			this.logger.info("Clearing cache on start.");
 			await this.config.adapter.clear();
 		}
-		console.log(context);
 		context.register("cache", asValue(this.config.adapter));
-		context.store.logger.info(
+		this.logger.info(
 			`Cache module initialized with ${this.config.adapter.constructor.name}.`,
 		);
 	}

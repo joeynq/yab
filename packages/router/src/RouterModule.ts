@@ -9,6 +9,7 @@ import {
 	type YabEventMap,
 	type YabEvents,
 	YabHook,
+	YabModule,
 	asClass,
 } from "@yab/core";
 import { type AnyClass, ensure } from "@yab/utils";
@@ -32,7 +33,8 @@ type ConsoleTable = {
 
 export type RouterOptions = Omit<RouterConfig, "routes">;
 
-export class RouterModule extends Module<RouterConfig> {
+@Module()
+export class RouterModule extends YabModule<RouterConfig> {
 	#routeMatcher = new Memoirist<RouteMatch>();
 
 	config: RouterConfig;
@@ -138,12 +140,12 @@ export class RouterModule extends Module<RouterConfig> {
 		context.register(registering);
 
 		console.table(table);
-		context.store.logger.info(`${table.length} routes initialized`);
+		this.logger.info(`${table.length} routes initialized`);
 	}
 
 	@YabHook("app:request")
 	async onRequest(context: RequestContext) {
-		const { request, serverUrl, logger } = context.store;
+		const { request, serverUrl, logger, hooks } = context.store;
 		const {
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
@@ -158,7 +160,7 @@ export class RouterModule extends Module<RouterConfig> {
 
 			const { hooks, handler, response } = match.store;
 
-			await hooks.invoke("app:init" as any, [context]);
+			await hooks.invoke(RouterEvent.Init, [context]);
 
 			await hooks.invoke(RouterEvent.BeforeRoute, [context]);
 

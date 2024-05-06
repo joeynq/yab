@@ -3,7 +3,7 @@
 	"private": true,
 	"scripts": {
 		"build": "turbo build",
-		"watch": "turbo run watch",
+		"watch": "turbo run watch --concurrency 20",
 		"format": "bunx @biomejs/biome format --write \"**/*.{ts,tsx,md}\"",
 		"commit": "bunx cz"
 	},

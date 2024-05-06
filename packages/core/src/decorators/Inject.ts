@@ -1,11 +1,48 @@
-import type { AnyClass } from "@yab/utils";
+import type { AnyClass, Dictionary } from "@yab/utils";
+import { YabEvents } from "../events";
 import type { RequestContext } from "../interfaces";
 import { getTokenName } from "../utils";
-import { YabHook } from "./YabHook";
+import { Hook } from "./Hook";
 
-const OnInitSymbol = Symbol("__OnInit__");
+export const AutoHookEvent = Symbol("AutoHookEvent");
 
-export const Inject = (token?: AnyClass | string): PropertyDecorator => {
+type AutoHookStore = Dictionary<string>;
+
+export const AutoHook = (event: string = YabEvents.OnInit) => {
+	return <T extends { new (...args: any[]): any }>(target: T) => {
+		const funcName = `__${event}__`;
+
+		const hookStores: AutoHookStore = Reflect.getMetadata(
+			AutoHookEvent,
+			target,
+		);
+
+		Object.defineProperty(target.prototype, funcName, {
+			value: function (context: RequestContext) {
+				for (const key in hookStores) {
+					const tokenName = hookStores[key];
+
+					Object.defineProperty(this, key, {
+						get: () => context.resolve(tokenName),
+						configurable: true,
+					});
+				}
+			},
+		});
+
+		const descriptor = Object.getOwnPropertyDescriptor(
+			target.prototype,
+			funcName,
+		);
+
+		descriptor && Hook(event, "before")(target.prototype, funcName, descriptor);
+	};
+};
+
+export const Inject = (
+	token: AnyClass | string,
+	event?: string,
+): PropertyDecorator => {
 	return (target, key) => {
 		let tokenName: string;
 
@@ -15,22 +52,13 @@ export const Inject = (token?: AnyClass | string): PropertyDecorator => {
 			tokenName = Reflect.getMetadata("design:type", target, key).name;
 		}
 
-		const funcName = `${OnInitSymbol.description}:${String(tokenName)}`;
+		const hookStores: AutoHookStore =
+			Reflect.getMetadata(AutoHookEvent, target.constructor) || {};
 
-		Object.defineProperty(target, funcName, {
-			value: function (context: RequestContext) {
-				Object.defineProperty(this, key, {
-					get: () => context.store[tokenName],
-					configurable: true,
-				});
-			},
-			writable: true,
-			configurable: true,
-		});
+		hookStores[key.toString()] = tokenName;
 
-		const descriptor = Object.getOwnPropertyDescriptor(target, funcName);
+		Reflect.defineMetadata(AutoHookEvent, hookStores, target.constructor);
 
-		descriptor && YabHook("app:init", "before")(target, funcName, descriptor);
 		return target;
 	};
 };

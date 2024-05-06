@@ -1,4 +1,4 @@
-import { Module, type RequestContext, YabHook } from "@yab/core";
+import { Module, type RequestContext, YabHook, YabModule } from "@yab/core";
 
 export type CorsConfig = {
 	origin?: string[];
@@ -11,7 +11,8 @@ export type CorsConfig = {
 	optionsSuccessStatus?: number;
 };
 
-export class CorsModule extends Module<CorsConfig> {
+@Module()
+export class CorsModule extends YabModule<CorsConfig> {
 	constructor(public config: CorsConfig) {
 		super();
 	}

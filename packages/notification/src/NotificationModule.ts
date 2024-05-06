@@ -4,6 +4,7 @@ import {
 	type LoggerAdapter,
 	Module,
 	YabHook,
+	YabModule,
 	asValue,
 } from "@yab/core";
 import type { AdapterConfigMap } from "./interfaces/channelMap";
@@ -15,7 +16,8 @@ export type NotificationModuleConfig<T extends Templates> = {
 	templates: T;
 };
 
-export class NotificationModule<T extends Templates> extends Module<
+@Module()
+export class NotificationModule<T extends Templates> extends YabModule<
 	NotificationModuleConfig<T>
 > {
 	#service: NotificationService;

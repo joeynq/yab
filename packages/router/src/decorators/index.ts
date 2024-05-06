@@ -4,6 +4,7 @@ export * from "./BeforeRoute";
 export * from "./Controller";
 export * from "./Delete";
 export * from "./Get";
+export * from "./Middleware";
 export * from "./OnRoute";
 export * from "./Patch";
 export * from "./Post";

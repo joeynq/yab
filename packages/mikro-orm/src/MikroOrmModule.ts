@@ -8,6 +8,7 @@ import {
 	type LoggerAdapter,
 	Module,
 	YabHook,
+	YabModule,
 	asValue,
 } from "@yab/core";
 import { getToken } from "./utils";
@@ -20,7 +21,8 @@ declare module "@yab/core" {
 
 export type MikroOrmModuleConfig = Options;
 
-export class MikroOrmModule extends Module<MikroOrmModuleConfig> {
+@Module()
+export class MikroOrmModule extends YabModule<MikroOrmModuleConfig> {
 	#orm!: MikroORM;
 
 	@Inject(ContextService)

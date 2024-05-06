@@ -5,6 +5,7 @@ import {
 	Module,
 	type RequestContext,
 	YabHook,
+	YabModule,
 	type _AppContext,
 } from "@yab/core";
 import type { Server } from "bun";
@@ -19,9 +20,10 @@ export type YogaModuleConfig<UserContext> = YogaServerOptions<
 	UserContext
 >;
 
-export class YogaModule<UserContext extends Record<string, any>> extends Module<
-	YogaModuleConfig<UserContext>
-> {
+@Module()
+export class YogaModule<
+	UserContext extends Record<string, any>,
+> extends YabModule<YogaModuleConfig<UserContext>> {
 	#yoga: YogaServerInstance<_AppContext, UserContext>;
 
 	@Logger()
@@ -30,7 +32,9 @@ export class YogaModule<UserContext extends Record<string, any>> extends Module<
 	constructor(public config: YogaModuleConfig<UserContext>) {
 		super();
 
-		this.#yoga = createYoga(config);
+		this.#yoga = createYoga({
+			...config,
+		});
 	}
 
 	@YabHook("app:request")

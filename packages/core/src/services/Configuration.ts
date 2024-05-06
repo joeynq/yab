@@ -1,5 +1,5 @@
 import type { Dictionary } from "@yab/utils";
-import type { Module, ModuleConfig, YabOptions } from "../interfaces";
+import type { ModuleConfig, YabModule, YabOptions } from "../interfaces";
 
 export class Configuration {
 	options!: YabOptions;
@@ -19,7 +19,7 @@ export class Configuration {
 	}
 
 	getModuleConfig<Config extends Dictionary = Dictionary>(
-		instance: Module<Config>,
+		instance: YabModule<Config>,
 	) {
 		return this.options.modules.find(
 			(config) => config.moduleInstance.id === instance.id,

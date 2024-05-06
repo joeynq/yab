@@ -1,8 +1,10 @@
 import {
 	type AppContext,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	YabHook,
+	YabModule,
 	asValue,
 } from "@yab/core";
 
@@ -10,9 +12,13 @@ export type LoggerModuleConfig<Adapter extends LoggerAdapter> = {
 	adapter: Adapter;
 };
 
-export class LoggerModule<Adapter extends LoggerAdapter> extends Module<
+@Module()
+export class LoggerModule<Adapter extends LoggerAdapter> extends YabModule<
 	LoggerModuleConfig<Adapter>
 > {
+	@Logger()
+	logger!: LoggerAdapter;
+
 	constructor(public config: LoggerModuleConfig<Adapter>) {
 		super();
 	}
@@ -22,8 +28,6 @@ export class LoggerModule<Adapter extends LoggerAdapter> extends Module<
 		const adapter = this.config.adapter;
 		context.register("_logger", asValue(adapter));
 
-		this.config.adapter.log.info(
-			`Logger initialized with ${adapter.constructor.name}`,
-		);
+		this.logger.info(`Logger initialized with ${adapter.constructor.name}`);
 	}
 }

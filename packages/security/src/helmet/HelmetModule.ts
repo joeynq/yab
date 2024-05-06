@@ -1,4 +1,4 @@
-import { Module, type RequestContext, YabHook } from "@yab/core";
+import { Module, type RequestContext, YabHook, YabModule } from "@yab/core";
 
 export type HelmetOptions = {
 	contentSecurityPolicy?: boolean | Record<string, any>;
@@ -14,7 +14,8 @@ export type HelmetOptions = {
 	xssFilter?: boolean | Record<string, any>;
 };
 
-export class HelmetModule extends Module<HelmetOptions> {
+@Module()
+export class HelmetModule extends YabModule<HelmetOptions> {
 	constructor(public config: HelmetOptions) {
 		super();
 	}

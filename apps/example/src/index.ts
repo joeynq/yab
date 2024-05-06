@@ -13,19 +13,19 @@ import {
 	type RequestContext,
 	Yab,
 } from "@yab/core";
-import { logger } from "@yab/logger";
-import { PinoLogger } from "@yab/logger/pino";
 import { Em, mikroOrm } from "@yab/mikro-orm";
 import {
 	AfterRoute,
 	BeforeRoute,
 	Controller,
 	Get,
+	Middleware,
 	Use,
 	router,
 } from "@yab/router";
 import { statics } from "@yab/static";
 
+@Middleware()
 class AnyMiddleware {
 	@Logger()
 	logger!: LoggerAdapter;
@@ -85,7 +85,6 @@ if (import.meta.env.NODE_ENV !== "production") {
 }
 
 new Yab({ port: 5000 })
-	.use(logger(PinoLogger))
 	.use(cache({}, SqliteAdapter))
 	.use(
 		auth(BearerAuth, {
@@ -103,6 +102,6 @@ new Yab({ port: 5000 })
 	)
 	.use(statics("/public", { assetsDir: "./public" }))
 	.use(router("/api", [UserController]))
-	.start((context, { port }) =>
-		context.store.logger.info(`Server started at ${port}`),
-	);
+	.start((context, { port }) => {
+		context.store.logger.info(`Server started at ${port}`);
+	});

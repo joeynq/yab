@@ -18,6 +18,7 @@
 		"typescript": "^5.0.0"
 	},
 	"dependencies": {
+		"chalk": "^5.3.0",
 		"reflect-metadata": "^0.2.2"
 	}
 }

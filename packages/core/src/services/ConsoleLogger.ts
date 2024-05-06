@@ -1,4 +1,6 @@
 import { clone, format, hasOwn } from "@yab/utils";
+import chalk from "chalk";
+import { logLevelOrder } from "../enum/logLevel";
 import type { LogLevel, LoggerAdapter, LoggerContext } from "../interfaces";
 
 interface ConsoleOptions {
@@ -19,7 +21,8 @@ export class ConsoleLogger implements LoggerAdapter {
 	constructor(opts?: Partial<ConsoleOptions>) {
 		this.opts = {
 			level: "info",
-			formatDate: (date: Date) => date.toLocaleTimeString(),
+			formatDate: (date: Date) =>
+				date.toISOString().slice(0, 23).replace("T", " "),
 			...opts,
 		};
 	}
@@ -50,7 +53,7 @@ export class ConsoleLogger implements LoggerAdapter {
 
 	// writeLog, return stack trace if level is error or trace
 	protected writeLog(level: LogLevel, ...args: any[]) {
-		if (!this.hasLevel(level)) return;
+		if (!this.allowLevel(level)) return;
 
 		const log = hasOwn(this.log, level)
 			? // @ts-ignore
@@ -80,7 +83,9 @@ export class ConsoleLogger implements LoggerAdapter {
 			stack = this.stackTrace();
 		}
 
-		stack ? log(this.logEntry(message), stack) : log(this.logEntry(message));
+		stack
+			? log(this.logEntry(level, message), stack)
+			: log(this.logEntry(level, message));
 	}
 
 	protected stackTrace() {
@@ -95,16 +100,33 @@ export class ConsoleLogger implements LoggerAdapter {
 		return format(message, object);
 	}
 
-	protected logEntry(message: string) {
+	protected logEntry(level: LogLevel, message: string) {
 		const date = this.opts.formatDate(new Date());
-		const level = this.level.toUpperCase();
+		const coloredLevel =
+			level === "error" || level === "fatal"
+				? chalk.red(level.toLocaleUpperCase())
+				: level === "warn" || level === "debug"
+					? chalk.yellow(level.toLocaleUpperCase())
+					: chalk.green(level.toLocaleUpperCase());
+
+		const coloredMessage =
+			level === "error" || level === "fatal" ? chalk.red(message) : message;
+
 		if (this.context?.requestId) {
-			return `[${date}] ${level} [${this.context.requestId}] ${message}`;
+			const requestId = chalk.whiteBright(`${this.context.requestId}`);
+			return chalk.cyan(
+				`[${date}] ${coloredLevel} ${requestId} ${coloredMessage}`,
+			);
 		}
-		return `[${date}] ${level} ${message}`;
+		return chalk.cyan(`[${date}] ${coloredLevel} ${coloredMessage}`);
 	}
 
-	protected hasLevel(level: LogLevel) {
-		return ["info", "error", "warn", "debug", "trace"].includes(level);
+	protected allowLevel(level: LogLevel) {
+		if (this.level === "silent") return false;
+
+		const allowed = logLevelOrder.indexOf(this.level);
+		const current = logLevelOrder.indexOf(level);
+
+		return current >= allowed;
 	}
 }

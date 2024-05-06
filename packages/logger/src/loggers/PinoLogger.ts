@@ -17,14 +17,6 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 	constructor(options?: LoggerOptions) {
 		this.log = Pino({
 			base: {},
-			formatters: {
-				bindings: (obj) => {
-					return {
-						...obj,
-						requestId: obj.requestId || "YAB",
-					};
-				},
-			},
 			transport: {
 				target: "pino-pretty",
 				options: {
@@ -46,13 +38,14 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 	}
 
 	createChild(context: LoggerContext) {
-		return clone(this, {
-			log: this.log.child({
-				requestId: context.requestId,
-				serverUrl: context.serverUrl,
-				userIp: context.userIp,
-				userAgent: context.userAgent,
-			}),
-		}) as LoggerAdapter<Logger>;
+		const cloned = clone(this, {});
+		cloned.log = this.log.child({
+			requestId: context.requestId,
+			serverUrl: context.serverUrl,
+			userIp: context.userIp,
+			userAgent: context.userAgent,
+		});
+
+		return cloned;
 	}
 }

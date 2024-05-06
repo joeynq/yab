@@ -5,6 +5,7 @@ import {
 	Module,
 	type RequestContext,
 	YabHook,
+	YabModule,
 	asValue,
 } from "@yab/core";
 import type { Strategy } from "./strategies";
@@ -22,7 +23,8 @@ export type AuthModuleConfig<S extends Strategy<any>> = {
 
 export const AuthModuleKey = "auth:strategy";
 
-export class AuthModule<S extends Strategy<any>> extends Module<
+@Module()
+export class AuthModule<S extends Strategy<any>> extends YabModule<
 	AuthModuleConfig<S>
 > {
 	@Logger()

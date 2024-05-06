@@ -2,13 +2,13 @@ import { type AnyFunction, type Dictionary, uuid } from "@yab/utils";
 import type { TLSOptions } from "bun";
 import type { LogLevel } from "./LoggerAdapter";
 
-export abstract class Module<Config extends Dictionary = Dictionary> {
+export abstract class YabModule<Config extends Dictionary = Dictionary> {
 	abstract config: Config;
 	id = uuid();
 }
 
 export interface ModuleConfig<Config extends Dictionary = Dictionary> {
-	moduleInstance: Module<Config>;
+	moduleInstance: YabModule<Config>;
 	hooks?: {
 		[key: string]: AnyFunction[];
 	};
