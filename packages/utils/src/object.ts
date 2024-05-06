@@ -5,6 +5,7 @@ import type {
 	Path,
 	PathValue,
 	Primitive,
+	WithoutUndefined,
 } from "./internal/object";
 import { isUndefined } from "./nullish";
 
@@ -105,6 +106,20 @@ export const clone = <T extends object>(obj: T, newPropertyValues: any): T => {
 	);
 
 	return Object.assign(clone, this, nestedClones, newPropertyValues);
+};
+
+export const omitUndefined = <T extends object>(
+	obj: T,
+): WithoutUndefined<T> => {
+	const result = {} as T;
+
+	for (const key in obj) {
+		if (!isUndefined(obj[key])) {
+			result[key] = obj[key];
+		}
+	}
+
+	return result;
 };
 
 export const flatten = <T extends Dictionary>(obj: unknown): T => {

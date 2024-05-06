@@ -21,8 +21,7 @@ class AuthorizedMiddleware {
 					resolve();
 				})
 				.catch((err) => {
-					this.logger.error(err);
-					reject(new Unauthorized(err.message));
+					reject(new Unauthorized(err.message, err));
 				});
 		});
 	}

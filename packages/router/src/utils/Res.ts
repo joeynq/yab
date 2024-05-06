@@ -51,7 +51,7 @@ export const Res = {
 		return response(
 			HttpErrorCodes.InternalServerError,
 			{
-				error: new InternalServerError(error.message).toJSON(),
+				error: new InternalServerError(error.message, error).toJSON(),
 			},
 			headers,
 		);

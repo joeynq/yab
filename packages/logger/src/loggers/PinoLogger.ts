@@ -4,6 +4,7 @@ import Pino, { type LogFn, type Logger, type LoggerOptions } from "pino";
 
 export class PinoLogger implements LoggerAdapter<Logger> {
 	log: Logger;
+
 	get level() {
 		return this.log.level as LogLevel;
 	}
@@ -14,7 +15,7 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 	debug: LogFn;
 	trace: LogFn;
 
-	constructor(options?: LoggerOptions) {
+	constructor(public options: LoggerOptions = {}) {
 		this.log = Pino({
 			base: {},
 			transport: {
@@ -27,7 +28,31 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 					ignore: "requestId,userIp,serverUrl,userAgent",
 				},
 			},
-			...options,
+			...this.options,
+		});
+
+		this.info = this.log.info.bind(this.log);
+		this.error = this.log.error.bind(this.log);
+		this.warn = this.log.warn.bind(this.log);
+		this.debug = this.log.debug.bind(this.log);
+		this.trace = this.log.trace.bind(this.log);
+	}
+
+	setOptions(options: LoggerOptions) {
+		this.options = options;
+		this.log = Pino({
+			base: {},
+			transport: {
+				target: "pino-pretty",
+				options: {
+					crlf: true,
+					colorize: true,
+					translateTime: "SYS:HH:MM:ss.l",
+					messageFormat: "{{requestId}} {msg}",
+					ignore: "requestId,userIp,serverUrl,userAgent",
+				},
+			},
+			...this.options,
 		});
 
 		this.info = this.log.info.bind(this.log);
@@ -38,14 +63,15 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 	}
 
 	createChild(context: LoggerContext) {
-		const cloned = clone(this, {});
-		cloned.log = this.log.child({
-			requestId: context.requestId,
-			serverUrl: context.serverUrl,
-			userIp: context.userIp,
-			userAgent: context.userAgent,
+		const child = clone(this, {
+			log: this.log.child({
+				requestId: context.requestId,
+				serverUrl: context.serverUrl,
+				userIp: context.userIp,
+				userAgent: context.userAgent,
+			}),
 		});
-
-		return cloned;
+		child.setOptions(this.options);
+		return child;
 	}
 }

@@ -1,4 +1,9 @@
-import { type AnyFunction, type Dictionary, uuid } from "@yab/utils";
+import {
+	type AnyClass,
+	type AnyFunction,
+	type Dictionary,
+	uuid,
+} from "@yab/utils";
 import type { TLSOptions } from "bun";
 import type { LogLevel } from "./LoggerAdapter";
 
@@ -18,8 +23,17 @@ export interface YabOptions {
 	port?: string | number;
 	hostname?: string;
 	modules: ModuleConfig[];
-	logLevel?: LogLevel;
 	env?: Dictionary;
 	reusePort?: boolean;
 	tls?: TLSOptions;
+	log?: {
+		noColor?: boolean;
+		level?: LogLevel;
+		stackTrace?: boolean;
+	};
+}
+
+export interface YabUse<M extends AnyClass<YabModule>> {
+	module: M;
+	args: ConstructorParameters<M>;
 }

@@ -26,6 +26,7 @@ export class LoggerModule<Adapter extends LoggerAdapter> extends YabModule<
 	@YabHook("app:init")
 	async init(context: AppContext) {
 		const adapter = this.config.adapter;
+
 		context.register("_logger", asValue(adapter));
 
 		this.logger.info(`Logger initialized with ${adapter.constructor.name}`);

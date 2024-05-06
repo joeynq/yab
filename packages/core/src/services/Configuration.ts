@@ -5,7 +5,7 @@ export class Configuration {
 	options!: YabOptions;
 
 	get bunOptions() {
-		const { modules, env, logLevel, ...options } = this.options;
+		const { modules, env, log, ...options } = this.options;
 		return options;
 	}
 

@@ -10,6 +10,7 @@ import type {
 	ModuleConfig,
 	YabModule,
 	YabOptions,
+	YabUse,
 	_AppContext,
 	_RequestContext,
 } from "./interfaces";
@@ -22,11 +23,6 @@ import {
 } from "./services";
 import { HookMetadataKey } from "./symbols";
 import { enhance } from "./utils";
-
-export interface YabUse<M extends AnyClass<YabModule>> {
-	module: M;
-	args: ConstructorParameters<M>;
-}
 
 export class Yab {
 	#config: Configuration;
@@ -56,7 +52,9 @@ export class Yab {
 		this.#container.register({
 			_logger: asValue(
 				new ConsoleLogger({
-					level: this.#config.options.logLevel || "info",
+					level: this.#config.options.log?.level || "info",
+					noColor: this.#config.options.log?.noColor,
+					stackTrace: this.#config.options.log?.stackTrace,
 				}),
 			),
 			env: asValue(this.#config.options.env || {}),
@@ -143,7 +141,11 @@ export class Yab {
 							return resolve(error.toResponse());
 						}
 						resolve(
-							new HttpException(500, (error as Error).message).toResponse(),
+							new HttpException(
+								500,
+								(error as Error).message,
+								error as Error,
+							).toResponse(),
 						);
 					} finally {
 						await this.#hooks.invoke(YabEvents.OnExitContext, [

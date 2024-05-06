@@ -4,8 +4,9 @@ export class HttpException extends Error {
 	constructor(
 		public readonly status: HttpErrorCodes,
 		message: string,
+		cause?: Error,
 	) {
-		super(message);
+		super(message, { cause });
 	}
 
 	toResponse() {

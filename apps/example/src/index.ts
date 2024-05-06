@@ -55,7 +55,7 @@ if (import.meta.env.NODE_ENV !== "production") {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-new Yab({ port: 3000 })
+new Yab()
 	.use(cache({}, SqliteAdapter))
 	.use(
 		auth(BearerAuth, {

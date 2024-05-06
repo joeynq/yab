@@ -8,7 +8,7 @@ export const defaultErrorHandler = (error: Error) => {
 		return Res.error(error);
 	}
 
-	return Res.error(new InternalServerError(error.message));
+	return Res.error(new InternalServerError(error.message, error));
 };
 
 export const defaultResponseHandler = <T>(
