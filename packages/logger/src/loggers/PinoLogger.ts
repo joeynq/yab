@@ -6,7 +6,6 @@ import type {
 } from "@yab/core";
 import type { Dictionary } from "@yab/utils";
 import Pino, { type Logger, type LoggerOptions } from "pino";
-import pinoCaller from "pino-caller";
 
 export class PinoLogger implements LoggerAdapter<Logger> {
 	log!: Logger;
@@ -44,7 +43,7 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 	}
 
 	setLogger(logger: Logger) {
-		this.log = pinoCaller(logger, { stackAdjustment: 1 });
+		this.log = logger;
 	}
 
 	createChild(context: LoggerContext) {
