@@ -41,6 +41,7 @@ export interface _AppContext {
 	serverUrl?: string;
 	userIp?: SocketAddress;
 	userAgent?: string;
+	hooks: Hooks<any, any>;
 	[key: string]: unknown;
 }
 
