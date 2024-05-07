@@ -4,7 +4,6 @@ import { Authorized, BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
 import { Logger, type LoggerAdapter, Yab } from "@yab/core";
-import { logger } from "@yab/logger";
 import { PinoLogger } from "@yab/logger/pino";
 import { Em, mikroOrm } from "@yab/mikro-orm";
 import { Controller, Get, router } from "@yab/router";
@@ -54,8 +53,7 @@ if (import.meta.env.NODE_ENV !== "production") {
 }
 
 new Yab()
-	// PinoLogger is recommended.
-	.use(logger(PinoLogger))
+	.useLogger(PinoLogger)
 	// SqliteAdapter recommended for development.
 	// RedisAdapter is recommended for production.
 	.use(cache({}, SqliteAdapter))
