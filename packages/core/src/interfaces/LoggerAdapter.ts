@@ -20,7 +20,7 @@ export interface LogOptions<Logger extends Dictionary | object | never> {
 	noColor: boolean;
 	level: LogLevel;
 	stackTrace: boolean;
-	options: Logger extends Dictionary ? Logger : never;
+	options: Logger extends Dictionary | object ? Logger : never;
 }
 
 export interface LogFn {
@@ -30,7 +30,6 @@ export interface LogFn {
 }
 
 export interface LoggerAdapter<Logger = any> {
-	log: Logger;
 	level: LogLevel;
 
 	createChild(context: LoggerContext): LoggerAdapter<Logger>;

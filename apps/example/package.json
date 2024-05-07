@@ -3,8 +3,8 @@
 	"module": "index.ts",
 	"type": "module",
 	"dependencies": {
-		"@mikro-orm/core": "^6.2.3",
-		"@mikro-orm/postgresql": "^6.2.3",
+		"@mikro-orm/core": "^6.2.5",
+		"@mikro-orm/postgresql": "^6.2.5",
 		"@yab/auth": "link:@yab/auth",
 		"@yab/core": "link:@yab/core",
 		"@yab/logger": "link:@yab/logger",

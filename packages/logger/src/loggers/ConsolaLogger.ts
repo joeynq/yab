@@ -1,10 +1,5 @@
-import type {
-	LogFn,
-	LogOptions,
-	LoggerAdapter,
-	LoggerContext,
-} from "@yab/core";
-import { type Dictionary, clone } from "@yab/utils";
+import type { LogOptions, LoggerAdapter, LoggerContext } from "@yab/core";
+import type { Dictionary } from "@yab/utils";
 import {
 	type Consola,
 	type ConsolaInstance,
@@ -21,13 +16,6 @@ export class ConsolaLogger implements LoggerAdapter<Consola> {
 	get level() {
 		return this.config.level;
 	}
-
-	info: LogFn;
-	error: LogFn;
-	warn: LogFn;
-	debug: LogFn;
-	trace: LogFn;
-
 	constructor(config: Partial<LogOptions<ConsolaOptions & Dictionary>> = {}) {
 		this.config = Object.assign(
 			{
@@ -43,19 +31,36 @@ export class ConsolaLogger implements LoggerAdapter<Consola> {
 			level: LogLevels[this.config.level],
 		});
 		this.log.wrapConsole();
+	}
 
-		this.info = this.log.info.bind(this.log);
-		this.error = this.log.error.bind(this.log);
-		this.warn = this.log.warn.bind(this.log);
-		this.debug = this.log.debug.bind(this.log);
-		this.trace = this.log.trace.bind(this.log);
+	setLogger(logger: ConsolaInstance) {
+		this.log = logger;
 	}
 
 	createChild(context: LoggerContext): LoggerAdapter<Consola> {
-		return clone(this, {
-			context,
-			config: this.config,
-			log: this.log.create({}).withTag(context.requestId).wrapConsole(),
-		});
+		const child = new ConsolaLogger(this.config);
+		child.setLogger(this.log.withTag(context.requestId));
+		child.log.wrapConsole();
+		return child;
+	}
+
+	info(arg: any, ...args: any[]) {
+		this.log.info(arg, ...args);
+	}
+
+	error(arg: any, ...args: any[]) {
+		this.log.error(arg, ...args);
+	}
+
+	warn(arg: any, ...args: any[]) {
+		this.log.warn(arg, ...args);
+	}
+
+	debug(arg: any, ...args: any[]) {
+		this.log.debug(arg, ...args);
+	}
+
+	trace(arg: any, ...args: any[]) {
+		this.log.trace(arg, ...args);
 	}
 }

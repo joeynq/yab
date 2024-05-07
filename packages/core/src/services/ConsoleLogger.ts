@@ -1,4 +1,4 @@
-import { clone, format, hasOwn, omitUndefined } from "@yab/utils";
+import { format, hasOwn, omitUndefined } from "@yab/utils";
 import { Chalk, type ChalkInstance } from "chalk";
 import { logLevelOrder } from "../enum/logLevel";
 import type {
@@ -84,7 +84,10 @@ export class ConsoleLogger implements LoggerAdapter {
 	}
 
 	createChild(context: LoggerContext) {
-		return clone(this, { context, opts: this.opts });
+		const child = new ConsoleLogger(this.opts);
+		child.context = context;
+
+		return child;
 	}
 
 	info(...args: any): void {

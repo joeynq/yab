@@ -1,6 +1,5 @@
 {
 	"cSpell.words": [
-		"autowire",
 		"awilix",
 		"biomejs",
 		"bunx",
@@ -10,21 +9,17 @@
 		"deburr",
 		"deburred",
 		"deepmerge",
-		"dotfiles",
-		"elysia",
 		"flushall",
 		"frameguard",
 		"Hasher",
 		"hsts",
 		"jwks",
 		"lefthook",
-		"Mergeable",
 		"mikro",
 		"noopen",
 		"nosniff",
 		"notifme",
 		"pino",
-		"Proxify",
 		"SAMEORIGIN",
 		"tslog",
 		"typebox"
@@ -35,11 +30,8 @@
 	"editor.tabSize": 2,
 	"exportall.config.relExclusion": [
 		"/packages/utils/src/internal",
-		"/packages/core/src/index.ts",
-		"/packages/logger/src/logger",
 		"/packages/cache/src/adapters",
-		"/packages/logger/src/loggers",
-		"/packages/static/src/utils.ts"
+		"/packages/logger/src/loggers"
 	],
 	"editor.defaultFormatter": "biomejs.biome",
 	"biome.rename": true,

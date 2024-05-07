@@ -14,10 +14,6 @@
 		"./consola": {
 			"import": "./dist/loggers/ConsolaLogger.js",
 			"require": "./dist/loggers/ConsolaLogger.js"
-		},
-		"./tslog": {
-			"import": "./dist/loggers/TslogLogger.js",
-			"require": "./dist/loggers/TslogLogger.js"
 		}
 	},
 	"type": "module",
@@ -37,6 +33,7 @@
 	"dependencies": {
 		"consola": "^3.2.3",
 		"pino": "^9.0.0",
+		"pino-caller": "^3.4.0",
 		"pino-pretty": "^11.0.0",
 		"reflect-metadata": "^0.2.2",
 		"tslog": "^4.9.2"

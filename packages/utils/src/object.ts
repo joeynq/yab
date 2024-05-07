@@ -111,7 +111,7 @@ export const clone = <T extends object>(obj: T, newPropertyValues: any): T => {
 export const omitUndefined = <T extends object>(
 	obj: T,
 ): WithoutUndefined<T> => {
-	const result = {} as T;
+	const result = {} as Partial<T>;
 
 	for (const key in obj) {
 		if (!isUndefined(obj[key])) {
@@ -119,7 +119,7 @@ export const omitUndefined = <T extends object>(
 		}
 	}
 
-	return result;
+	return result as WithoutUndefined<T>;
 };
 
 export const flatten = <T extends Dictionary>(obj: unknown): T => {

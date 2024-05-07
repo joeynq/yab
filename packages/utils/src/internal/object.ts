@@ -5,7 +5,9 @@ export type AnyPromiseFunction = (...args: any[]) => Promise<unknown>;
 export type MaybePromiseFunction = AnyFunction | AnyPromiseFunction;
 export type MaybePromise<T> = T | Promise<T>;
 
-export type WithoutUndefined<T> = T extends undefined ? never : T;
+export type WithoutUndefined<T extends object> = {
+	[P in keyof T]: T[P] extends undefined ? never : T[P];
+};
 
 export type DeepPartial<T extends object> = {
 	[P in keyof T]?: T[P] extends AnyClass | AnyFunction | Primitive

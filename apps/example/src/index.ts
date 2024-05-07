@@ -1,15 +1,11 @@
-import {
-	Entity,
-	type EntityManager,
-	PostgreSqlDriver,
-	PrimaryKey,
-} from "@mikro-orm/postgresql";
+import { Entity, type EntityManager, PrimaryKey } from "@mikro-orm/core";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { Authorized, BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
 import { Logger, type LoggerAdapter, Yab } from "@yab/core";
 import { logger } from "@yab/logger";
-import { TsLogLogger } from "@yab/logger/tslog";
+import { PinoLogger } from "@yab/logger/pino";
 import { Em, mikroOrm } from "@yab/mikro-orm";
 import { Controller, Get, router } from "@yab/router";
 import { statics } from "@yab/static";
@@ -22,13 +18,13 @@ class UserController {
 	@Em()
 	em!: EntityManager;
 
-	@Authorized()
 	@Get("/")
 	getUsers() {
 		this.logger.info("Get users");
 		return { users: [] };
 	}
 
+	@Authorized()
 	@Get("/:id")
 	getUser() {
 		this.logger.info("Get user");
@@ -58,7 +54,10 @@ if (import.meta.env.NODE_ENV !== "production") {
 }
 
 new Yab()
-	.use(logger(TsLogLogger))
+	// PinoLogger is recommended.
+	.use(logger(PinoLogger))
+	// SqliteAdapter recommended for development.
+	// RedisAdapter is recommended for production.
 	.use(cache({}, SqliteAdapter))
 	.use(
 		auth(BearerAuth, {
