@@ -5,7 +5,7 @@ import {
 	uuid,
 } from "@yab/utils";
 import type { TLSOptions } from "bun";
-import type { LogLevel } from "./LoggerAdapter";
+import type { LogOptions } from "./LoggerAdapter";
 
 export abstract class YabModule<Config extends Dictionary = Dictionary> {
 	abstract config: Config;
@@ -26,11 +26,7 @@ export interface YabOptions {
 	env?: Dictionary;
 	reusePort?: boolean;
 	tls?: TLSOptions;
-	log?: {
-		noColor?: boolean;
-		level?: LogLevel;
-		stackTrace?: boolean;
-	};
+	log?: LogOptions<never>;
 }
 
 export interface YabUse<M extends AnyClass<YabModule>> {

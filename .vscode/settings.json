@@ -5,6 +5,7 @@
 		"biomejs",
 		"bunx",
 		"commitlint",
+		"Consola",
 		"datasource",
 		"deburr",
 		"deburred",
@@ -42,6 +43,9 @@
 	"editor.defaultFormatter": "biomejs.biome",
 	"biome.rename": true,
 	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescript]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	}
 }

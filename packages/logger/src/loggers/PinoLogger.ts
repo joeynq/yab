@@ -1,9 +1,15 @@
-import type { LogLevel, LoggerAdapter, LoggerContext } from "@yab/core";
-import { clone } from "@yab/utils";
+import type {
+	LogLevel,
+	LogOptions,
+	LoggerAdapter,
+	LoggerContext,
+} from "@yab/core";
+import { type Dictionary, clone } from "@yab/utils";
 import Pino, { type LogFn, type Logger, type LoggerOptions } from "pino";
 
 export class PinoLogger implements LoggerAdapter<Logger> {
 	log: Logger;
+	options: LogOptions<LoggerOptions & Dictionary>;
 
 	get level() {
 		return this.log.level as LogLevel;
@@ -15,20 +21,29 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 	debug: LogFn;
 	trace: LogFn;
 
-	constructor(public options: LoggerOptions = {}) {
+	constructor(options: Partial<LogOptions<LoggerOptions & Dictionary>> = {}) {
+		this.options = Object.assign(
+			{
+				level: "info",
+				stackTrace: true,
+				noColor: false,
+				options: {},
+			},
+			options,
+		);
 		this.log = Pino({
 			base: {},
 			transport: {
 				target: "pino-pretty",
 				options: {
 					crlf: true,
-					colorize: true,
+					colorize: !this.options.noColor,
 					translateTime: "SYS:HH:MM:ss.l",
 					messageFormat: "{{requestId}} {msg}",
 					ignore: "requestId,userIp,serverUrl,userAgent",
 				},
 			},
-			...this.options,
+			...this.options.options,
 		});
 
 		this.info = this.log.info.bind(this.log);
@@ -38,7 +53,7 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 		this.trace = this.log.trace.bind(this.log);
 	}
 
-	setOptions(options: LoggerOptions) {
+	setOptions(options: LogOptions<LoggerOptions & Dictionary>) {
 		this.options = options;
 		this.log = Pino({
 			base: {},

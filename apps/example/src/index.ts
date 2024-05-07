@@ -8,6 +8,8 @@ import { Authorized, BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
 import { Logger, type LoggerAdapter, Yab } from "@yab/core";
+import { logger } from "@yab/logger";
+import { ConsolaLogger } from "@yab/logger/consola";
 import { Em, mikroOrm } from "@yab/mikro-orm";
 import { Controller, Get, router } from "@yab/router";
 import { statics } from "@yab/static";
@@ -56,6 +58,7 @@ if (import.meta.env.NODE_ENV !== "production") {
 }
 
 new Yab()
+	.use(logger(ConsolaLogger))
 	.use(cache({}, SqliteAdapter))
 	.use(
 		auth(BearerAuth, {

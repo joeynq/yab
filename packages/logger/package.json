@@ -10,6 +10,10 @@
 		"./pino": {
 			"import": "./dist/loggers/PinoLogger.js",
 			"require": "./dist/loggers/PinoLogger.js"
+		},
+		"./consola": {
+			"import": "./dist/loggers/ConsolaLogger.js",
+			"require": "./dist/loggers/ConsolaLogger.js"
 		}
 	},
 	"type": "module",
@@ -27,6 +31,7 @@
 		"typescript": "^5.0.0"
 	},
 	"dependencies": {
+		"consola": "^3.2.3",
 		"pino": "^9.0.0",
 		"pino-pretty": "^11.0.0",
 		"reflect-metadata": "^0.2.2"

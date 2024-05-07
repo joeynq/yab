@@ -1,8 +1,7 @@
 import type { AnyClass, Dictionary } from "@yab/utils";
 import type { AwilixContainer } from "awilix";
-import type { SocketAddress } from "bun";
 import type { Yab } from "../Yab";
-import type { Hooks } from "../services";
+import type { Configuration, Hooks } from "../services";
 import type { LoggerAdapter } from "./LoggerAdapter";
 
 export type InjectionToken<T> = string | { new (...args: any[]): T };
@@ -36,12 +35,7 @@ export interface _AppContext {
 	app: Yab;
 	logger: LoggerAdapter;
 	hooks: Hooks<Dictionary<any>, Dictionary<any>>;
-	requestId?: string;
-	request?: Request;
-	serverUrl?: string;
-	userIp?: SocketAddress;
-	userAgent?: string;
-	hooks: Hooks<any, any>;
+	config: Configuration;
 	[key: string]: unknown;
 }
 

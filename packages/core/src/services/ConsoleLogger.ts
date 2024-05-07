@@ -1,7 +1,12 @@
 import { clone, format, hasOwn, omitUndefined } from "@yab/utils";
 import { Chalk, type ChalkInstance } from "chalk";
 import { logLevelOrder } from "../enum/logLevel";
-import type { LogLevel, LoggerAdapter, LoggerContext } from "../interfaces";
+import type {
+	LogLevel,
+	LogOptions,
+	LoggerAdapter,
+	LoggerContext,
+} from "../interfaces";
 
 Error.stackTraceLimit = 10;
 
@@ -42,12 +47,9 @@ Error.prepareStackTrace = (error, stack) => {
 	return `${chalk.red(error)}\n${stackTrace}`;
 };
 
-interface ConsoleOptions {
-	level: LogLevel;
+type ConsoleOptions = {
 	formatDate: (date: Date) => string;
-	noColor?: boolean;
-	stackTrace?: boolean;
-}
+};
 
 export class ConsoleLogger implements LoggerAdapter {
 	log = console;
@@ -61,16 +63,19 @@ export class ConsoleLogger implements LoggerAdapter {
 	}
 	context?: LoggerContext;
 
-	opts: ConsoleOptions;
+	opts: LogOptions<ConsoleOptions>;
 
-	constructor(opts?: Partial<ConsoleOptions>) {
+	constructor(opts?: Partial<LogOptions<Partial<ConsoleOptions>>>) {
 		this.opts = Object.assign(
 			{
 				level: "info",
-				formatDate: (date: Date) =>
-					date.toISOString().slice(0, 23).replace("T", " "),
+
 				stackTrace: true,
 				noColor: false,
+				options: {
+					formatDate: (date: Date) =>
+						date.toISOString().slice(0, 23).replace("T", " "),
+				},
 			},
 			opts ? omitUndefined(opts) : {},
 		);
@@ -145,7 +150,7 @@ export class ConsoleLogger implements LoggerAdapter {
 	}
 
 	protected logEntry(level: LogLevel, message: string) {
-		const date = this.opts.formatDate(new Date());
+		const date = this.opts.options.formatDate(new Date());
 		const coloredLevel =
 			level === "error" || level === "fatal"
 				? this.chalk.red(level.padEnd(5, " ").toLocaleUpperCase())
