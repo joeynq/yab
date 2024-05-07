@@ -1,4 +1,9 @@
-import type { LogOptions, LoggerAdapter, LoggerContext } from "@yab/core";
+import type {
+	LogFn,
+	LogOptions,
+	LoggerAdapter,
+	LoggerContext,
+} from "@yab/core";
 import { type Dictionary, clone } from "@yab/utils";
 import {
 	type Consola,
@@ -7,7 +12,6 @@ import {
 	LogLevels,
 	createConsola,
 } from "consola";
-import type { LogFn } from "pino";
 
 export class ConsolaLogger implements LoggerAdapter<Consola> {
 	log: ConsolaInstance;

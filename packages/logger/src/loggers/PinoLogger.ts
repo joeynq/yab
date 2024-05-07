@@ -1,11 +1,12 @@
 import type {
+	LogFn,
 	LogLevel,
 	LogOptions,
 	LoggerAdapter,
 	LoggerContext,
 } from "@yab/core";
 import { type Dictionary, clone } from "@yab/utils";
-import Pino, { type LogFn, type Logger, type LoggerOptions } from "pino";
+import Pino, { type Logger, type LoggerOptions } from "pino";
 
 export class PinoLogger implements LoggerAdapter<Logger> {
 	log: Logger;

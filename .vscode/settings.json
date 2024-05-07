@@ -26,6 +26,7 @@
 		"pino",
 		"Proxify",
 		"SAMEORIGIN",
+		"tslog",
 		"typebox"
 	],
 	"editor.codeActionsOnSave": {
