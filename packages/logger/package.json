@@ -3,17 +3,13 @@
 	"module": "src/index.ts",
 	"main": "dist/index.js",
 	"exports": {
-		".": {
-			"import": "./dist/index.js",
-			"require": "./dist/index.js"
-		},
 		"./pino": {
-			"import": "./dist/loggers/PinoLogger.js",
-			"require": "./dist/loggers/PinoLogger.js"
+			"import": "./dist/PinoLogger.js",
+			"require": "./dist/PinoLogger.js"
 		},
 		"./consola": {
-			"import": "./dist/loggers/ConsolaLogger.js",
-			"require": "./dist/loggers/ConsolaLogger.js"
+			"import": "./dist/ConsolaLogger.js",
+			"require": "./dist/ConsolaLogger.js"
 		}
 	},
 	"type": "module",

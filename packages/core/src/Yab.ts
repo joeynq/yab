@@ -4,6 +4,7 @@ import type { Server } from "bun";
 import { type YabEventMap, YabEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
+	AbstractLogger,
 	AppContext,
 	EnhancedContainer,
 	LoggerAdapter,
@@ -25,6 +26,7 @@ import { HookMetadataKey } from "./symbols";
 import { enhance } from "./utils";
 
 export class Yab {
+	#logger: LoggerAdapter;
 	#config: Configuration;
 	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
 	#context = new ContextService();
@@ -46,17 +48,16 @@ export class Yab {
 			...options,
 			modules: options?.modules || [],
 		});
+		this.#logger = new ConsoleLogger({
+			level: this.#config.options.log?.level || "info",
+			noColor: this.#config.options.log?.noColor,
+			stackTrace: this.#config.options.log?.stackTrace,
+		});
 	}
 
 	#registerServices() {
 		this.#container.register({
-			_logger: asValue(
-				new ConsoleLogger({
-					level: this.#config.options.log?.level || "info",
-					noColor: this.#config.options.log?.noColor,
-					stackTrace: this.#config.options.log?.stackTrace,
-				}),
-			),
+			_logger: asValue(this.#logger),
 			env: asValue(this.#config.options.env || {}),
 			app: asValue(this),
 			logger: {
@@ -64,7 +65,7 @@ export class Yab {
 					const _logger = c.resolve<LoggerAdapter>("_logger");
 
 					if (c.hasRegistration("requestId")) {
-						return _logger.createChild({
+						return _logger.useContext({
 							requestId: c.resolve("requestId"),
 							serverUrl: c.resolve("serverUrl"),
 							userIp: c.resolve("userIp"),
@@ -80,14 +81,10 @@ export class Yab {
 		});
 	}
 
-	#registerHooksFromModule(instance: YabModule) {
-		this.#hooks.registerFromMetadata(instance);
-	}
-
 	#initModules() {
 		const moduleConfigs = this.#config.options.modules;
 		for (const { moduleInstance } of moduleConfigs) {
-			this.#registerHooksFromModule(moduleInstance);
+			this.#hooks.registerFromMetadata(moduleInstance);
 		}
 	}
 
@@ -161,6 +158,17 @@ export class Yab {
 		getContext: (ctx: _RequestContext) => T,
 	) {
 		this.#customContext = getContext;
+		return this;
+	}
+
+	useLogger<Logger extends AbstractLogger>(
+		logger: AnyClass<LoggerAdapter<Logger>>,
+		options: ConstructorParameters<AnyClass<LoggerAdapter<Logger>>>[0],
+	) {
+		this.#logger = new logger({
+			...this.#config.options.log,
+			...options,
+		});
 		return this;
 	}
 

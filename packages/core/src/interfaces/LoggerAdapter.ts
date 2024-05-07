@@ -1,4 +1,4 @@
-import type { Dictionary } from "@yab/utils";
+import type { AnyFunction, Dictionary } from "@yab/utils";
 import type { _RequestContext } from "./Container";
 
 export type LogLevel =
@@ -29,29 +29,28 @@ export interface LogFn {
 	(msg: string, ...args: any[]): void;
 }
 
-export interface LoggerAdapter<Logger = any> {
+export interface AbstractLogger {
+	info: AnyFunction;
+	error: AnyFunction;
+	warn: AnyFunction;
+	debug: AnyFunction;
+	trace: AnyFunction;
+}
+
+export interface LoggerAdapter<Logger extends AbstractLogger = AbstractLogger> {
+	log: Logger;
 	level: LogLevel;
+	context?: LoggerContext;
 
-	createChild(context: LoggerContext): LoggerAdapter<Logger>;
+	useContext(context: LoggerContext): LoggerAdapter<Logger>;
+	setLogger(logger: Logger): void;
 
-	/**
-	 * Write a 'log' level log.
-	 */
 	info: LogFn;
 
-	/**
-	 * Write an 'error' level log.
-	 */
 	error: LogFn;
 
-	/**
-	 * Write a 'warn' level log.
-	 */
 	warn: LogFn;
 
-	/**
-	 * Write a 'debug' level log.
-	 */
 	debug: LogFn;
 
 	trace: LogFn;

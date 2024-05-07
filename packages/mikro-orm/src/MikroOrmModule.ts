@@ -48,9 +48,11 @@ export class MikroOrmModule extends YabModule<MikroOrmModuleConfig> {
 			: "unsuccessfully";
 
 		this.logger.info(
-			`MikroORM connected to database ${isConnected} to ${url.host
-				.split(":")
-				.join(":")}/${url.pathname.slice(1)}`,
+			`MikroORM connected to database ${isConnected} to ${
+				url.protocol
+			}//${url.host.split(":").join(":")}/${url.pathname.slice(1)}${
+				url.search
+			}`,
 		);
 
 		const contextName = this.#orm.config.get("contextName");

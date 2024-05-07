@@ -1,14 +1,13 @@
-import type {
-	LogLevel,
-	LogOptions,
-	LoggerAdapter,
-	LoggerContext,
+import {
+	BaseLogger,
+	type LogLevel,
+	type LogOptions,
+	type LoggerContext,
 } from "@yab/core";
 import type { Dictionary } from "@yab/utils";
 import Pino, { type Logger, type LoggerOptions } from "pino";
 
-export class PinoLogger implements LoggerAdapter<Logger> {
-	log!: Logger;
+export class PinoLogger extends BaseLogger<Logger> {
 	options: LogOptions<LoggerOptions & Dictionary>;
 
 	get level() {
@@ -16,6 +15,7 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 	}
 
 	constructor(options: Partial<LogOptions<LoggerOptions & Dictionary>> = {}) {
+		super();
 		this.options = Object.assign(
 			{
 				level: "info",
@@ -42,33 +42,7 @@ export class PinoLogger implements LoggerAdapter<Logger> {
 		);
 	}
 
-	setLogger(logger: Logger) {
-		this.log = logger;
-	}
-
 	createChild(context: LoggerContext) {
-		const child = new PinoLogger(this.options);
-		child.setLogger(this.log.child(context));
-		return child;
-	}
-
-	info(arg: any, ...args: any[]) {
-		this.log.info(arg, ...args);
-	}
-
-	error(arg: any, ...args: any[]) {
-		this.log.error(arg, ...args);
-	}
-
-	warn(arg: any, ...args: any[]) {
-		this.log.warn(arg, ...args);
-	}
-
-	debug(arg: any, ...args: any[]) {
-		this.log.debug(arg, ...args);
-	}
-
-	trace(arg: any, ...args: any[]) {
-		this.log.trace(arg, ...args);
+		return this.log.child(context);
 	}
 }

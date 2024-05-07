@@ -1,12 +1,8 @@
 import { format, hasOwn, omitUndefined } from "@yab/utils";
 import { Chalk, type ChalkInstance } from "chalk";
 import { logLevelOrder } from "../enum/logLevel";
-import type {
-	LogLevel,
-	LogOptions,
-	LoggerAdapter,
-	LoggerContext,
-} from "../interfaces";
+import type { LogLevel, LogOptions } from "../interfaces";
+import { BaseLogger } from "./BaseLogger";
 
 Error.stackTraceLimit = 10;
 
@@ -51,21 +47,21 @@ type ConsoleOptions = {
 	formatDate: (date: Date) => string;
 };
 
-export class ConsoleLogger implements LoggerAdapter {
+export class ConsoleLogger extends BaseLogger<Console> {
 	log = console;
+
+	get level(): LogLevel {
+		return this.opts.level;
+	}
 
 	get chalk(): ChalkInstance {
 		return chalk;
 	}
 
-	get level() {
-		return this.opts.level;
-	}
-	context?: LoggerContext;
-
 	opts: LogOptions<ConsoleOptions>;
 
 	constructor(opts?: Partial<LogOptions<Partial<ConsoleOptions>>>) {
+		super();
 		this.opts = Object.assign(
 			{
 				level: "info",
@@ -83,11 +79,8 @@ export class ConsoleLogger implements LoggerAdapter {
 		chalk = new Chalk({ level: !opts?.noColor ? 1 : 0 });
 	}
 
-	createChild(context: LoggerContext) {
-		const child = new ConsoleLogger(this.opts);
-		child.context = context;
-
-		return child;
+	createChild() {
+		return console;
 	}
 
 	info(...args: any): void {
