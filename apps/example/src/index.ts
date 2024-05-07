@@ -53,7 +53,7 @@ if (import.meta.env.NODE_ENV !== "production") {
 }
 
 new Yab()
-	.useLogger(PinoLogger)
+	.logger(PinoLogger)
 	// SqliteAdapter recommended for development.
 	// RedisAdapter is recommended for production.
 	.use(cache({}, SqliteAdapter))
@@ -72,6 +72,7 @@ new Yab()
 		}),
 	)
 	.use(statics("/public", { assetsDir: "./public" }))
+	// .use(rateLimit("redis", {}))
 	.use(router("/api", [UserController]))
 	.start((context, { port }) => {
 		context.store.logger.info(`Server started at ${port}`);

@@ -20,7 +20,6 @@ import {
 	ConsoleLogger,
 	ContextService,
 	Hooks,
-	containerRef,
 } from "./services";
 import { HookMetadataKey } from "./symbols";
 import { enhance } from "./utils";
@@ -38,10 +37,6 @@ export class Yab {
 	);
 
 	#customContext?: (ctx: _RequestContext) => Record<string, unknown>;
-
-	get logger() {
-		return containerRef<_AppContext>().resolveValue<LoggerAdapter>("logger");
-	}
 
 	constructor(options?: Partial<YabOptions>) {
 		this.#config = new Configuration({
@@ -161,10 +156,10 @@ export class Yab {
 		return this;
 	}
 
-	useLogger<Logger extends AbstractLogger>(
-		logger: AnyClass<LoggerAdapter<Logger>>,
-		options: ConstructorParameters<AnyClass<LoggerAdapter<Logger>>>[0],
-	) {
+	logger<
+		Logger extends AbstractLogger,
+		Adapter extends AnyClass<LoggerAdapter<Logger>>,
+	>(logger: Adapter, options?: ConstructorParameters<Adapter>[0]) {
 		this.#logger = new logger({
 			...this.#config.options.log,
 			...options,
@@ -219,19 +214,20 @@ export class Yab {
 				server,
 			]);
 
-			for (const eventType of ["SIGTERM"]) {
-				process.on(eventType, async (exitCode) => {
-					this.logger.info("Shutting down server...");
-					await this.#hooks.invoke(YabEvents.OnExit, [
-						container.expose(),
-						server,
-					]);
-					server.stop();
-					setTimeout(() => {
-						process.exit(exitCode);
-					}, 500);
-				});
-			}
+			process.on("SIGINT", async () => {
+				this.#logger.info("Shutting down server...");
+				await this.#hooks.invoke(YabEvents.OnExit, [
+					container.expose(),
+					server,
+				]);
+
+				this.#container.dispose();
+
+				server.stop();
+				setTimeout(() => {
+					process.exit();
+				}, 500);
+			});
 
 			onStarted(container.expose(), server);
 		});

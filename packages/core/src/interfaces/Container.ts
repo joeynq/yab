@@ -1,5 +1,6 @@
 import type { AnyClass, Dictionary } from "@yab/utils";
 import type { AwilixContainer } from "awilix";
+import type { SocketAddress } from "bun";
 import type { Yab } from "../Yab";
 import type { Configuration, Hooks } from "../services";
 import type { LoggerAdapter } from "./LoggerAdapter";
@@ -43,6 +44,8 @@ export interface _RequestContext extends _AppContext {
 	request: Request;
 	requestId: string;
 	serverUrl: string;
+	userIp?: SocketAddress;
+	userAgent?: string;
 }
 
 export type ExposedContext<Context extends object = _RequestContext> = {

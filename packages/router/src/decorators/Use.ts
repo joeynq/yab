@@ -1,7 +1,9 @@
 import { type AnyClass, deepMerge } from "@yab/utils";
 import { getControllerMetadata, setControllerMetadata } from "../utils";
 
-export const Use = (middleware: AnyClass<any>): MethodDecorator => {
+export const Use = <Middleware extends AnyClass>(
+	middleware: Middleware,
+): MethodDecorator => {
 	return (target: any, propertyKey: string | symbol) => {
 		const existing = getControllerMetadata(target.constructor);
 

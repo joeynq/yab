@@ -10,6 +10,7 @@
 		"@yab/logger": "link:@yab/logger",
 		"@yab/mikro-orm": "link:@yab/mikro-orm",
 		"@yab/notification": "link:@yab/notification",
+		"@yab/rate-limit": "link:@yab/rate-limit",
 		"@yab/router": "link:@yab/router",
 		"@yab/security": "link:@yab/security",
 		"@yab/static": "link:@yab/static",

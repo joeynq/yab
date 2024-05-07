@@ -1,0 +1,22 @@
+{
+	"name": "@yab/rate-limit",
+	"module": "src/index.ts",
+	"main": "dist/index.js",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"watch": "tsc -w"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@yab/core": "link:@yab/core",
+		"@yab/router": "link:@yab/router",
+		"@yab/utils": "link:@yab/utils"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"rate-limiter-flexible": "^5.0.3"
+	}
+}
