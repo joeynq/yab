@@ -10,12 +10,10 @@ export class Configuration {
 	}
 
 	constructor(options?: YabOptions) {
-		this.options = Object.assign(
-			{
-				modules: [],
-			},
-			options,
-		);
+		this.options = {
+			modules: [],
+			...options,
+		};
 	}
 
 	getModuleConfig<Config extends Dictionary = Dictionary>(

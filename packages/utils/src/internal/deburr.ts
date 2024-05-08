@@ -1,5 +1,3 @@
-import { hasOwn } from "../object";
-
 const deburredLetters = {
 	// Latin-1 Supplement block.
 	"\xc0": "A",
@@ -212,7 +210,6 @@ const rsComboRange =
 /** Used to compose unicode capture groups. */
 const rsCombo = `[${rsComboRange}]`;
 
-// eslint-disable-next-line no-misleading-character-class
 const reComboMark = RegExp(rsCombo, "g");
 
 function basePropertyOf<O extends object>(object: O) {
@@ -220,7 +217,7 @@ function basePropertyOf<O extends object>(object: O) {
 		if (object === null) {
 			return "";
 		}
-		return hasOwn(object, key) ? object[key as keyof O] : "";
+		return Object.hasOwn(object, key) ? object[key as keyof O] : "";
 	};
 }
 

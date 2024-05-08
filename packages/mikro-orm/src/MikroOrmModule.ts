@@ -48,11 +48,8 @@ export class MikroOrmModule extends YabModule<MikroOrmModuleConfig> {
 			: "unsuccessfully";
 
 		this.logger.info(
-			`MikroORM connected to database ${isConnected} to ${
-				url.protocol
-			}//${url.host.split(":").join(":")}/${url.pathname.slice(1)}${
-				url.search
-			}`,
+			"MikroORM connected to database {isConnected} to {url.protocol}//{url.host}{url.pathname}{url.search}",
+			{ url, isConnected },
 		);
 
 		const contextName = this.#orm.config.get("contextName");
@@ -60,8 +57,8 @@ export class MikroOrmModule extends YabModule<MikroOrmModuleConfig> {
 			[`${getToken(contextName)}.orm`]: asValue(this.#orm),
 			[`${getToken(contextName)}.em`]: {
 				lifetime: InjectionScope.Scoped,
-				resolve: (c) =>
-					c
+				resolve: (container) =>
+					container
 						.resolve<MikroORM>(`${getToken(contextName)}.orm`)
 						.em.fork({ useContext: true }),
 			},

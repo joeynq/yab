@@ -1,4 +1,4 @@
-export type AnyClass<T = unknown> = { new (...args: any[]): T };
+export type AnyClass<T = unknown> = new (...args: any[]) => T;
 export type Dictionary<T = unknown> = Record<string, T>;
 export type AnyFunction = (...args: any[]) => unknown;
 export type AnyPromiseFunction = (...args: any[]) => Promise<unknown>;
@@ -53,8 +53,6 @@ export type IsTuple<T extends ReadonlyArray<any>> = number extends T["length"]
 	? false
 	: true;
 
-export type ArrayKey = number;
-
 type TupleKeys<T extends ReadonlyArray<any>> = Exclude<keyof T, keyof any[]>;
 
 export type IsEqual<T1, T2> = T1 extends T2
@@ -86,7 +84,7 @@ type PathInternal<T, TraversedTypes = T> = T extends ReadonlyArray<infer V>
 		? {
 				[K in TupleKeys<T>]-?: PathImpl<K & string, T[K], TraversedTypes>;
 			}[TupleKeys<T>]
-		: PathImpl<ArrayKey, V, TraversedTypes>
+		: PathImpl<number, V, TraversedTypes>
 	: {
 			[K in keyof T]-?: PathImpl<K & string, T[K], TraversedTypes>;
 		}[keyof T];
@@ -118,7 +116,7 @@ type ArrayPathInternal<T, TraversedTypes = T> = T extends ReadonlyArray<infer V>
 		? {
 				[K in TupleKeys<T>]-?: ArrayPathImpl<K & string, T[K], TraversedTypes>;
 			}[TupleKeys<T>]
-		: ArrayPathImpl<ArrayKey, V, TraversedTypes>
+		: ArrayPathImpl<number, V, TraversedTypes>
 	: {
 			[K in keyof T]-?: ArrayPathImpl<K & string, T[K], TraversedTypes>;
 		}[keyof T];
@@ -131,14 +129,14 @@ export type PathValue<T, P extends Path<T> | ArrayPath<T>> = T extends any
 			? R extends Path<T[K]>
 				? PathValue<T[K], R>
 				: never
-			: K extends `${ArrayKey}`
+			: K extends `${number}`
 				? T extends ReadonlyArray<infer V>
 					? PathValue<V, R & Path<V>>
 					: never
 				: never
 		: P extends keyof T
 			? T[P]
-			: P extends `${ArrayKey}`
+			: P extends `${number}`
 				? T extends ReadonlyArray<infer V>
 					? V
 					: never

@@ -16,15 +16,13 @@ export class PinoLogger extends BaseLogger<Logger> {
 
 	constructor(options: Partial<LogOptions<LoggerOptions & Dictionary>> = {}) {
 		super();
-		this.options = Object.assign(
-			{
-				level: "info",
-				stackTrace: true,
-				noColor: false,
-				options: {},
-			},
-			options,
-		);
+		this.options = {
+			level: "info",
+			stackTrace: true,
+			noColor: false,
+			options: {},
+			...options,
+		};
 		this.setLogger(
 			Pino({
 				base: {},

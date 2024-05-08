@@ -40,54 +40,10 @@ export const isPrimitive = (value: any): value is Primitive => {
 	);
 };
 
-export const deepEqual = <T>(a: T, b: T): boolean => {
-	if (a === b) {
-		return true;
-	}
-
-	if (a instanceof Object && b instanceof Object) {
-		const keysA = Object.keys(a) as (keyof T)[];
-		const keysB = Object.keys(b) as (keyof T)[];
-
-		if (keysA.length !== keysB.length) {
-			return false;
-		}
-
-		for (const key of keysA) {
-			if (!deepEqual(a[key], b[key])) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	// a, b are arrays
-	if (Array.isArray(a) && Array.isArray(b)) {
-		if (a.length !== b.length) {
-			return false;
-		}
-
-		for (let i = 0; i < a.length; i++) {
-			if (!deepEqual(a[i], b[i])) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	return false;
-};
-
 export const deepMerge = deepmerge;
 
-export const hasOwn = <T extends object>(obj: T, key: string) => {
-	return obj && Object.prototype.hasOwnProperty.call(obj, key);
-};
-
 export const clone = <T extends object>(obj: T, newPropertyValues: any): T => {
-	const clone = new (obj.constructor as { new (): T })();
+	const clone = new (obj.constructor as new () => T)();
 
 	const nestedClones = Object.getOwnPropertyNames(clone).reduce(
 		(partial, propertyName) => {
@@ -134,10 +90,10 @@ export const flatten = <T extends Dictionary>(obj: unknown): T => {
 		// biome-ignore lint/style/noNonNullAssertion: <explanation>
 		const [prefix, value] = stack.pop()!;
 		if (value == null) {
-			// @ts-ignore
+			// @ts-expect-error
 			flattened[prefix] = value;
 		} else if (typeof value !== "object") {
-			// @ts-ignore
+			// @ts-expect-error
 			flattened[prefix] = value;
 		} else if (Array.isArray(value)) {
 			for (let i = 0; i < value.length; i++) {
@@ -145,7 +101,7 @@ export const flatten = <T extends Dictionary>(obj: unknown): T => {
 			}
 		} else {
 			for (const key in value) {
-				// @ts-ignore
+				// @ts-expect-error
 				stack.push([`${prefix}.${key}`, value[key]]);
 			}
 		}
@@ -181,7 +137,7 @@ export function getVal<
 		(acc, key) => (acc as never)?.[key as keyof object],
 		obj as never,
 	);
-	return val === undefined ? defaultValue : val;
+	return val ?? defaultValue;
 }
 
 export const setVal = <

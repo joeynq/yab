@@ -102,12 +102,12 @@ export class Hooks<
 		if (handlers) {
 			for (const handler of handlers) {
 				try {
-					const result = await handler(...args);
+					const result = await (handler as MaybePromiseFunction)(...args);
 					if (breakOnNull && result === null) {
 						break;
 					}
 					if (breakOnResult && !isUndefined(result)) {
-						return result;
+						return result as EventResult<EventType, Event, EventMap>;
 					}
 				} catch (error) {
 					if (breakOnError) {

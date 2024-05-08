@@ -15,7 +15,7 @@ export type LoggerContext = Pick<
 	"requestId" | "serverUrl" | "userIp" | "userAgent"
 >;
 
-export interface LogOptions<Logger extends Dictionary | object | never> {
+export interface LogOptions<Logger extends Dictionary | object> {
 	context?: LoggerContext;
 	noColor: boolean;
 	level: LogLevel;
@@ -24,9 +24,9 @@ export interface LogOptions<Logger extends Dictionary | object | never> {
 }
 
 export interface LogFn {
-	<T extends object>(obj: T, msg?: string, ...args: any[]): void;
-	(obj: unknown, msg?: string, ...args: any[]): void;
-	(msg: string, ...args: any[]): void;
+	<T extends object>(obj: T, msg?: string, ...args: any[]): any;
+	(obj: unknown, msg?: string, ...args: any[]): any;
+	(msg: string, ...args: any[]): any;
 }
 
 export interface AbstractLogger {

@@ -8,7 +8,7 @@ export const AutoHookEvent = Symbol("AutoHookEvent");
 export type AutoHookStore = Dictionary<string>;
 
 export const AutoHook = (event: string = YabEvents.OnInit) => {
-	return <T extends { new (...args: any[]): any }>(target: T) => {
+	return <T extends new (...args: any[]) => any>(target: T) => {
 		const funcName = `__${event}__`;
 
 		const hookStores: AutoHookStore = Reflect.getMetadata(

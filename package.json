@@ -9,10 +9,16 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.7.1",
+		"@eslint/js": "^9.2.0",
+		"@types/bun": "latest",
 		"cz-conventional-changelog": "^3.3.0",
+		"eslint": "^9.2.0",
+		"eslint-plugin-sonarjs": "^1.0.3",
+		"globals": "^15.2.0",
 		"lefthook": "^1.6.10",
 		"semantic-release": "^23.0.8",
-		"turbo": "^1.13.3"
+		"turbo": "^1.13.3",
+		"typescript-eslint": "^7.8.0"
 	},
 	"engines": {
 		"node": ">=18"
@@ -23,5 +29,10 @@
 		"@commitlint/cli": "^19.3.0",
 		"@commitlint/config-conventional": "^19.2.2"
 	},
-	"trustedDependencies": ["@biomejs/biome", "@swc/core", "esbuild", "lefthook"]
+	"trustedDependencies": ["@biomejs/biome", "@swc/core", "esbuild", "lefthook"],
+	"module": "index.ts",
+	"type": "module",
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	}
 }

@@ -48,11 +48,11 @@ export class YogaModule<
 
 	@YabHook("app:started")
 	async onStarted(_: AppContext, server: Server) {
-		this.logger.info(
-			`Yoga server is running on ${new URL(
+		this.logger.info("Yoga server is running on {url}", {
+			url: new URL(
 				this.#yoga.graphqlEndpoint,
 				`http://${server.hostname}:${server.port}`,
-			)}`,
-		);
+			),
+		});
 	}
 }

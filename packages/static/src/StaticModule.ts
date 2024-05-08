@@ -1,4 +1,11 @@
-import { Module, type RequestContext, YabHook, YabModule } from "@yab/core";
+import {
+	Logger,
+	type LoggerAdapter,
+	Module,
+	type RequestContext,
+	YabHook,
+	YabModule,
+} from "@yab/core";
 import { generateETag, isCached } from "./utils";
 
 export type SlashedPath = `/${string}`;
@@ -35,8 +42,19 @@ const defaultStaticExtensions = [
 
 @Module()
 export class StaticModule extends YabModule<StaticModuleOptions> {
+	@Logger()
+	logger!: LoggerAdapter;
+
 	constructor(public config: StaticModuleOptions) {
 		super();
+	}
+
+	@YabHook("app:init")
+	public async onInit() {
+		this.logger.info(
+			"StaticModule initialized. Public path: {prefix}",
+			this.config,
+		);
 	}
 
 	@YabHook("app:request")
@@ -76,7 +94,7 @@ export class StaticModule extends YabModule<StaticModuleOptions> {
 		// file is ignored
 		if (ignorePatterns) {
 			for (const pattern of ignorePatterns) {
-				if (url.pathname.match(pattern)) {
+				if (RegExp(pattern).exec(url.pathname)) {
 					return;
 				}
 			}

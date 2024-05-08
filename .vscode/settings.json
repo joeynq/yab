@@ -16,13 +16,20 @@
 		"jwks",
 		"lefthook",
 		"mikro",
+		"mongolyy",
+		"nofilter",
 		"noopen",
 		"nosniff",
 		"notifme",
 		"pino",
+		"reviewdog",
+		"rlflx",
 		"SAMEORIGIN",
+		"sonarjs",
+		"tseslint",
 		"tslog",
-		"typebox"
+		"typebox",
+		"workdir"
 	],
 	"editor.codeActionsOnSave": {
 		"source.organizeImports.biome": "always"

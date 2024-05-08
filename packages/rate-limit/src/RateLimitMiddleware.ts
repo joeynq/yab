@@ -14,10 +14,10 @@ export class RateLimitMiddleware {
 
 	constructor(options?: Partial<RateLimitOptions>) {
 		this.options = {
-			keyPrefix: options?.keyPrefix || "rlflx",
-			points: options?.points || 4,
-			duration: options?.duration || 1,
-			blockDuration: options?.blockDuration || 0,
+			keyPrefix: options?.keyPrefix ?? "rlflx",
+			points: options?.points ?? 4,
+			duration: options?.duration ?? 1,
+			blockDuration: options?.blockDuration ?? 0,
 		};
 	}
 

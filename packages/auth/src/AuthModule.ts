@@ -41,9 +41,10 @@ export class AuthModule<S extends Strategy<any>> extends YabModule<
 		context.register(AuthModuleKey.toString(), asValue(this.config.strategy));
 		try {
 			await this.config.strategy.init?.();
-			this.logger.info(
-				`Auth module initialized with ${this.config.strategy.constructor.name}. Issuer: ${this.config.strategy.config.options.issuer}`,
-			);
+			this.logger.info("AuthModule initialized with {name}. Issuer: {issuer}", {
+				name: this.config.strategy.constructor.name,
+				issuer: this.config.strategy.config.options.issuer,
+			});
 		} catch (error) {
 			this.logger.error(error as any, "Error initializing auth module");
 			throw error;

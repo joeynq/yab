@@ -1,4 +1,4 @@
-import { clone } from "@yab/utils";
+import { clone, format } from "@yab/utils";
 import type {
 	AbstractLogger,
 	LogLevel,
@@ -30,15 +30,15 @@ export abstract class BaseLogger<Logger extends AbstractLogger>
 	}
 
 	info(arg: any, ...args: any[]) {
-		this.log.info(arg, ...args);
+		this.log.info(...this.#formatMessage(arg, ...args));
 	}
 
 	error(arg: any, ...args: any[]) {
-		this.log.error(arg, ...args);
+		this.log.error(...this.#formatMessage(arg, ...args));
 	}
 
 	warn(arg: any, ...args: any[]) {
-		this.log.warn(arg, ...args);
+		this.log.warn(...this.#formatMessage(arg, ...args));
 	}
 
 	debug(arg: any, ...args: any[]) {
@@ -46,6 +46,29 @@ export abstract class BaseLogger<Logger extends AbstractLogger>
 	}
 
 	trace(arg: any, ...args: any[]) {
-		this.log.trace(arg, ...args);
+		this.log.trace(...this.#formatMessage(arg, ...args));
+	}
+
+	#formatMessage(arg: any, ...args: any[]): any[] {
+		// if first arg is string, then it's a message, second arg is interpolation context
+		if (
+			typeof arg === "string" &&
+			args.length > 0 &&
+			typeof args[0] === "object"
+		) {
+			const message = format(arg, args[0]);
+			return [message, ...args.slice(1)];
+		}
+		// if first arg is object, then it's a log object, last rule applies to second arg
+		if (
+			typeof arg === "object" &&
+			args.length > 0 &&
+			typeof args[0] === "string"
+		) {
+			const [message, ...rest] = this.#formatMessage(args[0], ...args.slice(1));
+			return [arg, message, ...rest];
+		}
+
+		return [arg, ...args];
 	}
 }

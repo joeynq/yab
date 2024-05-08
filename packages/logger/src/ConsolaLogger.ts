@@ -8,23 +8,23 @@ import {
 } from "consola";
 
 export class ConsolaLogger extends BaseLogger<ConsolaInstance> {
-	config: LogOptions<ConsolaOptions & Dictionary>;
+	config: LogOptions<Partial<ConsolaOptions> & Dictionary>;
 
 	get level() {
 		return this.config.level;
 	}
 
-	constructor(config: Partial<LogOptions<ConsolaOptions & Dictionary>> = {}) {
+	constructor(
+		config: Partial<LogOptions<Partial<ConsolaOptions> & Dictionary>> = {},
+	) {
 		super();
-		this.config = Object.assign(
-			{
-				level: "info",
-				stackTrace: true,
-				noColor: false,
-				options: {},
-			},
-			config,
-		);
+		this.config = {
+			level: "info",
+			stackTrace: true,
+			noColor: false,
+			options: {},
+			...config,
+		};
 		this.log = createConsola({
 			...this.config.options,
 			level: LogLevels[this.config.level],

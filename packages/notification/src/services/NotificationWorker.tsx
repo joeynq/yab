@@ -2,8 +2,7 @@ import { parentPort } from "node:worker_threads";
 import type { AnyClass } from "@yab/utils";
 import type { NotificationAdapter, NotificationEvent } from "../interfaces";
 
-// biome-ignore lint/style/noVar: <explanation>
-declare var self: Worker;
+declare let self: Worker;
 
 const log = (message: any) => {
 	parentPort?.postMessage(message);

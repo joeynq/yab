@@ -1,4 +1,4 @@
-import { format, hasOwn, omitUndefined } from "@yab/utils";
+import { format, omitUndefined } from "@yab/utils";
 import { Chalk, type ChalkInstance } from "chalk";
 import { logLevelOrder } from "../enum/logLevel";
 import type { LogLevel, LogOptions } from "../interfaces";
@@ -16,9 +16,7 @@ Error.prepareStackTrace = (error, stack) => {
 			const lineNumber = callSite.getLineNumber();
 			const columnNumber = callSite.getColumnNumber();
 
-			const functionNameColor = functionName
-				? functionName
-				: chalk.dim("<anonymous>");
+			const functionNameColor = functionName ?? chalk.dim("<anonymous>");
 
 			const fileNameOnly = fileName?.split("/").pop();
 			const pathWithoutFileName = fileName?.split("/").slice(0, -1).join("/");
@@ -62,19 +60,17 @@ export class ConsoleLogger extends BaseLogger<Console> {
 
 	constructor(opts?: Partial<LogOptions<Partial<ConsoleOptions>>>) {
 		super();
-		this.opts = Object.assign(
-			{
-				level: "info",
-
-				stackTrace: true,
-				noColor: false,
-				options: {
-					formatDate: (date: Date) =>
-						date.toISOString().slice(0, 23).replace("T", " "),
-				},
+		this.opts = {
+			level: "info",
+			stackTrace: true,
+			noColor: false,
+			...(opts ? omitUndefined(opts) : {}),
+			options: {
+				...opts?.options,
+				formatDate: (date: Date) =>
+					date.toISOString().slice(0, 23).replace("T", " "),
 			},
-			opts ? omitUndefined(opts) : {},
-		);
+		};
 
 		chalk = new Chalk({ level: !opts?.noColor ? 1 : 0 });
 	}
@@ -107,8 +103,8 @@ export class ConsoleLogger extends BaseLogger<Console> {
 	protected writeLog(level: LogLevel, ...args: any[]) {
 		if (!this.allowLevel(level)) return;
 
-		const log = hasOwn(this.log, level)
-			? // @ts-ignore
+		const log = Object.hasOwn(this.log, level)
+			? // @ts-expect-error
 				this.log[level]
 			: this.log.log.bind(this.log);
 
@@ -137,8 +133,8 @@ export class ConsoleLogger extends BaseLogger<Console> {
 		}
 
 		stack && this.opts.stackTrace
-			? log(this.logEntry(errorLevel || level, `${message}`), `\n${stack}`)
-			: log(this.logEntry(errorLevel || level, message));
+			? log(this.logEntry(errorLevel ?? level, `${message}`), `\n${stack}`)
+			: log(this.logEntry(errorLevel ?? level, message));
 	}
 
 	protected formatMessage<O extends object>(message: string, object: O) {
@@ -147,12 +143,18 @@ export class ConsoleLogger extends BaseLogger<Console> {
 
 	protected logEntry(level: LogLevel, message: string) {
 		const date = this.opts.options.formatDate(new Date());
-		const coloredLevel =
-			level === "error" || level === "fatal"
-				? this.chalk.red(level.padEnd(5, " ").toLocaleUpperCase())
-				: level === "warn" || level === "debug"
-					? this.chalk.yellow(level.padEnd(5, " ").toLocaleUpperCase())
-					: this.chalk.green(level.padEnd(5, " ").toLocaleUpperCase());
+
+		const coloredLevels = {
+			error: this.chalk.red,
+			warn: this.chalk.yellow,
+			debug: this.chalk.yellow,
+			info: this.chalk.green,
+			trace: this.chalk.green,
+			fatal: this.chalk.red,
+			silent: (message: string) => undefined,
+		};
+
+		const coloredLevel = coloredLevels[level](level.toUpperCase());
 
 		const coloredMessage =
 			level === "error" || level === "fatal"

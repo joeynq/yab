@@ -44,7 +44,7 @@ export class Yab {
 			modules: options?.modules || [],
 		});
 		this.#logger = new ConsoleLogger({
-			level: this.#config.options.log?.level || "info",
+			level: this.#config.options.log?.level ?? "info",
 			noColor: this.#config.options.log?.noColor,
 			stackTrace: this.#config.options.log?.stackTrace,
 		});
@@ -94,12 +94,12 @@ export class Yab {
 				async (stored: EnhancedContainer<_RequestContext>) => {
 					try {
 						stored.register({
-							requestId: asValue(request.headers.get("x-request-id") || uuid()),
+							requestId: asValue(request.headers.get("x-request-id") ?? uuid()),
 							request: asValue(request),
 							serverUrl: asValue(server.url.toJSON()),
 							userIp: asValue(server.requestIP(request) || undefined),
 							userAgent: asValue(
-								request.headers.get("user-agent") || undefined,
+								request.headers.get("user-agent") ?? undefined,
 							),
 						});
 
