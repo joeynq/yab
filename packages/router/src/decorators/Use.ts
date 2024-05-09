@@ -1,6 +1,13 @@
 import { type HookHandler, HookMetadataKey, mergeMetadata } from "@yab/core";
 import type { AnyClass } from "@yab/utils";
-import { getControllerMetadata, getMiddlewareMetadata } from "../utils";
+import { RouterEvent } from "../event";
+import {
+	getControllerMetadata,
+	getEventName,
+	getMiddlewareMetadata,
+} from "../utils";
+
+const routeSpecificEvents = [RouterEvent.BeforeHandle, RouterEvent.AfterHandle];
 
 export const Use = <Middleware extends AnyClass>(
 	middleware: Middleware,
@@ -11,12 +18,14 @@ export const Use = <Middleware extends AnyClass>(
 			throw new Error("Path not found!");
 		}
 
-		const router = existing.routes[String(propertyKey)];
+		const { method, path } = existing.routes[String(propertyKey)];
 		const midMetadata = getMiddlewareMetadata(middleware);
 		const hookValue: Record<string, HookHandler[]> = {};
 
 		for (const [key, { event }] of Object.entries(midMetadata.handler)) {
-			const eventName = `${event}:${router.method}{prefix}${router.path}`;
+			const eventName = routeSpecificEvents.includes(event)
+				? getEventName(event, method, `{prefix}${path}`)
+				: event;
 			hookValue[eventName] = [
 				{
 					target: middleware,

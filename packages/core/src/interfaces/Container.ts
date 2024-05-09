@@ -1,4 +1,4 @@
-import type { AnyClass, Dictionary } from "@yab/utils";
+import type { AnyClass, Dictionary, MaybePromiseFunction } from "@yab/utils";
 import type { AwilixContainer } from "awilix";
 import type { SocketAddress } from "bun";
 import type { Yab } from "../Yab";
@@ -35,7 +35,7 @@ export interface _AppContext {
 	env: Dictionary<unknown>;
 	app: Yab;
 	logger: LoggerAdapter;
-	hooks: Hooks<Dictionary<any>, Dictionary<any>>;
+	hooks: Hooks<Dictionary<string>, Dictionary<MaybePromiseFunction>>;
 	config: Configuration;
 	[key: string]: unknown;
 }

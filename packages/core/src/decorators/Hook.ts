@@ -7,8 +7,6 @@ export function Hook<EventType extends { [key: string]: string }>(
 	position: "before" | "after" = "after",
 ): MethodDecorator {
 	return (target, key) => {
-		// mergeMetadata(HookMetadataKey, { [event]: [key] }, target, position);
-
 		mergeMetadata(
 			HookMetadataKey,
 			{

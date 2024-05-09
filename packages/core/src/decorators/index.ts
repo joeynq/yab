@@ -1,3 +1,4 @@
+export * from "./AutoHook";
 export * from "./Env";
 export * from "./Hook";
 export * from "./Inject";

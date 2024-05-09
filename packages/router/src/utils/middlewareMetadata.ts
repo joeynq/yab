@@ -30,5 +30,5 @@ export const setMiddlewareMetadata = (
 };
 
 export const getEventName = (event: string, method: string, path: string) => {
-	return `${event}-${method.toLowerCase()}-${path}`;
+	return `${event}:${method}${path}`.replace(/\/$/, "").toLowerCase();
 };

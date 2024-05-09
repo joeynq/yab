@@ -30,8 +30,11 @@ export type HookHandler = {
 };
 
 export class Hooks<
-	EventType extends { [key: string]: string },
-	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction>,
+	EventType extends { [key: string]: string } = Dictionary<string>,
+	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction> = Record<
+		string,
+		MaybePromiseFunction
+	>,
 > {
 	#hooks = new Map<
 		string,
@@ -48,38 +51,20 @@ export class Hooks<
 		>;
 	}
 
-	// registerFromMetadata(instance: any) {
-	//   const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
-	//     { target: AnyClass }[]
-	//   >;
-	//   console.log("hooks", instance, hooks);
-	//   if (hooks) {
-	//     for (const [event, handlers] of Object.entries(hooks)) {
-	//       for (const handler of handlers) {
-	//         this.register(
-	//           event as EnumValues<EventType>,
-	//           instance[handler].bind(instance)
-	//         );
-	//       }
-	//     }
-	//   }
-	// }
-
 	registerFromMetadata(instance: any) {
 		const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
 			HookHandler[]
 		>;
 		if (hooks) {
 			for (const [event, handlers] of Object.entries(hooks)) {
-				for (const handler of handlers) {
-					const currentInstance = !isUndefined(handler.target)
-						? containerRef().resolve(handler.target.name)
+				for (const { target, method } of handlers) {
+					const currentInstance = !isUndefined(target)
+						? containerRef().resolve(target.name)
 						: instance;
 
-					this.register(
-						event as EnumValues<EventType>,
-						currentInstance[handler.method].bind(currentInstance),
-					);
+					const handler = currentInstance[method].bind(currentInstance);
+
+					this.register(event as EnumValues<EventType>, handler);
 				}
 			}
 		}

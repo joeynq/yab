@@ -1,86 +1,14 @@
-import {
-	Entity,
-	type EntityManager,
-	PrimaryKey,
-	type RequestContext,
-} from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
-import { Logger, type LoggerAdapter, Yab } from "@yab/core";
+import { Yab } from "@yab/core";
 import { PinoLogger } from "@yab/logger/pino";
-import { Em, mikroOrm } from "@yab/mikro-orm";
-import {
-	AfterRoute,
-	BeforeRoute,
-	Body,
-	Controller,
-	Get,
-	Params,
-	Post,
-	Query,
-	Use,
-	router,
-} from "@yab/router";
+import { mikroOrm } from "@yab/mikro-orm";
+import { router } from "@yab/router";
 import { statics } from "@yab/static";
-import {
-	type UserParamDto,
-	UserParamSchema,
-	UserQuerySchema,
-	type UserQuerySchemaDto,
-} from "./models";
-
-class AnyMiddleware {
-	@BeforeRoute()
-	public test(ctx: RequestContext) {}
-
-	@AfterRoute()
-	public test3(ctx: RequestContext) {}
-}
-
-@Controller("/users")
-class UserController {
-	@Logger()
-	logger!: LoggerAdapter;
-
-	@Em()
-	em!: EntityManager;
-
-	@Post("/")
-	createUser(@Body(UserQuerySchema) user: UserQuerySchemaDto) {
-		this.logger.info("Create users");
-		return { user };
-	}
-
-	@Get("/")
-	getUsers() {
-		this.logger.info("Get users");
-		return { users: [] };
-	}
-
-	@Use(AnyMiddleware)
-	// @Authorized()
-	@Get("/:id")
-	getUser(
-		@Query(UserQuerySchema) userQuery: UserQuerySchemaDto,
-		@Params(UserParamSchema) param: UserParamDto,
-	) {
-		this.logger.info("Get user");
-		return {
-			user: {
-				userQuery,
-				param,
-			},
-		};
-	}
-}
-
-@Entity()
-class User {
-	@PrimaryKey()
-	id!: number;
-}
+import { UserController } from "./controllers";
+import { User } from "./entities";
 
 /*
 
@@ -120,8 +48,8 @@ new Yab()
 	// .use(rateLimit("redis", {}))
 	.use(
 		router("/api", [UserController], {
-			customValidation: async (schema: any, payload: any) => {},
-			middlewares: [AnyMiddleware],
+			// customValidation: async (schema: any, payload: any) => {},
+			// middlewares: [AnyMiddleware],
 		}),
 	)
 	.start((context, { port }) => {
