@@ -1,4 +1,4 @@
-import { AutoHook } from "./Inject";
+import { AutoHook } from "./AutoHook";
 
 export const Module = () => {
 	return (target: any) => {

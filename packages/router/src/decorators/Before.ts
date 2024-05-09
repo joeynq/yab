@@ -1,4 +1,4 @@
 import { RouterEvent } from "../event";
 import { OnRoute } from "./OnRoute";
 
-export const AfterRoute = OnRoute.bind(null, RouterEvent.AfterRoute);
+export const Before = OnRoute.bind(null, RouterEvent.BeforeHandle);

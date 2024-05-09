@@ -1,13 +1,21 @@
 import type { TObject } from "@sinclair/typebox";
-import type { Hooks } from "@yab/core";
-import type { AnyClass, AnyFunction } from "@yab/utils";
+import type { AnyClass, MaybePromiseFunction } from "@yab/utils";
+import type { FindResult } from "memoirist";
 import type { HttpMethod } from "../enums";
-import type { RouterEvent, RouterEventMap } from "../event";
 
 export type SlashedPath = `/${string}`;
 
+export type ParameterType = "query" | "params" | "body" | "headers" | "cookie";
+
+export type RouteParameter = {
+	index: number;
+	schema?: TObject;
+	in: ParameterType;
+};
+
 export type RouterConfig = {
 	middlewares?: AnyClass<any>[];
+	customValidation?: ValidationFn;
 	errorHandler?: (
 		error: Error,
 		responseConfig?: RouteObject["response"],
@@ -19,26 +27,24 @@ export type RouterConfig = {
 	routes: { [key: SlashedPath]: RouteObject[] };
 };
 
-export type RouteObject = {
-	prefix: SlashedPath;
-	method: HttpMethod;
+interface Route {
 	path: string;
-	controller: AnyClass<any>;
-	actionName: string;
-	middlewares?: AnyClass<any>[];
-	payload?: {
-		query?: TObject;
-		body?: TObject;
-		params?: TObject;
-		headers?: TObject;
-	};
+	parameters?: RouteParameter[];
 	response?: {
 		[statusCode: number]: {
 			contentType: string;
 			schema: TObject;
 		};
 	};
-};
+}
+
+export interface RouteObject extends Route {
+	prefix: SlashedPath;
+	method: HttpMethod;
+	controller: AnyClass<any>;
+	actionName: string;
+	middlewares?: AnyClass<any>[];
+}
 
 export type ControllerMetadata = {
 	prefix: SlashedPath;
@@ -49,37 +55,18 @@ export type ControllerMetadata = {
 };
 
 // separate route metadata and route object
-export type RouteMetadata = {
+export interface RouteMetadata extends Route {
 	method: HttpMethod;
-	path: string;
-	payload?: {
-		query?: TObject;
-		body?: TObject;
-		params?: TObject;
-		headers?: TObject;
-	};
-	response?: {
-		[statusCode: number]: {
-			contentType: string;
-			schema: TObject;
-		};
-	};
 	middlewares?: AnyClass<any>[];
-};
+}
 
-export type RouteMatch = {
-	handler: AnyFunction;
-	hooks: Hooks<typeof RouterEvent, RouterEventMap>;
-	payload?: {
-		query?: TObject;
-		body?: TObject;
-		params?: TObject;
-		headers?: TObject;
-	};
-	response?: {
-		[statusCode: number]: {
-			contentType: string;
-			schema: TObject;
-		};
-	};
-};
+export interface RouteMatch extends Route {
+	handler: MaybePromiseFunction;
+	prefix: SlashedPath;
+}
+
+export type ValidationFn = <Schema extends TObject, T extends Readonly<any>>(
+	schema: Schema,
+	value: T,
+	route: FindResult<RouteMatch>,
+) => Promise<void>;

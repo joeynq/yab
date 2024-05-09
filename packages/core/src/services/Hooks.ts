@@ -1,4 +1,5 @@
 import {
+	type AnyClass,
 	type Dictionary,
 	type EnumValues,
 	type MaybePromiseFunction,
@@ -6,6 +7,7 @@ import {
 } from "@yab/utils";
 import type { EventPayload, EventResult } from "../interfaces";
 import { HookMetadataKey } from "../symbols";
+import { containerRef } from "./Context";
 
 type EventHandler<
 	EventType extends { [key: string]: string },
@@ -21,9 +23,18 @@ interface InvokeOptions {
 	breakOnError?: boolean;
 }
 
+export type HookHandler = {
+	target?: AnyClass;
+	method: string;
+	scoped?: "request";
+};
+
 export class Hooks<
-	EventType extends { [key: string]: string },
-	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction>,
+	EventType extends { [key: string]: string } = Dictionary<string>,
+	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction> = Record<
+		string,
+		MaybePromiseFunction
+	>,
 > {
 	#hooks = new Map<
 		string,
@@ -34,17 +45,26 @@ export class Hooks<
 		return this.#hooks;
 	}
 
+	getMetadata(instance: any) {
+		return Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
+			string[]
+		>;
+	}
+
 	registerFromMetadata(instance: any) {
 		const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
-			string[]
+			HookHandler[]
 		>;
 		if (hooks) {
 			for (const [event, handlers] of Object.entries(hooks)) {
-				for (const handler of handlers) {
-					this.register(
-						event as EnumValues<EventType>,
-						instance[handler].bind(instance),
-					);
+				for (const { target, method } of handlers) {
+					const currentInstance = !isUndefined(target)
+						? containerRef().resolve(target.name)
+						: instance;
+
+					const handler = currentInstance[method].bind(currentInstance);
+
+					this.register(event as EnumValues<EventType>, handler);
 				}
 			}
 		}

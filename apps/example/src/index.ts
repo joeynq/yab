@@ -1,41 +1,14 @@
-import { Entity, type EntityManager, PrimaryKey } from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { Authorized, BearerAuth, auth } from "@yab/auth";
+import { BearerAuth, auth } from "@yab/auth";
 import { cache } from "@yab/cache";
 import { SqliteAdapter } from "@yab/cache/sqlite";
-import { Logger, type LoggerAdapter, Yab } from "@yab/core";
+import { Yab } from "@yab/core";
 import { PinoLogger } from "@yab/logger/pino";
-import { Em, mikroOrm } from "@yab/mikro-orm";
-import { Controller, Get, router } from "@yab/router";
+import { mikroOrm } from "@yab/mikro-orm";
+import { router } from "@yab/router";
 import { statics } from "@yab/static";
-
-@Controller("/users")
-class UserController {
-	@Logger()
-	logger!: LoggerAdapter;
-
-	@Em()
-	em!: EntityManager;
-
-	@Get("/")
-	getUsers() {
-		this.logger.info("Get users");
-		return { users: [] };
-	}
-
-	@Authorized()
-	@Get("/:id")
-	getUser() {
-		this.logger.info("Get user");
-		return { user: {} };
-	}
-}
-
-@Entity()
-class User {
-	@PrimaryKey()
-	id!: number;
-}
+import { UserController } from "./controllers";
+import { User } from "./entities";
 
 /*
 
@@ -73,7 +46,12 @@ new Yab()
 	)
 	.use(statics("/public", { assetsDir: "./public" }))
 	// .use(rateLimit("redis", {}))
-	.use(router("/api", [UserController]))
+	.use(
+		router("/api", [UserController], {
+			// customValidation: async (schema: any, payload: any) => {},
+			// middlewares: [AnyMiddleware],
+		}),
+	)
 	.start((context, { port }) => {
 		context.store.logger.info(`Server started at ${port}`);
 	});

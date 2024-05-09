@@ -180,10 +180,10 @@ export class Yab {
 
 		if (hookMetadata) {
 			for (const [event, methods] of Object.entries(hookMetadata)) {
-				for (const method of methods) {
+				for (const m of methods) {
 					const instance = config.moduleInstance;
 					// @ts-expect-error
-					const handler = instance[method].bind(instance) as AnyFunction;
+					const handler = instance[m.method].bind(instance) as AnyFunction;
 					if (handler) {
 						config.hooks = deepMerge(config.hooks, {
 							[event]: [handler],
@@ -202,7 +202,6 @@ export class Yab {
 		this.#context.runInContext(this.#container, async (container) => {
 			this.#registerServices();
 			this.#initModules();
-
 			await this.#hooks.invoke(YabEvents.OnInit, [container.expose()]);
 
 			const server = Bun.serve({

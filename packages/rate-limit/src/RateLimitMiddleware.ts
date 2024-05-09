@@ -1,5 +1,5 @@
 import { type RequestContext, asValue } from "@yab/core";
-import { AfterRoute, BeforeRoute, Middleware } from "@yab/router";
+import { Middleware, OnRoute, RouterEvent } from "@yab/router";
 
 interface RateLimitOptions {
 	keyPrefix: string;
@@ -21,14 +21,14 @@ export class RateLimitMiddleware {
 		};
 	}
 
-	@BeforeRoute()
+	@OnRoute(RouterEvent.BeforeRoute)
 	public async rateLimit(ctx: RequestContext) {
 		const limit = await ctx.store.rateLimitHandler(ctx);
 
 		ctx.register({ rateLimit: asValue(limit) });
 	}
 
-	@AfterRoute()
+	@OnRoute(RouterEvent.AfterRoute)
 	public async rateLimitAfter(ctx: RequestContext, response: Response) {
 		const limit = ctx.store.rateLimit;
 

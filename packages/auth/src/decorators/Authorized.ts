@@ -4,14 +4,14 @@ import {
 	type RequestContext,
 	asValue,
 } from "@yab/core";
-import { BeforeRoute, Middleware, Unauthorized, Use } from "@yab/router";
+import { Before, Middleware, Unauthorized, Use } from "@yab/router";
 
 @Middleware()
 class AuthorizedMiddleware {
 	@Logger()
 	logger!: LoggerAdapter;
 
-	@BeforeRoute()
+	@Before()
 	public authorize(ctx: RequestContext) {
 		return new Promise<void>((resolve, reject) => {
 			ctx.store
