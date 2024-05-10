@@ -5,9 +5,8 @@ import {
 	type MaybePromiseFunction,
 	isUndefined,
 } from "@yab/utils";
-import type { EventPayload, EventResult } from "../interfaces";
+import type { AppContext, EventPayload, EventResult } from "../interfaces";
 import { HookMetadataKey } from "../symbols";
-import { containerRef } from "./Context";
 
 type EventHandler<
 	EventType extends { [key: string]: string },
@@ -35,14 +34,21 @@ export class Hooks<
 		string,
 		MaybePromiseFunction
 	>,
+	Context extends AppContext = AppContext,
 > {
 	#hooks = new Map<
 		string,
 		Array<EventHandler<EventType, EnumValues<EventType>, EventMap>>
 	>();
 
+	#context?: Context;
+
 	get debug() {
 		return this.#hooks;
+	}
+
+	useContext(context: Context) {
+		this.#context = context;
 	}
 
 	getMetadata(instance: any) {
@@ -59,12 +65,12 @@ export class Hooks<
 			for (const [event, handlers] of Object.entries(hooks)) {
 				for (const { target, method } of handlers) {
 					const currentInstance = !isUndefined(target)
-						? containerRef().resolve(target.name)
+						? this.#context?.resolve(target.name)
 						: instance;
 
-					const handler = currentInstance[method].bind(currentInstance);
+					const handler = currentInstance?.[method].bind(currentInstance);
 
-					this.register(event as EnumValues<EventType>, handler);
+					handler && this.register(event as EnumValues<EventType>, handler);
 				}
 			}
 		}
