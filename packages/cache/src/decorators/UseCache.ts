@@ -1,4 +1,4 @@
-import { containerRef } from "@yab/core";
+import { containerRef } from "@vermi/core";
 import type { CacheAdapter } from "../interfaces/CacheAdapter";
 
 export interface UseCacheOptions {

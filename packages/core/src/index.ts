@@ -1,4 +1,4 @@
-export * from "./Yab";
+export * from "./Vermi";
 export * from "./utils/enhance";
 export * from "./decorators";
 export * from "./enum";

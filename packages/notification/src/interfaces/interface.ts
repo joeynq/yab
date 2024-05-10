@@ -1,4 +1,4 @@
-import type { Dictionary } from "@yab/utils";
+import type { Dictionary } from "@vermi/utils";
 import type { FC } from "react";
 import type { AdapterConfigMap } from "./channelMap";
 

@@ -1,16 +1,16 @@
 import {
 	type AppContext,
+	AppHook,
 	type HookHandler,
 	HookMetadataKey,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	YabHook,
-	YabModule,
+	VermiModule,
 	asClass,
-} from "@yab/core";
-import { type AnyClass, type Dictionary, ensure } from "@yab/utils";
+} from "@vermi/core";
+import { type AnyClass, type Dictionary, ensure } from "@vermi/utils";
 import { RouterEvent } from "./event";
 import type { RouterConfig, SlashedPath } from "./interfaces";
 import { Router } from "./services/Router";
@@ -30,7 +30,7 @@ interface RegisteringList {
 }
 
 @Module()
-export class RouterModule extends YabModule<RouterConfig> {
+export class RouterModule extends VermiModule<RouterConfig> {
 	#router = new Router();
 
 	config: RouterConfig;
@@ -94,7 +94,7 @@ export class RouterModule extends YabModule<RouterConfig> {
 		return instance;
 	}
 
-	@YabHook("app:init")
+	@AppHook("app:init")
 	initRoute(context: AppContext) {
 		const registering: Record<
 			string,
@@ -126,6 +126,7 @@ export class RouterModule extends YabModule<RouterConfig> {
 			}
 		}
 
+		console.table(this.#router.debug);
 		this.logger.info(`${this.#router.debug.length} routes initialized`);
 
 		context.register(
@@ -144,7 +145,7 @@ export class RouterModule extends YabModule<RouterConfig> {
 		}
 	}
 
-	@YabHook("app:request")
+	@AppHook("app:request")
 	async onRequest(context: RequestContext) {
 		const {
 			errorHandler = defaultErrorHandler,

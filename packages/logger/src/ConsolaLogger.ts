@@ -1,5 +1,5 @@
-import { BaseLogger, type LogOptions, type LoggerContext } from "@yab/core";
-import type { Dictionary } from "@yab/utils";
+import { BaseLogger, type LogOptions, type LoggerContext } from "@vermi/core";
+import type { Dictionary } from "@vermi/utils";
 import {
 	type ConsolaInstance,
 	type ConsolaOptions,

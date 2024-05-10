@@ -1,4 +1,4 @@
-import { containerRef } from "@yab/core";
+import { containerRef } from "@vermi/core";
 import { getToken } from "../utils/getToken";
 
 export function Em(contextName = "default") {

@@ -3,23 +3,23 @@ import {
 	type AnyFunction,
 	type Dictionary,
 	uuid,
-} from "@yab/utils";
+} from "@vermi/utils";
 import type { TLSOptions } from "bun";
 import type { LogOptions } from "./LoggerAdapter";
 
-export abstract class YabModule<Config extends Dictionary = Dictionary> {
+export abstract class VermiModule<Config extends Dictionary = Dictionary> {
 	abstract config: Config;
 	id = uuid();
 }
 
 export interface ModuleConfig<Config extends Dictionary = Dictionary> {
-	moduleInstance: YabModule<Config>;
+	moduleInstance: VermiModule<Config>;
 	hooks?: {
 		[key: string]: AnyFunction[];
 	};
 }
 
-export interface YabOptions {
+export interface AppOptions {
 	port?: string | number;
 	hostname?: string;
 	modules: ModuleConfig[];
@@ -29,7 +29,7 @@ export interface YabOptions {
 	log?: LogOptions<never>;
 }
 
-export interface YabUse<M extends AnyClass<YabModule>> {
+export interface UseModule<M extends AnyClass<VermiModule>> {
 	module: M;
 	args: ConstructorParameters<M>;
 }

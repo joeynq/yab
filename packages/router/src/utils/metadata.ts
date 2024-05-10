@@ -1,4 +1,4 @@
-import { type AnyClass, ensure } from "@yab/utils";
+import { type AnyClass, ensure } from "@vermi/utils";
 import type { ControllerMetadata, RouteObject } from "../interfaces";
 
 export const RouteMetadataKey = Symbol("Router:Routes");

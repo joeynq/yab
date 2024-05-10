@@ -1,4 +1,4 @@
-import type { Dictionary } from "@yab/utils";
+import type { Dictionary } from "@vermi/utils";
 import type { RequestContext } from "../interfaces";
 import { Hook } from "./Hook";
 

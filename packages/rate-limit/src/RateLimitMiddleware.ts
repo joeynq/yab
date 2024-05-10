@@ -1,5 +1,5 @@
-import { type RequestContext, asValue } from "@yab/core";
-import { Middleware, OnRoute, RouterEvent } from "@yab/router";
+import { type RequestContext, asValue } from "@vermi/core";
+import { Middleware, OnRoute, RouterEvent } from "@vermi/router";
 
 interface RateLimitOptions {
 	keyPrefix: string;

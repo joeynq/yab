@@ -1,4 +1,4 @@
-import type { EnumValues, MaybePromiseFunction } from "@yab/utils";
+import type { EnumValues, MaybePromiseFunction } from "@vermi/utils";
 
 export type EventPayload<
 	EventType extends { [key: string]: string },

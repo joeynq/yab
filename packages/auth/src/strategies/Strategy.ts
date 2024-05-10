@@ -1,4 +1,4 @@
-import { type RequestContext, asValue } from "@yab/core";
+import { type RequestContext, asValue } from "@vermi/core";
 
 export abstract class Strategy<S> {
 	abstract readonly tokenType: string;

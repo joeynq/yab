@@ -1,4 +1,4 @@
-# @yab/notifme
+# @vermi/notifme
 
 To install dependencies:
 

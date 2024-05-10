@@ -1,11 +1,11 @@
 import {
+	AppHook,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	YabHook,
-	YabModule,
-} from "@yab/core";
+	VermiModule,
+} from "@vermi/core";
 import { generateETag, isCached } from "./utils";
 
 export type SlashedPath = `/${string}`;
@@ -41,7 +41,7 @@ const defaultStaticExtensions = [
 ];
 
 @Module()
-export class StaticModule extends YabModule<StaticModuleOptions> {
+export class StaticModule extends VermiModule<StaticModuleOptions> {
 	@Logger()
 	logger!: LoggerAdapter;
 
@@ -83,7 +83,7 @@ export class StaticModule extends YabModule<StaticModuleOptions> {
 		return headers;
 	}
 
-	@YabHook("app:init")
+	@AppHook("app:init")
 	public async onInit() {
 		this.logger.info(
 			"StaticModule initialized. Public path: {prefix}",
@@ -91,7 +91,7 @@ export class StaticModule extends YabModule<StaticModuleOptions> {
 		);
 	}
 
-	@YabHook("app:request")
+	@AppHook("app:request")
 	public async onRequest(context: RequestContext) {
 		const { request, serverUrl } = context.store;
 

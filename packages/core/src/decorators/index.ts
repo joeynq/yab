@@ -4,4 +4,4 @@ export * from "./Hook";
 export * from "./Inject";
 export * from "./Logger";
 export * from "./Module";
-export * from "./YabHook";
+export * from "./AppHook";

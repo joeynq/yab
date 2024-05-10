@@ -1,5 +1,5 @@
 import type { TObject } from "@sinclair/typebox";
-import type { AnyClass, MaybePromiseFunction } from "@yab/utils";
+import type { AnyClass, MaybePromiseFunction } from "@vermi/utils";
 import type { FindResult } from "memoirist";
 import type { HttpMethod } from "../enums";
 

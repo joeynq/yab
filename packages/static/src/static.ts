@@ -1,5 +1,5 @@
-import type { YabUse } from "@yab/core";
-import type { AnyClass } from "@yab/utils";
+import type { UseModule } from "@vermi/core";
+import type { AnyClass } from "@vermi/utils";
 import {
 	type SlashedPath,
 	StaticModule,
@@ -9,7 +9,7 @@ import {
 export const statics = (
 	path: SlashedPath,
 	options: Omit<StaticModuleOptions, "prefix">,
-): YabUse<AnyClass<StaticModule>> => ({
+): UseModule<AnyClass<StaticModule>> => ({
 	module: StaticModule,
 	args: [
 		{

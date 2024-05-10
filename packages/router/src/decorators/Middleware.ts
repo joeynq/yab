@@ -1,4 +1,4 @@
-import { AutoHook } from "@yab/core";
+import { AutoHook } from "@vermi/core";
 
 export const Middleware = () => {
 	return (target: any) => {

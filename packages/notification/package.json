@@ -1,5 +1,5 @@
 {
-	"name": "@yab/notification",
+	"name": "@vermi/notification",
 	"module": "src/index.ts",
 	"main": "dist/index.js",
 	"type": "module",
@@ -12,8 +12,8 @@
 		"@types/bun": "latest",
 		"@types/nodemailer": "^6.4.14",
 		"@types/react": "^18.3.1",
-		"@yab/core": "link:@yab/core",
-		"@yab/utils": "link:@yab/utils"
+		"@vermi/core": "link:@vermi/core",
+		"@vermi/utils": "link:@vermi/utils"
 	},
 	"peerDependencies": {
 		"typescript": "^5.4.5"

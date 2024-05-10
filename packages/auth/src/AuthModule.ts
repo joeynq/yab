@@ -1,17 +1,17 @@
 import {
 	type AppContext,
+	AppHook,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	YabHook,
-	YabModule,
+	VermiModule,
 	asValue,
-} from "@yab/core";
+} from "@vermi/core";
 import type { JWTVerifyResult } from "jose";
 import type { Strategy } from "./strategies";
 
-declare module "@yab/core" {
+declare module "@vermi/core" {
 	interface _RequestContext {
 		token: string | undefined;
 		verifyToken<T>(): Promise<JWTVerifyResult<T>>;
@@ -26,7 +26,7 @@ export type AuthModuleConfig<S extends Strategy<any>> = {
 export const AuthModuleKey = "auth:strategy";
 
 @Module()
-export class AuthModule<S extends Strategy<any>> extends YabModule<
+export class AuthModule<S extends Strategy<any>> extends VermiModule<
 	AuthModuleConfig<S>
 > {
 	@Logger()
@@ -36,7 +36,7 @@ export class AuthModule<S extends Strategy<any>> extends YabModule<
 		super();
 	}
 
-	@YabHook("app:init")
+	@AppHook("app:init")
 	async onInit(context: AppContext) {
 		context.register(AuthModuleKey.toString(), asValue(this.config.strategy));
 		try {
@@ -51,7 +51,7 @@ export class AuthModule<S extends Strategy<any>> extends YabModule<
 		}
 	}
 
-	@YabHook("app:enter-context")
+	@AppHook("app:enter-context")
 	async onRequest(ctx: RequestContext) {
 		await this.config.strategy.useContext(ctx);
 	}

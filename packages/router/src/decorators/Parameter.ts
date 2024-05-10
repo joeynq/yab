@@ -1,5 +1,5 @@
 import type { TObject } from "@sinclair/typebox";
-import { deepMerge } from "@yab/utils";
+import { deepMerge } from "@vermi/utils";
 import type {
 	ControllerMetadata,
 	ParameterType,

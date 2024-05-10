@@ -1,4 +1,4 @@
-import type { AnyClass } from "@yab/utils";
+import type { AnyClass } from "@vermi/utils";
 import type { RouterEvent } from "../event";
 
 type HandlerMetadata = {

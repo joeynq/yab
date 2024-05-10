@@ -1,4 +1,4 @@
-import { deepMerge } from "@yab/utils";
+import { deepMerge } from "@vermi/utils";
 import type { RouterEvent } from "../event";
 import { getMiddlewareMetadata, setMiddlewareMetadata } from "../utils";
 

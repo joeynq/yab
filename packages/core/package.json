@@ -1,5 +1,5 @@
 {
-	"name": "@yab/core",
+	"name": "@vermi/core",
 	"module": "src/index.ts",
 	"main": "dist/index.js",
 	"type": "module",
@@ -10,7 +10,7 @@
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
-		"@yab/utils": "link:@yab/utils",
+		"@vermi/utils": "link:@vermi/utils",
 		"awilix": "^10.0.2"
 	},
 	"peerDependencies": {

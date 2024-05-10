@@ -1,12 +1,12 @@
 import {
 	type AppContext,
+	AppHook,
 	Logger,
 	type LoggerAdapter,
 	Module,
-	YabHook,
-	YabModule,
+	VermiModule,
 	asValue,
-} from "@yab/core";
+} from "@vermi/core";
 import type { AdapterConfigMap } from "./interfaces/channelMap";
 import type { Templates } from "./interfaces/interface";
 import { NotificationService } from "./services";
@@ -17,7 +17,7 @@ export type NotificationModuleConfig<T extends Templates> = {
 };
 
 @Module()
-export class NotificationModule<T extends Templates> extends YabModule<
+export class NotificationModule<T extends Templates> extends VermiModule<
 	NotificationModuleConfig<T>
 > {
 	#service: NotificationService;
@@ -30,12 +30,12 @@ export class NotificationModule<T extends Templates> extends YabModule<
 		this.#service = new NotificationService(config);
 	}
 
-	@YabHook("app:exit")
+	@AppHook("app:exit")
 	async exit() {
 		this.#service.unmount();
 	}
 
-	@YabHook("app:init")
+	@AppHook("app:init")
 	async init(container: AppContext) {
 		container.register("notification", asValue(this.#service));
 

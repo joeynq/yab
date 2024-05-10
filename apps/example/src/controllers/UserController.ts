@@ -1,7 +1,7 @@
 import type { EntityManager } from "@mikro-orm/core";
-import { Logger, type LoggerAdapter } from "@yab/core";
-import { Em } from "@yab/mikro-orm";
-import { Body, Controller, Get, Params, Post, Query, Use } from "@yab/router";
+import { Logger, type LoggerAdapter } from "@vermi/core";
+import { Em } from "@vermi/mikro-orm";
+import { Body, Controller, Get, Params, Post, Query, Use } from "@vermi/router";
 import { AnyMiddleware } from "../middlewares";
 import {
 	type UserParamDto,

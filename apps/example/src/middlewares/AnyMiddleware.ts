@@ -1,5 +1,5 @@
-import { Logger, type LoggerAdapter, type RequestContext } from "@yab/core";
-import { After, Before, Middleware } from "@yab/router";
+import { Logger, type LoggerAdapter, type RequestContext } from "@vermi/core";
+import { After, Before, Middleware } from "@vermi/router";
 
 @Middleware()
 export class AnyMiddleware {

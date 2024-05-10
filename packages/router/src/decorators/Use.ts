@@ -1,5 +1,5 @@
-import { type HookHandler, HookMetadataKey, mergeMetadata } from "@yab/core";
-import type { AnyClass } from "@yab/utils";
+import { type HookHandler, HookMetadataKey, mergeMetadata } from "@vermi/core";
+import type { AnyClass } from "@vermi/utils";
 import {
 	getControllerMetadata,
 	getMiddlewareMetadata,
