@@ -1,5 +1,5 @@
-import type { AppContext } from "@yab/core";
-import { ensure } from "@yab/utils";
+import type { AppContext } from "@vermi/core";
+import { ensure } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
 import { RouterEvent } from "../event";
 import { NotFound } from "../exceptions";

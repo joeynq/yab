@@ -1,4 +1,4 @@
-import { HttpErrorCodes, HttpException } from "@yab/core";
+import { HttpErrorCodes, HttpException } from "@vermi/core";
 import { ValidationException, type ValueError } from "typebox-validators";
 
 export class BadRequest extends HttpException {

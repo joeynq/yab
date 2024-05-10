@@ -1,4 +1,4 @@
-import { clone, format } from "@yab/utils";
+import { clone, format } from "@vermi/utils";
 import type {
 	AbstractLogger,
 	LogLevel,

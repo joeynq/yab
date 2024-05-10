@@ -4,7 +4,7 @@ import {
 	type EnumValues,
 	type MaybePromiseFunction,
 	isNil,
-} from "@yab/utils";
+} from "@vermi/utils";
 import type { AppContext, EventPayload, EventResult } from "../interfaces";
 import { HookMetadataKey } from "../symbols";
 

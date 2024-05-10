@@ -1,7 +1,7 @@
-import type { AnyClass, Dictionary, MaybePromiseFunction } from "@yab/utils";
+import type { AnyClass, Dictionary, MaybePromiseFunction } from "@vermi/utils";
 import type { AwilixContainer } from "awilix";
 import type { SocketAddress } from "bun";
-import type { Yab } from "../Yab";
+import type { Vermi } from "../Vermi";
 import type { Configuration, Hooks } from "../services";
 import type { LoggerAdapter } from "./LoggerAdapter";
 
@@ -33,7 +33,7 @@ export interface EnhancedContainer<Context extends object>
 
 export interface _AppContext {
 	env: Dictionary<unknown>;
-	app: Yab;
+	app: Vermi;
 	logger: LoggerAdapter;
 	hooks: Hooks<Dictionary<string>, Dictionary<MaybePromiseFunction>>;
 	config: Configuration;

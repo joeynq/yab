@@ -1,5 +1,5 @@
 import { parentPort } from "node:worker_threads";
-import type { AnyClass } from "@yab/utils";
+import type { AnyClass } from "@vermi/utils";
 import type { NotificationAdapter, NotificationEvent } from "../interfaces";
 
 declare let self: Worker;

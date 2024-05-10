@@ -3,8 +3,8 @@ import {
 	type LoggerAdapter,
 	type RequestContext,
 	asValue,
-} from "@yab/core";
-import { Before, Middleware, Unauthorized, Use } from "@yab/router";
+} from "@vermi/core";
+import { Before, Middleware, Unauthorized, Use } from "@vermi/router";
 
 @Middleware()
 class AuthorizedMiddleware {

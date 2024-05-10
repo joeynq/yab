@@ -1,4 +1,4 @@
-import { Module, type RequestContext, YabHook, YabModule } from "@yab/core";
+import { AppHook, Module, type RequestContext, VermiModule } from "@vermi/core";
 
 export type CorsConfig = {
 	origin?: string[];
@@ -12,12 +12,12 @@ export type CorsConfig = {
 };
 
 @Module()
-export class CorsModule extends YabModule<CorsConfig> {
+export class CorsModule extends VermiModule<CorsConfig> {
 	constructor(public config: CorsConfig) {
 		super();
 	}
 
-	@YabHook("app:response")
+	@AppHook("app:response")
 	async corsHook(_: RequestContext, response: Response) {
 		if (this.config.origin) {
 			response.headers.set(

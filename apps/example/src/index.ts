@@ -1,18 +1,18 @@
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { BearerAuth, auth } from "@yab/auth";
-import { cache } from "@yab/cache";
-import { SqliteAdapter } from "@yab/cache/sqlite";
-import { Yab } from "@yab/core";
-import { PinoLogger } from "@yab/logger/pino";
-import { mikroOrm } from "@yab/mikro-orm";
-import { router } from "@yab/router";
-import { statics } from "@yab/static";
+import { BearerAuth, auth } from "@vermi/auth";
+import { cache } from "@vermi/cache";
+import { SqliteAdapter } from "@vermi/cache/sqlite";
+import { Vermi } from "@vermi/core";
+import { PinoLogger } from "@vermi/logger/pino";
+import { mikroOrm } from "@vermi/mikro-orm";
+import { router } from "@vermi/router";
+import { statics } from "@vermi/static";
 import { UserController } from "./controllers";
 import { User } from "./entities";
 
 /*
 
-new Yab()
+new Vermi()
 	.use(DDDModule, {
 		mount: "/api",
 		domain: await import("@domain/users"), // inject user domain { entities, services, controllers }
@@ -25,7 +25,7 @@ if (import.meta.env.NODE_ENV !== "production") {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-new Yab()
+new Vermi()
 	.logger(PinoLogger)
 	// SqliteAdapter recommended for development.
 	// RedisAdapter is recommended for production.

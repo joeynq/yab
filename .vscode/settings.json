@@ -29,6 +29,7 @@
 		"tseslint",
 		"tslog",
 		"typebox",
+		"Vermi",
 		"workdir"
 	],
 	"editor.codeActionsOnSave": {

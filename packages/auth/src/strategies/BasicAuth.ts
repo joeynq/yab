@@ -1,4 +1,4 @@
-import { ensure } from "@yab/utils";
+import { ensure } from "@vermi/utils";
 import { Strategy } from "./Strategy";
 
 export type BasicTokenAuthorize = {

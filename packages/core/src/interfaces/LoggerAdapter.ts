@@ -1,4 +1,4 @@
-import type { AnyFunction, Dictionary } from "@yab/utils";
+import type { AnyFunction, Dictionary } from "@vermi/utils";
 import type { _RequestContext } from "./Container";
 
 export type LogLevel =

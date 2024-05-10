@@ -1,14 +1,14 @@
 import {
 	type AppContext,
+	AppHook,
 	HttpException,
 	Module,
 	type RequestContext,
-	YabHook,
-	YabModule,
+	VermiModule,
 	asValue,
-} from "@yab/core";
-import { TooManyRequests } from "@yab/router";
-import type { AnyClass } from "@yab/utils";
+} from "@vermi/core";
+import { TooManyRequests } from "@vermi/router";
+import type { AnyClass } from "@vermi/utils";
 import {
 	type RateLimiterAbstract,
 	RateLimiterDynamo,
@@ -40,7 +40,7 @@ export type RateLimitConfig<M extends typeof adapterMap, N extends keyof M> = {
 	options: ConstructorParameters<AnyClass<M[N]>>[0];
 };
 
-declare module "@yab/core" {
+declare module "@vermi/core" {
 	interface _RequestContext {
 		rateLimit: RateLimiterRes;
 	}
@@ -55,7 +55,7 @@ export class RateLimitModule<
 	M extends typeof adapterMap,
 	N extends keyof M,
 	RateLimiter extends RateLimiterAbstract,
-> extends YabModule<RateLimitConfig<M, N>> {
+> extends VermiModule<RateLimitConfig<M, N>> {
 	#rateLimiter: RateLimiter;
 
 	constructor(public config: RateLimitConfig<M, N>) {
@@ -81,20 +81,20 @@ export class RateLimitModule<
 		}
 	}
 
-	@YabHook("app:init")
+	@AppHook("app:init")
 	async rateLimitInit(context: AppContext) {
 		context.register({
 			rateLimitHandler: asValue(this.#handle.bind(this)),
 		});
 	}
 
-	@YabHook("app:request")
+	@AppHook("app:request")
 	async rateLimitHook(ctx: RequestContext) {
 		const limit = await this.#handle(ctx);
 		ctx.register({ rateLimit: asValue(limit) });
 	}
 
-	@YabHook("app:response")
+	@AppHook("app:response")
 	async corsHook(context: RequestContext, response: Response) {
 		const limit = context.resolve<RateLimiterRes>("rateLimit");
 

@@ -3,7 +3,7 @@ import {
 	HttpException,
 	HttpRedirectCodes,
 	HttpSuccessCodes,
-} from "@yab/core";
+} from "@vermi/core";
 import type { BunFile } from "bun";
 import { InternalServerError } from "../exceptions";
 

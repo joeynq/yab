@@ -1,13 +1,13 @@
 import {
 	type AppContext,
+	AppHook,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	YabHook,
-	YabModule,
+	VermiModule,
 	type _AppContext,
-} from "@yab/core";
+} from "@vermi/core";
 import type { Server } from "bun";
 import {
 	type YogaServerInstance,
@@ -23,7 +23,7 @@ export type YogaModuleConfig<UserContext> = YogaServerOptions<
 @Module()
 export class YogaModule<
 	UserContext extends Record<string, any>,
-> extends YabModule<YogaModuleConfig<UserContext>> {
+> extends VermiModule<YogaModuleConfig<UserContext>> {
 	#yoga: YogaServerInstance<_AppContext, UserContext>;
 
 	@Logger()
@@ -37,7 +37,7 @@ export class YogaModule<
 		});
 	}
 
-	@YabHook("app:request")
+	@AppHook("app:request")
 	async init(context: RequestContext) {
 		const { request, serverUrl } = context.store;
 		const url = new URL(request.url, serverUrl);
@@ -46,7 +46,7 @@ export class YogaModule<
 		}
 	}
 
-	@YabHook("app:started")
+	@AppHook("app:started")
 	async onStarted(_: AppContext, server: Server) {
 		this.logger.info("Yoga server is running on {url}", {
 			url: new URL(

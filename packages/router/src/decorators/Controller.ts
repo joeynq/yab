@@ -4,7 +4,7 @@ import {
 	HookMetadataKey,
 	getMetadata,
 	setMetadata,
-} from "@yab/core";
+} from "@vermi/core";
 import type { SlashedPath } from "../interfaces";
 import { getControllerMetadata, setControllerMetadata } from "../utils";
 

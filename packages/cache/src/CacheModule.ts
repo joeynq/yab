@@ -1,12 +1,12 @@
 import {
 	type AppContext,
+	AppHook,
 	Logger,
 	type LoggerAdapter,
 	Module,
-	YabHook,
-	YabModule,
+	VermiModule,
 	asValue,
-} from "@yab/core";
+} from "@vermi/core";
 import type { CacheAdapter } from "./interfaces/CacheAdapter";
 
 export type CacheModuleOptions<Adapter extends CacheAdapter> = {
@@ -15,7 +15,7 @@ export type CacheModuleOptions<Adapter extends CacheAdapter> = {
 };
 
 @Module()
-export class CacheModule<Adapter extends CacheAdapter> extends YabModule<
+export class CacheModule<Adapter extends CacheAdapter> extends VermiModule<
 	CacheModuleOptions<Adapter>
 > {
 	@Logger()
@@ -25,7 +25,7 @@ export class CacheModule<Adapter extends CacheAdapter> extends YabModule<
 		super();
 	}
 
-	@YabHook("app:init")
+	@AppHook("app:init")
 	async init(context: AppContext) {
 		if (this.config.clearOnStart) {
 			this.logger.info("Clearing cache on start.");

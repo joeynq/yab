@@ -1,4 +1,4 @@
-# @yab/core
+# @vermi/core
 
 To install dependencies:
 

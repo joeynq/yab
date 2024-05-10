@@ -3,8 +3,8 @@ import {
 	type LogLevel,
 	type LogOptions,
 	type LoggerContext,
-} from "@yab/core";
-import type { Dictionary } from "@yab/utils";
+} from "@vermi/core";
+import type { Dictionary } from "@vermi/utils";
 import Pino, { type Logger, type LoggerOptions } from "pino";
 
 export class PinoLogger extends BaseLogger<Logger> {

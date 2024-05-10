@@ -1,10 +1,10 @@
-import type { YabUse } from "@yab/core";
+import type { UseModule } from "@vermi/core";
 import type { AnyClass } from "../../../utils/dist";
 import { HelmetModule, type HelmetOptions } from "./HelmetModule";
 
 export const helmet = (
 	config: HelmetOptions = {},
-): YabUse<AnyClass<HelmetModule>> => ({
+): UseModule<AnyClass<HelmetModule>> => ({
 	module: HelmetModule,
 	args: [config],
 });

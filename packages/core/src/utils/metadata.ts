@@ -4,7 +4,7 @@ import {
 	deepMerge,
 	isClass,
 	isInstance,
-} from "@yab/utils";
+} from "@vermi/utils";
 
 export const getMetadata = <T = any>(
 	key: string | symbol,

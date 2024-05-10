@@ -1,4 +1,4 @@
-import { Module, type RequestContext, YabHook, YabModule } from "@yab/core";
+import { AppHook, Module, type RequestContext, VermiModule } from "@vermi/core";
 
 export type HelmetOptions = {
 	contentSecurityPolicy?: boolean | Record<string, any>;
@@ -15,12 +15,12 @@ export type HelmetOptions = {
 };
 
 @Module()
-export class HelmetModule extends YabModule<HelmetOptions> {
+export class HelmetModule extends VermiModule<HelmetOptions> {
 	constructor(public config: HelmetOptions) {
 		super();
 	}
 
-	@YabHook("app:response")
+	@AppHook("app:response")
 	async helmetHook(_: RequestContext, response: Response) {
 		if (this.config.contentSecurityPolicy) {
 			response.headers.set("Content-Security-Policy", "default-src 'self';");
@@ -39,7 +39,7 @@ export class HelmetModule extends YabModule<HelmetOptions> {
 		}
 
 		if (this.config.hidePoweredBy) {
-			response.headers.set("X-Powered-By", "Yab");
+			response.headers.set("X-Powered-By", "Vermi");
 		}
 
 		if (this.config.hsts) {

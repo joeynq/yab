@@ -1,6 +1,6 @@
 import { URL } from "node:url";
-import { UseCache } from "@yab/cache";
-import { ensure } from "@yab/utils";
+import { UseCache } from "@vermi/cache";
+import { ensure } from "@vermi/utils";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { Strategy } from "./Strategy";
 

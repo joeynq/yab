@@ -1,10 +1,10 @@
-import type { YabUse } from "@yab/core";
-import type { AnyClass } from "@yab/utils";
+import type { UseModule } from "@vermi/core";
+import type { AnyClass } from "@vermi/utils";
 import { type CorsConfig, CorsModule } from "./CorsModule";
 
 export const cors = (
 	options: CorsConfig = {},
-): YabUse<AnyClass<CorsModule>> => ({
+): UseModule<AnyClass<CorsModule>> => ({
 	module: CorsModule,
 	args: [options],
 });

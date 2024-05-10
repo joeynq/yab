@@ -1,5 +1,5 @@
-import { AutoHook, type RequestContext } from "@yab/core";
-import { type AnyClass, deepMerge } from "@yab/utils";
+import { AutoHook, type RequestContext } from "@vermi/core";
+import { type AnyClass, deepMerge } from "@vermi/utils";
 import type { NextFunction } from "express";
 import { RouterEvent } from "../event";
 import {
@@ -22,8 +22,8 @@ type ExpressMiddleware = (
  * @returns `ExpressMiddlewareAdapter` that implements the `Middleware` interface.
  * @example
  * ```ts
- * import { fromExpress } from "@yab/router";
- * import { Middleware } from "@yab/core";
+ * import { fromExpress } from "@vermi/router";
+ * import { Middleware } from "@vermi/core";
  * import theExpressMiddleware from "express-middleware";
  *
  * class UserController {

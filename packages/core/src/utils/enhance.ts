@@ -1,4 +1,4 @@
-import { isClass } from "@yab/utils";
+import { isClass } from "@vermi/utils";
 import { type AwilixContainer, asClass, asFunction, asValue } from "awilix";
 import { getTokenName } from ".";
 import {

@@ -1,15 +1,15 @@
-import type { Dictionary } from "@yab/utils";
-import type { ModuleConfig, YabModule, YabOptions } from "../interfaces";
+import type { Dictionary } from "@vermi/utils";
+import type { AppOptions, ModuleConfig, VermiModule } from "../interfaces";
 
 export class Configuration {
-	options!: YabOptions;
+	options!: AppOptions;
 
 	get bunOptions() {
 		const { modules, env, log, ...options } = this.options;
 		return options;
 	}
 
-	constructor(options?: YabOptions) {
+	constructor(options?: AppOptions) {
 		this.options = {
 			modules: [],
 			...options,
@@ -17,7 +17,7 @@ export class Configuration {
 	}
 
 	getModuleConfig<Config extends Dictionary = Dictionary>(
-		instance: YabModule<Config>,
+		instance: VermiModule<Config>,
 	) {
 		return this.options.modules.find(
 			(config) => config.moduleInstance.id === instance.id,

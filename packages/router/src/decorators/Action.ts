@@ -1,4 +1,4 @@
-import { deepMerge } from "@yab/utils";
+import { deepMerge } from "@vermi/utils";
 import type { HttpMethod } from "../enums";
 import { getControllerMetadata, setControllerMetadata } from "../utils";
 

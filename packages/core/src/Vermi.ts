@@ -1,17 +1,17 @@
-import { type AnyClass, type AnyFunction, deepMerge, uuid } from "@yab/utils";
+import { type AnyClass, type AnyFunction, deepMerge, uuid } from "@vermi/utils";
 import { InjectionMode, Lifetime, asValue, createContainer } from "awilix";
 import type { Server } from "bun";
-import { type YabEventMap, YabEvents } from "./events";
+import { type AppEventMap, AppEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
 	AbstractLogger,
 	AppContext,
+	AppOptions,
 	EnhancedContainer,
 	LoggerAdapter,
 	ModuleConfig,
-	YabModule,
-	YabOptions,
-	YabUse,
+	UseModule,
+	VermiModule,
 	_AppContext,
 	_RequestContext,
 } from "./interfaces";
@@ -24,10 +24,10 @@ import {
 import { HookMetadataKey } from "./symbols";
 import { enhance } from "./utils";
 
-export class Yab {
+export class Vermi {
 	#logger: LoggerAdapter;
 	#config: Configuration;
-	#hooks = new Hooks<typeof YabEvents, YabEventMap>();
+	#hooks = new Hooks<typeof AppEvents, AppEventMap>();
 	#context = new ContextService();
 	#container = enhance(
 		createContainer<_AppContext>({
@@ -38,7 +38,7 @@ export class Yab {
 
 	#customContext?: (ctx: _RequestContext) => Record<string, unknown>;
 
-	constructor(options?: Partial<YabOptions>) {
+	constructor(options?: Partial<AppOptions>) {
 		this.#config = new Configuration({
 			...options,
 			modules: options?.modules || [],
@@ -109,12 +109,12 @@ export class Yab {
 							stored.registerValue(key, value);
 						}
 
-						await this.#hooks.invoke(YabEvents.OnEnterContext, [
+						await this.#hooks.invoke(AppEvents.OnEnterContext, [
 							stored.expose(),
 						]);
 
 						const result = await this.#hooks.invoke(
-							YabEvents.OnRequest,
+							AppEvents.OnRequest,
 							[stored.expose()],
 							{
 								breakOn: "result",
@@ -123,7 +123,7 @@ export class Yab {
 
 						const response = result || new Response("OK", { status: 200 });
 
-						await this.#hooks.invoke(YabEvents.OnResponse, [
+						await this.#hooks.invoke(AppEvents.OnResponse, [
 							stored.expose(),
 							response,
 						]);
@@ -140,7 +140,7 @@ export class Yab {
 							).toResponse(),
 						);
 					} finally {
-						await this.#hooks.invoke(YabEvents.OnExitContext, [
+						await this.#hooks.invoke(AppEvents.OnExitContext, [
 							stored.expose(),
 						]);
 					}
@@ -167,7 +167,7 @@ export class Yab {
 		return this;
 	}
 
-	use<M extends AnyClass<YabModule>>({ module, args }: YabUse<M>): this {
+	use<M extends AnyClass<VermiModule>>({ module, args }: UseModule<M>): this {
 		const config: ModuleConfig = {
 			moduleInstance: new module(...args),
 			hooks: {},
@@ -202,20 +202,20 @@ export class Yab {
 		this.#context.runInContext(this.#container, async (container) => {
 			this.#registerServices();
 			this.#initModules();
-			await this.#hooks.invoke(YabEvents.OnInit, [container.expose()]);
+			await this.#hooks.invoke(AppEvents.OnInit, [container.expose()]);
 
 			const server = Bun.serve({
 				...this.#config.bunOptions,
 				fetch: this.#runInRequestContext.bind(this, container),
 			});
-			await this.#hooks.invoke(YabEvents.OnStarted, [
+			await this.#hooks.invoke(AppEvents.OnStarted, [
 				container.expose(),
 				server,
 			]);
 
 			process.on("SIGINT", async () => {
 				this.#logger.info("Shutting down server...");
-				await this.#hooks.invoke(YabEvents.OnExit, [
+				await this.#hooks.invoke(AppEvents.OnExit, [
 					container.expose(),
 					server,
 				]);

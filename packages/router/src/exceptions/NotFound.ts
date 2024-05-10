@@ -1,4 +1,4 @@
-import { HttpErrorCodes, HttpException } from "@yab/core";
+import { HttpErrorCodes, HttpException } from "@vermi/core";
 
 export class NotFound extends HttpException {
 	constructor(message: string, cause?: Error) {

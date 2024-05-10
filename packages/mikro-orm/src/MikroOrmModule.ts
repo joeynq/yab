@@ -1,19 +1,19 @@
 import { type EntityManager, MikroORM, type Options } from "@mikro-orm/core";
 import {
 	type AppContext,
+	AppHook,
 	ContextService,
 	Inject,
 	InjectionScope,
 	Logger,
 	type LoggerAdapter,
 	Module,
-	YabHook,
-	YabModule,
+	VermiModule,
 	asValue,
-} from "@yab/core";
+} from "@vermi/core";
 import { getToken } from "./utils";
 
-declare module "@yab/core" {
+declare module "@vermi/core" {
 	interface _AppContext {
 		em?: MikroORM["em"];
 	}
@@ -22,7 +22,7 @@ declare module "@yab/core" {
 export type MikroOrmModuleConfig = Options;
 
 @Module()
-export class MikroOrmModule extends YabModule<MikroOrmModuleConfig> {
+export class MikroOrmModule extends VermiModule<MikroOrmModuleConfig> {
 	#orm!: MikroORM;
 
 	@Inject(ContextService)
@@ -35,7 +35,7 @@ export class MikroOrmModule extends YabModule<MikroOrmModuleConfig> {
 		super();
 	}
 
-	@YabHook("app:init")
+	@AppHook("app:init")
 	async init(context: AppContext) {
 		this.#orm = await MikroORM.init({
 			...this.config,
@@ -65,7 +65,7 @@ export class MikroOrmModule extends YabModule<MikroOrmModuleConfig> {
 		});
 	}
 
-	@YabHook("app:exit")
+	@AppHook("app:exit")
 	async exit() {
 		await this.#orm.close();
 		this.logger.info("MikroORM connection closed.");

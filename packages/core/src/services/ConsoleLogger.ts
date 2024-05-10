@@ -1,4 +1,4 @@
-import { format, omitUndefined } from "@yab/utils";
+import { format, omitUndefined } from "@vermi/utils";
 import { Chalk, type ChalkInstance } from "chalk";
 import { logLevelOrder } from "../enum/logLevel";
 import type { LogLevel, LogOptions } from "../interfaces";

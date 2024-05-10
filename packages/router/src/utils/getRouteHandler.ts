@@ -1,4 +1,4 @@
-import { ensure } from "@yab/utils";
+import { ensure } from "@vermi/utils";
 import type { RouteObject } from "../interfaces";
 
 export const getRouteHandler = (

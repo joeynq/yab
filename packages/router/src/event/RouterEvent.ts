@@ -1,4 +1,4 @@
-import type { RequestContext } from "@yab/core";
+import type { RequestContext } from "@vermi/core";
 
 export enum RouterEvent {
 	Init = "router:init",

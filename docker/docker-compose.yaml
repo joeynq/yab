@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - yab_dev
+      - vermi_dev
   redis:
     image: redis/redis-stack:7.2.0-v6
     ports:
@@ -38,9 +38,9 @@ services:
       options:
         max-size: "1m"
     networks:
-      - yab_dev
+      - vermi_dev
 networks:
-  yab_dev:
+  vermi_dev:
     driver: bridge
 volumes:
   postgres:

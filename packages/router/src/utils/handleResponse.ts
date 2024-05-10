@@ -1,4 +1,4 @@
-import { HttpException } from "@yab/core";
+import { HttpException } from "@vermi/core";
 import { InternalServerError } from "../exceptions";
 import type { RouteObject } from "../interfaces";
 import { Res } from "./Res";
