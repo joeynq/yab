@@ -1,0 +1,35 @@
+{
+	"name": "@yab/logger",
+	"module": "src/index.ts",
+	"main": "dist/index.js",
+	"exports": {
+		"./pino": {
+			"import": "./dist/PinoLogger.js",
+			"require": "./dist/PinoLogger.js"
+		},
+		"./consola": {
+			"import": "./dist/ConsolaLogger.js",
+			"require": "./dist/ConsolaLogger.js"
+		}
+	},
+	"type": "module",
+	"scripts": {
+		"link": "bun link",
+		"build": "tsc",
+		"watch": "tsc -w"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@yab/core": "link:@yab/core",
+		"@yab/utils": "link:@yab/utils"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"consola": "^3.2.3",
+		"pino": "^9.0.0",
+		"pino-pretty": "^11.0.0",
+		"reflect-metadata": "^0.2.2"
+	}
+}

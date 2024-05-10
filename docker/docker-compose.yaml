@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - yab_dev
+  redis:
+    image: redis/redis-stack:7.2.0-v6
+    ports:
+      - "${REDIS_SERVER_PORT:-6379}:6379"
+      - "${REDIS_ENDPOINT_PORT:-8001}:8001"
+    healthcheck:
+      test: "bash -c 'redis-cli ping'"
+      retries: 5
+      interval: 10s
+    restart: always
+  maildev:
+    image: maildev/maildev
+    restart: always
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+    ports:
+      - "8080:1080"
+      - "8025:1025"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+    networks:
+      - yab_dev
+networks:
+  yab_dev:
+    driver: bridge
+volumes:
+  postgres:

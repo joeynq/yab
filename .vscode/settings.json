@@ -1,0 +1,51 @@
+{
+	"cSpell.words": [
+		"awilix",
+		"biomejs",
+		"bunx",
+		"commitlint",
+		"Consola",
+		"datasource",
+		"deburr",
+		"deburred",
+		"deepmerge",
+		"flushall",
+		"frameguard",
+		"Hasher",
+		"hsts",
+		"jwks",
+		"lefthook",
+		"mikro",
+		"mongolyy",
+		"nofilter",
+		"noopen",
+		"nosniff",
+		"notifme",
+		"pino",
+		"reviewdog",
+		"rlflx",
+		"SAMEORIGIN",
+		"sonarjs",
+		"tseslint",
+		"tslog",
+		"typebox",
+		"workdir"
+	],
+	"editor.codeActionsOnSave": {
+		"source.organizeImports.biome": "always"
+	},
+	"editor.tabSize": 2,
+	"exportall.config.relExclusion": [
+		"/packages/utils/src/internal",
+		"/packages/cache/src/adapters",
+		"/packages/logger/src/loggers"
+	],
+	"editor.defaultFormatter": "biomejs.biome",
+	"biome.rename": true,
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	}
+}
