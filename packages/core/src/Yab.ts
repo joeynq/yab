@@ -117,7 +117,7 @@ export class Yab {
 							YabEvents.OnRequest,
 							[stored.expose()],
 							{
-								breakOnResult: true,
+								breakOn: "result",
 							},
 						);
 

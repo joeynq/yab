@@ -40,17 +40,17 @@ export abstract class Strategy<S> {
 		if (tokenFrom === "query") {
 			const url = new URL(request.url);
 			const token = url.searchParams.get(tokenName);
-			return token || undefined;
+			return token ?? undefined;
 		}
 		if (tokenFrom === "body") {
 			if (request.headers.get("content-type")?.includes("application/json")) {
-				const body = await request.json();
-				const token = (body as any)[tokenName];
+				const body = (await request.json()) as any;
+				const token = body[tokenName];
 				return token || undefined;
 			}
 			const body = await request.formData();
 			const token = body.get(tokenName);
-			return token?.toString() || undefined;
+			return token?.toString() ?? undefined;
 		}
 		return undefined;
 	}

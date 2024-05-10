@@ -1,5 +1,4 @@
-import type { RequestContext } from "@mikro-orm/core";
-import { Logger, type LoggerAdapter } from "@yab/core";
+import { Logger, type LoggerAdapter, type RequestContext } from "@yab/core";
 import { After, Before, Middleware } from "@yab/router";
 
 @Middleware()
@@ -9,12 +8,11 @@ export class AnyMiddleware {
 
 	@Before()
 	public mwBefore(ctx: RequestContext) {
-		console.log(this.logger);
-		// this.logger.info("Before route");
+		this.logger.info("Before");
 	}
 
 	@After()
 	public mwAfter(ctx: RequestContext) {
-		// this.logger.info("After route");
+		this.logger.info("After");
 	}
 }

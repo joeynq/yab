@@ -1,12 +1,17 @@
-import type { RequestContext } from "@yab/core";
+import type { AppContext } from "@yab/core";
 import { ensure } from "@yab/utils";
 import Memoirist, { type FindResult } from "memoirist";
 import { RouterEvent } from "../event";
 import { NotFound } from "../exceptions";
-import type { RouteMatch, RouteObject, ValidationFn } from "../interfaces";
+import type {
+	RouteMatch,
+	RouteObject,
+	SlashedPath,
+	ValidationFn,
+} from "../interfaces";
 import {
-	getEventName,
 	getRequestPayload,
+	getRequestScope,
 	getRouteHandler,
 	validate,
 } from "../utils";
@@ -20,7 +25,7 @@ type ConsoleTable = {
 export class Router {
 	#matcher = new Memoirist<RouteMatch>();
 
-	#context?: RequestContext;
+	#context?: AppContext;
 
 	#route?: FindResult<RouteMatch>;
 
@@ -43,8 +48,8 @@ export class Router {
 	}
 
 	#ensureMatch() {
-		const request = this.context.store.request;
-		const serverUrl = this.context.store.serverUrl;
+		const request = this.context.resolve("request") as Request;
+		const serverUrl = this.context.resolve("serverUrl") as string;
 
 		const url = new URL(request.url, serverUrl);
 
@@ -59,7 +64,7 @@ export class Router {
 	}
 
 	async #getHandlerArguments() {
-		const { request } = this.context.store;
+		const request = this.context.resolve("request") as Request;
 		const args = await getRequestPayload(request, this.route);
 
 		for (const arg of args) {
@@ -80,21 +85,27 @@ export class Router {
 		return this.#matcher.add(method, path, store);
 	}
 
-	addRouteFromController(controller: any, route: RouteObject, root = "") {
+	addRouteFromController(
+		controller: any,
+		route: RouteObject,
+		root: SlashedPath = "/",
+	) {
 		const { method: httpMethod, path, prefix } = route;
 		const method = httpMethod.toLowerCase();
-		const routePath = `${root}${prefix}${path}`.replace(/\/$/, "");
+		const routePath = `${root}${prefix}${path}`
+			.replace(/\/$/, "")
+			.replace(/\/\//, "/");
 		const handler = getRouteHandler(controller, route);
 		this.addRoute(method, routePath, {
 			handler,
-			prefix,
+			prefix: root,
 			path: routePath,
 			parameters: route.parameters,
 			response: route.response,
 		});
 	}
 
-	useContext(context: RequestContext) {
+	useContext(context: AppContext) {
 		this.#context = context;
 	}
 
@@ -112,17 +123,27 @@ export class Router {
 			responses?: RouteMatch["response"],
 		) => Response,
 	) {
-		const { request, logger } = this.context.store;
+		this.#ensureMatch();
+
+		const request = this.context.resolve("request") as Request;
+		const { logger } = this.context.store;
 		const { prefix, path } = this.route.store;
 		try {
 			logger.info(`Incoming request: ${request.method} ${request.url}`);
 
 			this.#ensureMatch();
-			const relativePath = `${prefix}${path}`.replace(/\/$/, "");
+			const relativePath = path.replace(prefix, "").replace(/\/$/, "");
 
 			await this.context.store.hooks.invoke(
-				getEventName(RouterEvent.BeforeHandle, request.method, relativePath),
-				[this.context.store],
+				RouterEvent.RouteGuard,
+				[this.context],
+				{ scope: getRequestScope(request.method, relativePath) },
+			);
+
+			await this.context.store.hooks.invoke(
+				RouterEvent.BeforeHandle,
+				[this.context],
+				{ scope: getRequestScope(request.method, relativePath) },
 			);
 
 			const result = await this.route.store.handler(
@@ -130,8 +151,9 @@ export class Router {
 			);
 
 			await this.context.store.hooks.invoke(
-				getEventName(RouterEvent.AfterHandle, request.method, relativePath),
-				[this.context.store, result],
+				RouterEvent.AfterHandle,
+				[this.context],
+				{ scope: getRequestScope(request.method, relativePath) },
 			);
 
 			return responseHandler(result, this.route.store.response);

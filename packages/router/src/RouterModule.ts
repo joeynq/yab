@@ -11,6 +11,7 @@ import {
 	asClass,
 } from "@yab/core";
 import { type AnyClass, type Dictionary, ensure } from "@yab/utils";
+import { RouterEvent } from "./event";
 import type { RouterConfig, SlashedPath } from "./interfaces";
 import { Router } from "./services/Router";
 import {
@@ -21,9 +22,15 @@ import {
 
 export type RouterOptions = Omit<RouterConfig, "routes">;
 
+interface RegisteringList {
+	[name: string]: {
+		resolver: ReturnType<typeof asClass>;
+		instance: any;
+	};
+}
+
 @Module()
 export class RouterModule extends YabModule<RouterConfig> {
-	// #routeMatcher = new Memoirist<RouteMatch>();
 	#router = new Router();
 
 	config: RouterConfig;
@@ -50,6 +57,43 @@ export class RouterModule extends YabModule<RouterConfig> {
 		};
 	}
 
+	#getInstance(
+		context: AppContext,
+		registering: RegisteringList,
+		controller: AnyClass<any>,
+	) {
+		if (registering[controller.name]) {
+			return registering[controller.name].instance;
+		}
+
+		const resolver = asClass(controller).singleton();
+		const instance = context.build(resolver);
+
+		registering[controller.name] = { resolver, instance };
+
+		const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
+			HookHandler[]
+		>;
+
+		if (!hooks) {
+			return instance;
+		}
+
+		for (const handlers of Object.values(hooks)) {
+			for (const { target } of handlers) {
+				if (target) {
+					const resolver = asClass(target).scoped();
+					registering[target.name] = {
+						resolver: resolver,
+						instance: context.build(resolver),
+					};
+				}
+			}
+		}
+
+		return instance;
+	}
+
 	@YabHook("app:init")
 	initRoute(context: AppContext) {
 		const registering: Record<
@@ -72,42 +116,17 @@ export class RouterModule extends YabModule<RouterConfig> {
 			for (const route of routes) {
 				const { controller } = route;
 
-				let instance: any;
+				const instance = this.#getInstance(context, registering, controller);
 
-				if (registering[controller.name]) {
-					instance = registering[controller.name].instance;
-				} else {
-					const resolver = asClass(controller).singleton();
-					instance = context.build(resolver);
-
-					registering[controller.name] = { resolver, instance };
-
-					const hooks = Reflect.getMetadata(
-						HookMetadataKey,
-						instance,
-					) as Dictionary<HookHandler[]>;
-
-					if (hooks) {
-						for (const handlers of Object.values(hooks)) {
-							for (const { target } of handlers) {
-								if (target) {
-									const resolver = asClass(target).scoped();
-									registering[target.name] = {
-										resolver: resolver,
-										instance: context.build(resolver),
-									};
-								}
-							}
-						}
-					}
-				}
-
-				this.#router.addRouteFromController(instance, route, root);
-
-				console.table(this.#router.debug);
-				this.logger.info(`${this.#router.debug.length} routes initialized`);
+				this.#router.addRouteFromController(
+					instance,
+					route,
+					root as SlashedPath,
+				);
 			}
 		}
+
+		this.logger.info(`${this.#router.debug.length} routes initialized`);
 
 		context.register(
 			Object.keys(registering).reduce(
@@ -119,6 +138,7 @@ export class RouterModule extends YabModule<RouterConfig> {
 			),
 		);
 
+		context.store.hooks.useContext(context);
 		for (const { instance } of Object.values(registering)) {
 			context.store.hooks.registerFromMetadata(instance);
 		}
@@ -135,6 +155,17 @@ export class RouterModule extends YabModule<RouterConfig> {
 		this.#router.useContext(context);
 		customValidation && this.#router.useValidator(customValidation);
 
-		return await this.#router.handleRequest(responseHandler, errorHandler);
+		await context.store.hooks.invoke(RouterEvent.Init, [context]);
+
+		await context.store.hooks.invoke(RouterEvent.BeforeRoute, [context]);
+
+		const response = await this.#router.handleRequest(
+			responseHandler,
+			errorHandler,
+		);
+
+		await context.store.hooks.invoke(RouterEvent.AfterRoute, [context]);
+
+		return response;
 	}
 }
