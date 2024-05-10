@@ -1,13 +1,10 @@
 import { type HookHandler, HookMetadataKey, mergeMetadata } from "@yab/core";
 import type { AnyClass } from "@yab/utils";
-import { RouterEvent } from "../event";
 import {
 	getControllerMetadata,
-	getEventName,
 	getMiddlewareMetadata,
+	getRequestScope,
 } from "../utils";
-
-const routeSpecificEvents = [RouterEvent.BeforeHandle, RouterEvent.AfterHandle];
 
 export const Use = <Middleware extends AnyClass>(
 	middleware: Middleware,
@@ -23,14 +20,11 @@ export const Use = <Middleware extends AnyClass>(
 		const hookValue: Record<string, HookHandler[]> = {};
 
 		for (const [key, { event }] of Object.entries(midMetadata.handler)) {
-			const eventName = routeSpecificEvents.includes(event)
-				? getEventName(event, method, `{prefix}${path}`)
-				: event;
-			hookValue[eventName] = [
+			hookValue[event] = [
 				{
 					target: middleware,
 					method: key,
-					scoped: "request",
+					scope: getRequestScope(method, `{prefix}${path}`),
 				},
 			];
 		}

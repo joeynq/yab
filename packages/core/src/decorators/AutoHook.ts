@@ -1,5 +1,4 @@
 import type { Dictionary } from "@yab/utils";
-import { YabEvents } from "../events";
 import type { RequestContext } from "../interfaces";
 import { Hook } from "./Hook";
 
@@ -7,7 +6,7 @@ export const AutoHookEvent = Symbol("AutoHookEvent");
 
 export type AutoHookStore = Dictionary<string>;
 
-export const AutoHook = (event: string = YabEvents.OnInit) => {
+export const AutoHook = (event: string, scoped = false) => {
 	return <T extends new (...args: any[]) => any>(target: T) => {
 		const funcName = `__${event}__`;
 
@@ -35,6 +34,11 @@ export const AutoHook = (event: string = YabEvents.OnInit) => {
 			funcName,
 		);
 
-		descriptor && Hook(event, "before")(target.prototype, funcName, descriptor);
+		descriptor &&
+			Hook(event, { scoped, position: "before" })(
+				target.prototype,
+				funcName,
+				descriptor,
+			);
 	};
 };

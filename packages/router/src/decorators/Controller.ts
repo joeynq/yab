@@ -14,14 +14,19 @@ export const Controller = (path: SlashedPath) => {
 		metadata.prefix = path;
 		metadata.controller = target;
 
-		const hookData: { [x: string]: HookHandler[] } =
+		const hookData: Record<string, HookHandler[]> =
 			getMetadata(HookMetadataKey, target.prototype) || {};
-		const newHooks: { [x: string]: HookHandler[] } = {};
 
-		for (const [key, value] of Object.entries(hookData || {})) {
-			const eventKey = key.replace("{prefix}", path);
-			newHooks[eventKey] = value;
-		}
+		const newHooks = Object.entries(hookData).reduce(
+			(acc, [key, value]) => {
+				acc[key] = value.map((hook) => ({
+					...hook,
+					scope: hook.scope?.replace("{prefix}", path),
+				}));
+				return acc;
+			},
+			{} as Record<string, HookHandler[]>,
+		);
 
 		setMetadata(HookMetadataKey, newHooks, target.prototype);
 		setControllerMetadata(target, metadata);

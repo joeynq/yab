@@ -21,7 +21,7 @@ export class SqliteAdapter implements CacheAdapter {
 
 	#prepared!: PreparedStatements;
 
-	constructor(file: string | ":memory:" = ":memory:") {
+	constructor(file = ":memory:") {
 		this.#db = new Database(file);
 		this.#createTable();
 		this.#prepareStatements();

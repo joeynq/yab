@@ -15,7 +15,7 @@
 		"@yab/utils": "link:@yab/utils"
 	},
 	"peerDependencies": {
-		"typescript": "^5.0.0"
+		"typescript": "^5.4.5"
 	},
 	"dependencies": {
 		"jose": "^5.2.4",

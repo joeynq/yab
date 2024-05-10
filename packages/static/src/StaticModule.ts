@@ -49,6 +49,40 @@ export class StaticModule extends YabModule<StaticModuleOptions> {
 		super();
 	}
 
+	#getFile(request: Request) {
+		const { prefix, assetsDir } = this.config;
+		const isAbsolute = assetsDir.startsWith("/");
+
+		const filePath = isAbsolute
+			? `${assetsDir}${request.url.slice(prefix.length)}`
+			: Bun.resolveSync(
+					`${assetsDir}${request.url.slice(prefix.length)}`,
+					process.cwd(),
+				);
+
+		return Bun.file(filePath);
+	}
+
+	#getHeaders(etag?: string) {
+		const { immutable, maxAge } = this.config;
+		const headers = new Headers();
+
+		let cacheControl = "no-cache";
+		if (maxAge) {
+			cacheControl = `public, max-age=${maxAge}`;
+		}
+		if (immutable) {
+			cacheControl += ", immutable";
+		}
+		headers.set("Cache-Control", cacheControl);
+
+		if (etag) {
+			headers.set("ETag", etag);
+		}
+
+		return headers;
+	}
+
 	@YabHook("app:init")
 	public async onInit() {
 		this.logger.info(
@@ -72,10 +106,7 @@ export class StaticModule extends YabModule<StaticModuleOptions> {
 
 		const {
 			extensions = defaultStaticExtensions,
-			assetsDir,
 			ignorePatterns,
-			immutable,
-			maxAge,
 			eTag,
 			index,
 		} = this.config;
@@ -100,16 +131,7 @@ export class StaticModule extends YabModule<StaticModuleOptions> {
 			}
 		}
 
-		const isAbsolute = assetsDir.startsWith("/");
-
-		const filePath = isAbsolute
-			? `${assetsDir}${request.url.slice(prefix.length)}`
-			: Bun.resolveSync(
-					`${assetsDir}${request.url.slice(prefix.length)}`,
-					process.cwd(),
-				);
-
-		const file = Bun.file(filePath);
+		const file = this.#getFile(request);
 
 		const etag = eTag ? await generateETag(file) : undefined;
 
@@ -117,21 +139,6 @@ export class StaticModule extends YabModule<StaticModuleOptions> {
 			return new Response(null, { status: 304 });
 		}
 
-		const headers = new Headers();
-
-		let cacheControl = "no-cache";
-		if (maxAge) {
-			cacheControl = `public, max-age=${maxAge}`;
-		}
-		if (immutable) {
-			cacheControl += ", immutable";
-		}
-		headers.set("Cache-Control", cacheControl);
-
-		if (etag) {
-			headers.set("ETag", etag);
-		}
-
-		return new Response(file, { headers });
+		return new Response(file, { headers: this.#getHeaders(etag) });
 	}
 }

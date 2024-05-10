@@ -3,7 +3,7 @@ import {
 	type Dictionary,
 	type EnumValues,
 	type MaybePromiseFunction,
-	isUndefined,
+	isNil,
 } from "@yab/utils";
 import type { AppContext, EventPayload, EventResult } from "../interfaces";
 import { HookMetadataKey } from "../symbols";
@@ -16,16 +16,25 @@ type EventHandler<
 	...args: EventPayload<EventType, Event, EventMap>
 ) => EventResult<EventType, Event, EventMap>;
 
+interface EventObject<
+	EventType extends { [key: string]: string },
+	Event extends EnumValues<EventType>,
+	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction>,
+> {
+	target?: AnyClass;
+	handler: EventHandler<EventType, Event, EventMap>;
+	scope?: string;
+}
+
 interface InvokeOptions {
-	breakOnResult?: boolean;
-	breakOnNull?: boolean;
-	breakOnError?: boolean;
+	breakOn?: "null" | "result" | "error" | (<T>(result: T) => boolean);
+	scope?: string;
 }
 
 export type HookHandler = {
 	target?: AnyClass;
 	method: string;
-	scoped?: "request";
+	scope?: string;
 };
 
 export class Hooks<
@@ -38,13 +47,29 @@ export class Hooks<
 > {
 	#hooks = new Map<
 		string,
-		Array<EventHandler<EventType, EnumValues<EventType>, EventMap>>
+		Array<EventObject<EventType, EnumValues<EventType>, EventMap>>
 	>();
 
 	#context?: Context;
 
 	get debug() {
 		return this.#hooks;
+	}
+
+	#shouldBreak(result: any, breakOn: InvokeOptions["breakOn"]) {
+		if (breakOn === "null" && result === null) {
+			return true;
+		}
+
+		if (breakOn === "result" && !isNil(result)) {
+			return true;
+		}
+
+		if (typeof breakOn === "function" && breakOn(result)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	useContext(context: Context) {
@@ -61,30 +86,36 @@ export class Hooks<
 		const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
 			HookHandler[]
 		>;
-		if (hooks) {
-			for (const [event, handlers] of Object.entries(hooks)) {
-				for (const { target, method } of handlers) {
-					const currentInstance = !isUndefined(target)
-						? this.#context?.resolve(target.name)
-						: instance;
+		if (!hooks) {
+			return;
+		}
+		for (const [event, handlers] of Object.entries(hooks)) {
+			for (const { target, method, scope } of handlers) {
+				const currentInstance = target
+					? this.#context?.resolve(target.name)
+					: instance;
 
-					const handler = currentInstance?.[method].bind(currentInstance);
+				const handler = currentInstance?.[method].bind(currentInstance);
 
-					handler && this.register(event as EnumValues<EventType>, handler);
-				}
+				handler &&
+					this.register(event as EnumValues<EventType>, {
+						target,
+						handler,
+						scope,
+					});
 			}
 		}
 	}
 
 	register<Event extends EnumValues<EventType>>(
 		event: Event,
-		callback: EventHandler<EventType, Event, EventMap>,
+		eventObject: EventObject<EventType, Event, EventMap>,
 	) {
 		let handlers = this.#hooks.get(event);
 		if (handlers) {
-			handlers.push(callback);
+			handlers.push(eventObject);
 		} else {
-			handlers = [callback];
+			handlers = [eventObject];
 		}
 		this.#hooks.set(event, handlers);
 	}
@@ -92,27 +123,31 @@ export class Hooks<
 	async invoke<Event extends EnumValues<EventType>>(
 		event: Event,
 		args: EventPayload<EventType, Event, EventMap>,
-		{
-			breakOnResult = false,
-			breakOnNull = false,
-			breakOnError = true,
-		}: InvokeOptions = {},
+		{ breakOn = "error", scope }: InvokeOptions = {},
 	): Promise<EventResult<EventType, Event, EventMap> | undefined> {
-		const handlers = this.#hooks.get(event);
-		if (handlers) {
-			for (const handler of handlers) {
-				try {
-					const result = await (handler as MaybePromiseFunction)(...args);
-					if (breakOnNull && result === null) {
-						break;
-					}
-					if (breakOnResult && !isUndefined(result)) {
-						return result as EventResult<EventType, Event, EventMap>;
-					}
-				} catch (error) {
-					if (breakOnError) {
-						throw error;
-					}
+		let handlers = this.#hooks.get(event);
+		if (!handlers?.length) {
+			return;
+		}
+
+		if (scope) {
+			handlers = handlers.filter((handler) => handler.scope === scope);
+		}
+
+		for (const { handler: rawHandler, target } of handlers) {
+			try {
+				let handler = rawHandler as MaybePromiseFunction;
+				if (target && this.#context?.resolve(target)) {
+					handler = handler.bind(this.#context.resolve(target));
+				}
+				const result = await handler(...args);
+
+				if (this.#shouldBreak(result, breakOn)) {
+					return result as any;
+				}
+			} catch (error) {
+				if (breakOn === "error") {
+					throw error;
 				}
 			}
 		}

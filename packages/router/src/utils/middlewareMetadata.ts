@@ -29,6 +29,6 @@ export const setMiddlewareMetadata = (
 	Reflect.defineMetadata(MiddlewareMetadataKey, metadata, target);
 };
 
-export const getEventName = (event: string, method: string, path: string) => {
-	return `${event}:${method}${path}`.replace(/\/$/, "").toLowerCase();
+export const getRequestScope = (method: string, path: string) => {
+	return `${method}${path}`.replace(/\/$/, "").toLowerCase();
 };
