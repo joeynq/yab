@@ -1,7 +1,7 @@
-import type { AppContext } from "@vermi/core";
+import type { AppContext, Hooks, RequestContext } from "@vermi/core";
 import { ensure } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
-import { RouterEvent } from "../event";
+import { RouterEvent, type RouterEventMap } from "../event";
 import { NotFound } from "../exceptions";
 import type {
 	RouteMatch,
@@ -70,6 +70,11 @@ export class Router {
 		for (const arg of args) {
 			if (arg.schema) {
 				this.#validator(arg.schema, arg.payload, this.route);
+				if (arg.pipes) {
+					for (const pipe of arg.pipes) {
+						arg.payload = await this.context.build(pipe).map(arg.payload);
+					}
+				}
 			}
 		}
 
@@ -125,35 +130,41 @@ export class Router {
 	) {
 		this.#ensureMatch();
 
-		const request = this.context.resolve("request") as Request;
-		const { logger } = this.context.store;
+		const context = this.context as RequestContext;
+
+		const request = context.resolve("request") as Request;
+		const { logger } = context.store;
 		const { prefix, path } = this.route.store;
 		try {
 			logger.info(`Incoming request: ${request.method} ${request.url}`);
 
 			this.#ensureMatch();
+
 			const relativePath = path.replace(prefix, "").replace(/\/$/, "");
+			const scope = getRequestScope(request.method, relativePath);
 
-			await this.context.store.hooks.invoke(
-				RouterEvent.RouteGuard,
-				[this.context],
-				{ scope: getRequestScope(request.method, relativePath) },
-			);
+			const hooks = context.store.hooks as Hooks<
+				typeof RouterEvent,
+				RouterEventMap,
+				RequestContext
+			>;
 
-			await this.context.store.hooks.invoke(
-				RouterEvent.BeforeHandle,
-				[this.context],
-				{ scope: getRequestScope(request.method, relativePath) },
-			);
+			await hooks.invoke(RouterEvent.RouteGuard, [context, this.route], {
+				scope,
+			});
+
+			await hooks.invoke(RouterEvent.BeforeHandle, [context, this.route], {
+				scope,
+			});
 
 			const result = await this.route.store.handler(
 				...(await this.#getHandlerArguments()),
 			);
 
-			await this.context.store.hooks.invoke(
+			await hooks.invoke(
 				RouterEvent.AfterHandle,
-				[this.context],
-				{ scope: getRequestScope(request.method, relativePath) },
+				[context, result, this.route],
+				{ scope },
 			);
 
 			return responseHandler(result, this.route.store.response);

@@ -2,6 +2,7 @@ import type { TObject } from "@sinclair/typebox";
 import type { AnyClass, MaybePromiseFunction } from "@vermi/utils";
 import type { FindResult } from "memoirist";
 import type { HttpMethod } from "../enums";
+import type { Mapper } from "../services/Mapper";
 
 export type SlashedPath = `/${string}`;
 
@@ -11,6 +12,7 @@ export type RouteParameter = {
 	index: number;
 	schema?: TObject;
 	in: ParameterType;
+	pipes?: AnyClass<Mapper>[];
 };
 
 export type RouterConfig = {

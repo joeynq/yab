@@ -39,7 +39,8 @@
 	"exportall.config.relExclusion": [
 		"/packages/utils/src/internal",
 		"/packages/cache/src/adapters",
-		"/packages/logger/src/loggers"
+		"/packages/logger/src/loggers",
+		"/packages/router/src/services/index.ts"
 	],
 	"editor.defaultFormatter": "biomejs.biome",
 	"biome.rename": true,
