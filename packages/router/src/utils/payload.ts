@@ -1,3 +1,5 @@
+import type { TObject } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 import { parse } from "fast-querystring";
 import type { FindResult } from "memoirist";
 import { StandardValidator, ValidationException } from "typebox-validators";
@@ -5,7 +7,7 @@ import type { RouteMatch, RouteParameter, ValidationFn } from "../interfaces";
 
 const getFromRequest = async (
 	request: Request,
-	from: "params" | "query" | "body" | "headers" | "cookie",
+	from: "query" | "body" | "headers" | "cookie",
 ) => {
 	const url = new URL(request.url);
 	const body = await request.json();
@@ -43,14 +45,12 @@ export const getRequestPayload = async (
 
 	return Promise.all(
 		args.map(async (arg: RouteParameter) => {
-			if (arg.in === "params") {
-				return {
-					...arg,
-					payload: match.params,
-				};
-			}
+			const raw =
+				arg.in === "params"
+					? match.params
+					: await getFromRequest(request, arg.in);
 
-			const payload = await getFromRequest(request, arg.in);
+			const payload = arg.schema ? transform(arg.schema, raw) : raw;
 
 			return {
 				...arg,
@@ -58,6 +58,10 @@ export const getRequestPayload = async (
 			};
 		}),
 	);
+};
+
+export const transform = <T>(schema: TObject, value: any): T => {
+	return Value.Convert(schema, value) as T;
 };
 
 export const validate: ValidationFn = async (schema, value): Promise<void> => {

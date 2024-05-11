@@ -3,6 +3,7 @@ import {
 	AppHook,
 	type HookHandler,
 	HookMetadataKey,
+	type Hooks,
 	Logger,
 	type LoggerAdapter,
 	Module,
@@ -11,7 +12,7 @@ import {
 	asClass,
 } from "@vermi/core";
 import { type AnyClass, type Dictionary, ensure } from "@vermi/utils";
-import { RouterEvent } from "./event";
+import { RouterEvent, type RouterEventMap } from "./event";
 import type { RouterConfig, SlashedPath } from "./interfaces";
 import { Router } from "./services/Router";
 import {
@@ -156,16 +157,22 @@ export class RouterModule extends VermiModule<RouterConfig> {
 		this.#router.useContext(context);
 		customValidation && this.#router.useValidator(customValidation);
 
-		await context.store.hooks.invoke(RouterEvent.Init, [context]);
+		const hooks = context.store.hooks as Hooks<
+			typeof RouterEvent,
+			RouterEventMap,
+			RequestContext
+		>;
 
-		await context.store.hooks.invoke(RouterEvent.BeforeRoute, [context]);
+		await hooks.invoke(RouterEvent.Init, [context]);
+
+		await hooks.invoke(RouterEvent.BeforeRoute, [context]);
 
 		const response = await this.#router.handleRequest(
 			responseHandler,
 			errorHandler,
 		);
 
-		await context.store.hooks.invoke(RouterEvent.AfterRoute, [context]);
+		await hooks.invoke(RouterEvent.AfterRoute, [context]);
 
 		return response;
 	}
