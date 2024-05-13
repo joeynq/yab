@@ -1,7 +1,6 @@
-import { AutoHook } from "./AutoHook";
+import { useDecorators } from "../utils";
+import { Injectable } from "./Injectable";
 
 export const Module = () => {
-	return (target: any) => {
-		AutoHook("app:init")(target);
-	};
+	return useDecorators(Injectable("SINGLETON"));
 };

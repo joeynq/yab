@@ -1,6 +1,8 @@
-import type { Dictionary } from "@vermi/utils";
-import type { AppOptions, ModuleConfig, VermiModule } from "../interfaces";
+import { type Dictionary, deepMerge } from "@vermi/utils";
+import { Injectable } from "../decorators";
+import type { AppOptions, ModuleConfig } from "../interfaces";
 
+@Injectable()
 export class Configuration {
 	options!: AppOptions;
 
@@ -9,24 +11,22 @@ export class Configuration {
 		return options;
 	}
 
-	constructor(options?: AppOptions) {
+	constructor(appConfig?: AppOptions) {
 		this.options = {
-			modules: [],
-			...options,
+			modules: new Map(),
+			...appConfig,
 		};
 	}
 
-	getModuleConfig<Config extends Dictionary = Dictionary>(
-		instance: VermiModule<Config>,
-	) {
-		return this.options.modules.find(
-			(config) => config.moduleInstance.id === instance.id,
-		);
+	getModuleConfig<Config>(name: string): ModuleConfig<Config> | undefined {
+		const module = this.options.modules.get(name);
+		return module as ModuleConfig<Config> | undefined;
 	}
 
 	setModuleConfig<Config extends Dictionary = Dictionary>(
 		config: ModuleConfig<Config>,
 	) {
-		this.options.modules.push(config);
+		const existing = this.options.modules.get(config.module.name);
+		this.options.modules.set(config.module.name, deepMerge(existing, config));
 	}
 }

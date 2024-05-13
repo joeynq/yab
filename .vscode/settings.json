@@ -1,7 +1,9 @@
 {
 	"cSpell.words": [
+		"argtypes",
 		"awilix",
 		"biomejs",
+		"bodytypes",
 		"bunx",
 		"commitlint",
 		"Consola",
@@ -21,10 +23,12 @@
 		"noopen",
 		"nosniff",
 		"notifme",
+		"paramtypes",
 		"pino",
 		"reviewdog",
 		"rlflx",
 		"SAMEORIGIN",
+		"sindresorhus",
 		"sonarjs",
 		"tseslint",
 		"tslog",

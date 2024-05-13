@@ -1,10 +1,9 @@
-import { Logger, type LoggerAdapter, type RequestContext } from "@vermi/core";
+import type { LoggerAdapter, RequestContext } from "@vermi/core";
 import { After, Before, Middleware } from "@vermi/router";
 
 @Middleware()
 export class AnyMiddleware {
-	@Logger()
-	logger!: LoggerAdapter;
+	constructor(private logger: LoggerAdapter) {}
 
 	@Before()
 	public mwBefore(ctx: RequestContext) {

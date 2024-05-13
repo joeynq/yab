@@ -1,2 +1,2 @@
-import { Parameter } from "./Parameter";
-export const Params = Parameter.bind(null, "params");
+import { Arg } from "./Arg";
+export const Params = Arg.bind(null, "path");

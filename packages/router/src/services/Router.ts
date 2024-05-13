@@ -3,18 +3,8 @@ import { ensure } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
 import { RouterEvent, type RouterEventMap } from "../event";
 import { NotFound } from "../exceptions";
-import type {
-	RouteMatch,
-	RouteObject,
-	SlashedPath,
-	ValidationFn,
-} from "../interfaces";
-import {
-	getRequestPayload,
-	getRequestScope,
-	getRouteHandler,
-	validate,
-} from "../utils";
+import type { RouteMatch, ValidationFn } from "../interfaces";
+import { getRequestPayload, getRequestScope, validate } from "../utils";
 
 type ConsoleTable = {
 	method: string;
@@ -69,7 +59,7 @@ export class Router {
 
 		for (const arg of args) {
 			if (arg.schema) {
-				this.#validator(arg.schema, arg.payload, this.route);
+				await this.#validator(arg.schema, arg.payload, this.route);
 				if (arg.pipes) {
 					for (const pipe of arg.pipes) {
 						arg.payload = await this.context.build(pipe).map(arg.payload);
@@ -90,26 +80,6 @@ export class Router {
 		return this.#matcher.add(method, path, store);
 	}
 
-	addRouteFromController(
-		controller: any,
-		route: RouteObject,
-		root: SlashedPath = "/",
-	) {
-		const { method: httpMethod, path, prefix } = route;
-		const method = httpMethod.toLowerCase();
-		const routePath = `${root}${prefix}${path}`
-			.replace(/\/$/, "")
-			.replace(/\/\//, "/");
-		const handler = getRouteHandler(controller, route);
-		this.addRoute(method, routePath, {
-			handler,
-			prefix: root,
-			path: routePath,
-			parameters: route.parameters,
-			response: route.response,
-		});
-	}
-
 	useContext(context: AppContext) {
 		this.#context = context;
 	}
@@ -121,11 +91,11 @@ export class Router {
 	async handleRequest(
 		responseHandler: <T>(
 			result: T,
-			responses: RouteMatch["response"],
+			responses: RouteMatch["responses"],
 		) => Response,
 		errorHandler: <Err extends Error>(
 			error: Err,
-			responses?: RouteMatch["response"],
+			responses?: RouteMatch["responses"],
 		) => Response,
 	) {
 		this.#ensureMatch();
@@ -134,13 +104,11 @@ export class Router {
 
 		const request = context.resolve("request") as Request;
 		const { logger } = context.store;
-		const { prefix, path } = this.route.store;
+		const { path } = this.route.store;
 		try {
 			logger.info(`Incoming request: ${request.method} ${request.url}`);
 
-			this.#ensureMatch();
-
-			const relativePath = path.replace(prefix, "").replace(/\/$/, "");
+			const relativePath = path.replace(/\/$/, "");
 			const scope = getRequestScope(request.method, relativePath);
 
 			const hooks = context.store.hooks as Hooks<
@@ -167,10 +135,10 @@ export class Router {
 				{ scope },
 			);
 
-			return responseHandler(result, this.route.store.response);
+			return responseHandler(result, this.route.store.responses);
 		} catch (error) {
 			logger.error(error as Error, `${request.method} ${request.url} failed`);
-			return errorHandler(error as Error, this.#route?.store.response);
+			return errorHandler(error as Error, this.#route?.store.responses);
 		}
 	}
 }

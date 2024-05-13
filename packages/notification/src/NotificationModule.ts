@@ -1,7 +1,7 @@
 import {
 	type AppContext,
 	AppHook,
-	Logger,
+	type Configuration,
 	type LoggerAdapter,
 	Module,
 	VermiModule,
@@ -22,12 +22,12 @@ export class NotificationModule<T extends Templates> extends VermiModule<
 > {
 	#service: NotificationService;
 
-	@Logger()
-	logger!: LoggerAdapter;
-
-	constructor(public config: NotificationModuleConfig<T>) {
+	constructor(
+		protected configuration: Configuration,
+		private logger: LoggerAdapter,
+	) {
 		super();
-		this.#service = new NotificationService(config);
+		this.#service = new NotificationService(this.config);
 	}
 
 	@AppHook("app:exit")

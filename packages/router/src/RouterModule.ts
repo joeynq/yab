@@ -1,158 +1,149 @@
 import {
 	type AppContext,
-	AppHook,
-	type HookHandler,
-	HookMetadataKey,
+	AppEvents,
+	type Configuration,
+	Hook,
 	type Hooks,
-	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
 	VermiModule,
 	asClass,
+	dependentStore,
+	hookStore,
 } from "@vermi/core";
-import { type AnyClass, type Dictionary, ensure } from "@vermi/utils";
+import { type Class, ensure } from "@vermi/utils";
+import type { HttpMethod } from "./enums";
 import { RouterEvent, type RouterEventMap } from "./event";
-import type { RouterConfig, SlashedPath } from "./interfaces";
+import type { RouteMatch, ValidationFn } from "./interfaces";
+import type { Routes, SlashedPath } from "./interfaces/schema";
 import { Router } from "./services/Router";
-import {
-	defaultErrorHandler,
-	defaultResponseHandler,
-	extractMetadata,
-} from "./utils";
+import { routeStore } from "./stores/routeStore";
+import { defaultErrorHandler, defaultResponseHandler } from "./utils";
 
-export type RouterOptions = Omit<RouterConfig, "routes">;
+export type RouterOptions = {
+	middlewares?: Class<any>[];
+	customValidation?: ValidationFn;
+	errorHandler?: (
+		error: Error,
+		responses?: RouteMatch["responses"],
+	) => Response;
+	responseHandler?: <T>(
+		result: T,
+		responses?: RouteMatch["responses"],
+	) => Response;
+};
 
-interface RegisteringList {
-	[name: string]: {
-		resolver: ReturnType<typeof asClass>;
-		instance: any;
+export type RouterModuleConfig = {
+	[prefix: SlashedPath]: {
+		controllers: Class<any>[];
+		options?: RouterOptions;
 	};
-}
+};
 
 @Module()
-export class RouterModule extends VermiModule<RouterConfig> {
+export class RouterModule extends VermiModule<RouterModuleConfig> {
 	#router = new Router();
 
-	config: RouterConfig;
-
-	@Logger()
-	logger!: LoggerAdapter;
-
 	constructor(
-		prefix: SlashedPath,
-		controllers: AnyClass<any>[],
-		options?: RouterOptions,
+		protected configuration: Configuration,
+		private logger: LoggerAdapter,
+		private hooks: Hooks<typeof RouterEvent, RouterEventMap>,
 	) {
 		super();
-		ensure(controllers.length > 0, "No controllers provided");
-		this.config = {
-			...options,
-			routes: {
-				[prefix]: controllers.flatMap((controller) =>
-					extractMetadata(controller).map((action) => {
-						return { ...action, controller };
-					}),
-				),
-			},
-		};
 	}
 
-	#getInstance(
-		context: AppContext,
-		registering: RegisteringList,
-		controller: AnyClass<any>,
-	) {
-		if (registering[controller.name]) {
-			return registering[controller.name].instance;
+	#addRoutes(instance: any, routes: Routes["paths"]) {
+		for (const [path, operation] of routes) {
+			const method = path.split("/")[0];
+			const route = path.slice(method.length);
+
+			this.#router.addRoute(method as HttpMethod, route, {
+				handler: instance[operation.handler.action].bind(instance),
+				path: route,
+				args: operation.args,
+			});
+		}
+	}
+
+	#getConfig(): RouterModuleConfig;
+	#getConfig(request: Request): RouterOptions;
+	#getConfig(request?: Request) {
+		const config = this.getConfig();
+
+		if (!request) {
+			return config;
 		}
 
-		const resolver = asClass(controller).singleton();
-		const instance = context.build(resolver);
+		const path = new URL(request.url).pathname.split("/")[1];
+		const mount = `/${path}` as SlashedPath;
 
-		registering[controller.name] = { resolver, instance };
+		return config[mount];
+	}
 
-		const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
-			HookHandler[]
-		>;
+	@Hook(AppEvents.OnInit)
+	initRoute(context: AppContext) {
+		const mounted = this.#getConfig();
 
-		if (!hooks) {
-			return instance;
+		ensure(mounted, "No configuration provided");
+
+		const registering: Record<string, ReturnType<typeof asClass>> = {};
+
+		let hookEvents: ReturnType<typeof hookStore.combineStore> = new Map();
+		let dependents: Class<any>[] = [];
+		for (const [prefix, { controllers }] of Object.entries(mounted)) {
+			ensure(controllers.length > 0, "No controllers provided");
+
+			for (const controller of controllers) {
+				const routes = routeStore
+					.apply(controller)
+					.updatePathPrefix({ mount: prefix as SlashedPath });
+				const resolver = asClass(controller);
+				const instance = context.build(resolver);
+
+				registering[controller.name] = resolver;
+
+				routes && this.#addRoutes(instance, routes);
+				hookStore.apply(controller).updateScope({ mount: prefix });
+			}
+
+			hookEvents = hookStore.combineStore(...controllers);
+			dependents = dependentStore.combineStore(...controllers) || [];
 		}
 
-		for (const handlers of Object.values(hooks)) {
-			for (const { target } of handlers) {
-				if (target) {
-					const resolver = asClass(target).scoped();
-					registering[target.name] = {
-						resolver: resolver,
-						instance: context.build(resolver),
-					};
+		for (const dependent of dependents) {
+			registering[dependent.name] = asClass(dependent);
+		}
+
+		context.register(registering);
+
+		// console.table(this.#router.debug);
+		this.logger.info(`${this.#router.debug.length} routes registered`);
+
+		// register hooks
+		if (hookEvents) {
+			for (const [event, handlers] of hookEvents.entries()) {
+				for (const { target, handler, scope } of handlers) {
+					this.hooks.register(event as any, {
+						target: target,
+						handler: handler,
+						scope,
+					});
 				}
 			}
 		}
-
-		return instance;
 	}
 
-	@AppHook("app:init")
-	initRoute(context: AppContext) {
-		const registering: Record<
-			string,
-			{
-				resolver: ReturnType<typeof asClass>;
-				instance: any;
-			}
-		> = {};
-
-		for (const mid of this.config.middlewares || []) {
-			const midResolver = asClass(mid).singleton();
-			registering[mid.name] = {
-				resolver: midResolver,
-				instance: context.build(midResolver),
-			};
-		}
-
-		for (const [root, routes] of Object.entries(this.config.routes)) {
-			for (const route of routes) {
-				const { controller } = route;
-
-				const instance = this.#getInstance(context, registering, controller);
-
-				this.#router.addRouteFromController(
-					instance,
-					route,
-					root as SlashedPath,
-				);
-			}
-		}
-
-		console.table(this.#router.debug);
-		this.logger.info(`${this.#router.debug.length} routes initialized`);
-
-		context.register(
-			Object.keys(registering).reduce(
-				(acc, key) => {
-					acc[key] = registering[key].resolver;
-					return acc;
-				},
-				{} as Record<string, ReturnType<typeof asClass>>,
-			),
-		);
-
-		context.store.hooks.useContext(context);
-		for (const { instance } of Object.values(registering)) {
-			context.store.hooks.registerFromMetadata(instance);
-		}
-	}
-
-	@AppHook("app:request")
+	@Hook("app:request")
 	async onRequest(context: RequestContext) {
+		this.logger.info(`Request received: ${context.store.request.url}`);
+		const config = this.#getConfig(context.store.request);
+
 		const {
+			customValidation,
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
-			customValidation,
-		} = this.config;
+		} = config;
 
 		this.#router.useContext(context);
 		customValidation && this.#router.useValidator(customValidation);
@@ -163,7 +154,7 @@ export class RouterModule extends VermiModule<RouterConfig> {
 			RequestContext
 		>;
 
-		await hooks.invoke(RouterEvent.Init, [context]);
+		await hooks.invoke(RouterEvent.Init, [context]).catch(console.error);
 
 		await hooks.invoke(RouterEvent.BeforeRoute, [context]);
 

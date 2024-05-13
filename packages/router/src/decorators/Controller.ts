@@ -1,35 +1,16 @@
-import {
-	AutoHook,
-	type HookHandler,
-	HookMetadataKey,
-	getMetadata,
-	setMetadata,
-} from "@vermi/core";
+import { InjectOn, Injectable, hookStore, useDecorators } from "@vermi/core";
 import type { SlashedPath } from "../interfaces";
-import { getControllerMetadata, setControllerMetadata } from "../utils";
+import { routeStore } from "../stores/routeStore";
 
-export const Controller = (path: SlashedPath) => {
-	return (target: any) => {
-		const metadata = getControllerMetadata(target);
-		metadata.prefix = path;
-		metadata.controller = target;
-
-		const hookData: Record<string, HookHandler[]> =
-			getMetadata(HookMetadataKey, target.prototype) || {};
-
-		const newHooks = Object.entries(hookData).reduce(
-			(acc, [key, value]) => {
-				acc[key] = value.map((hook) => ({
-					...hook,
-					scope: hook.scope?.replace("{prefix}", path),
-				}));
-				return acc;
-			},
-			{} as Record<string, HookHandler[]>,
-		);
-
-		setMetadata(HookMetadataKey, newHooks, target.prototype);
-		setControllerMetadata(target, metadata);
-		AutoHook("router:init")(target);
-	};
+export const Controller = (prefix: SlashedPath) => {
+	return useDecorators(
+		(target: any) => {
+			routeStore.apply(target).updatePathPrefix({ prefix });
+		},
+		(target: any) => {
+			hookStore.apply(target).updateScope({ prefix });
+		},
+		InjectOn("router:init"),
+		Injectable("SINGLETON"),
+	);
 };

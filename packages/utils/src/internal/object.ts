@@ -1,4 +1,10 @@
-export type AnyClass<T = unknown> = new (...args: any[]) => T;
+import type { Class, Primitive } from "type-fest";
+
+/**
+ * @deprecated Use `Class` from `type-fest` instead.
+ */
+export type AnyClass<T = any> = Class<T>;
+
 export type Dictionary<T = unknown> = Record<string, T>;
 export type AnyFunction = (...args: any[]) => unknown;
 export type AnyPromiseFunction = (...args: any[]) => Promise<unknown>;
@@ -10,21 +16,12 @@ export type WithoutUndefined<T extends object> = {
 };
 
 export type DeepPartial<T extends object> = {
-	[P in keyof T]?: T[P] extends AnyClass | AnyFunction | Primitive
+	[P in keyof T]?: T[P] extends Class<any> | AnyFunction | Primitive
 		? T[P]
 		: T[P] extends object
 			? DeepPartial<T[P]>
 			: T[P];
 };
-
-export type Primitive =
-	| null
-	| undefined
-	| string
-	| number
-	| boolean
-	| symbol
-	| bigint;
 
 type IfEquals<X, Y, A, B> = (<T>() => T extends X ? 1 : 2) extends <
 	T,
@@ -142,3 +139,5 @@ export type PathValue<T, P extends Path<T> | ArrayPath<T>> = T extends any
 					: never
 				: never
 	: never;
+
+export type * from "type-fest";

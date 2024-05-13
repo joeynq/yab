@@ -1,12 +1,12 @@
 import {
-	type AnyClass,
+	type Class,
 	type Dictionary,
 	type EnumValues,
 	type MaybePromiseFunction,
 	isNil,
 } from "@vermi/utils";
+import { Injectable } from "../decorators";
 import type { AppContext, EventPayload, EventResult } from "../interfaces";
-import { HookMetadataKey } from "../symbols";
 
 type EventHandler<
 	EventType extends { [key: string]: string },
@@ -16,12 +16,12 @@ type EventHandler<
 	...args: EventPayload<EventType, Event, EventMap>
 ) => EventResult<EventType, Event, EventMap>;
 
-interface EventObject<
+export interface EventObject<
 	EventType extends { [key: string]: string },
 	Event extends EnumValues<EventType>,
 	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction>,
 > {
-	target?: AnyClass;
+	target?: Class<any>;
 	handler: EventHandler<EventType, Event, EventMap>;
 	scope?: string;
 }
@@ -31,12 +31,7 @@ interface InvokeOptions {
 	scope?: string;
 }
 
-export type HookHandler = {
-	target?: AnyClass;
-	method: string;
-	scope?: string;
-};
-
+@Injectable("SINGLETON")
 export class Hooks<
 	EventType extends { [key: string]: string } = Dictionary<string>,
 	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction> = Record<
@@ -45,15 +40,29 @@ export class Hooks<
 	>,
 	Context extends AppContext = AppContext,
 > {
-	#hooks = new Map<
+	#hooks: Map<
 		string,
-		Array<EventObject<EventType, EnumValues<EventType>, EventMap>>
-	>();
+		EventObject<EventType, EnumValues<EventType>, EventMap>[]
+	> = new Map();
 
 	#context?: Context;
 
 	get debug() {
-		return this.#hooks;
+		type WithEvent = {
+			event: string;
+		} & EventObject<EventType, EnumValues<EventType>, EventMap>;
+		const debug: WithEvent[] = [];
+
+		this.#hooks.forEach((handlers, event) => {
+			debug.push(
+				...handlers.map((handler) => ({
+					...handler,
+					event,
+				})),
+			);
+		});
+
+		return debug;
 	}
 
 	#shouldBreak(result: any, breakOn: InvokeOptions["breakOn"]) {
@@ -74,37 +83,6 @@ export class Hooks<
 
 	useContext(context: Context) {
 		this.#context = context;
-	}
-
-	getMetadata(instance: any) {
-		return Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
-			string[]
-		>;
-	}
-
-	registerFromMetadata(instance: any) {
-		const hooks = Reflect.getMetadata(HookMetadataKey, instance) as Dictionary<
-			HookHandler[]
-		>;
-		if (!hooks) {
-			return;
-		}
-		for (const [event, handlers] of Object.entries(hooks)) {
-			for (const { target, method, scope } of handlers) {
-				const currentInstance = target
-					? this.#context?.resolve(target.name)
-					: instance;
-
-				const handler = currentInstance?.[method].bind(currentInstance);
-
-				handler &&
-					this.register(event as EnumValues<EventType>, {
-						target,
-						handler,
-						scope,
-					});
-			}
-		}
 	}
 
 	register<Event extends EnumValues<EventType>>(
@@ -134,11 +112,11 @@ export class Hooks<
 			handlers = handlers.filter((handler) => handler.scope === scope);
 		}
 
-		for (const { handler: rawHandler, target } of handlers) {
+		for (const event of handlers) {
 			try {
-				let handler = rawHandler as MaybePromiseFunction;
-				if (target && this.#context?.resolve(target)) {
-					handler = handler.bind(this.#context.resolve(target));
+				let handler = event.handler;
+				if (event.target) {
+					handler = handler.bind(this.#context?.resolve(event.target.name));
 				}
 				const result = await handler(...args);
 

@@ -2,7 +2,7 @@ import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { BearerAuth, auth } from "@vermi/auth";
 import { cache } from "@vermi/cache";
 import { SqliteAdapter } from "@vermi/cache/sqlite";
-import { Vermi } from "@vermi/core";
+import { type LoggerAdapter, Vermi } from "@vermi/core";
 import { PinoLogger } from "@vermi/logger/pino";
 import { mikroOrm } from "@vermi/mikro-orm";
 import { router } from "@vermi/router";
@@ -25,7 +25,7 @@ if (import.meta.env.NODE_ENV !== "production") {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-new Vermi()
+new Vermi({ log: { level: "info" } })
 	.logger(PinoLogger)
 	// SqliteAdapter recommended for development.
 	// RedisAdapter is recommended for production.
@@ -46,12 +46,7 @@ new Vermi()
 	)
 	.use(statics("/public", { assetsDir: "./public" }))
 	// .use(rateLimit("redis", {}))
-	.use(
-		router("/api", [UserController], {
-			// customValidation: async (schema: any, payload: any) => {},
-			// middlewares: [AnyMiddleware],
-		}),
-	)
+	.use(router("/api", [UserController]))
 	.start((context, { port }) => {
-		context.store.logger.info(`Server started at ${port}`);
+		context.resolve<LoggerAdapter>("logger")?.info(`Server started at ${port}`);
 	});

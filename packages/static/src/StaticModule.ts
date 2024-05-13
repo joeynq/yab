@@ -1,6 +1,6 @@
 import {
 	AppHook,
-	Logger,
+	type Configuration,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -42,15 +42,15 @@ const defaultStaticExtensions = [
 
 @Module()
 export class StaticModule extends VermiModule<StaticModuleOptions> {
-	@Logger()
-	logger!: LoggerAdapter;
-
-	constructor(public config: StaticModuleOptions) {
+	constructor(
+		protected configuration: Configuration,
+		private logger: LoggerAdapter,
+	) {
 		super();
 	}
 
 	#getFile(request: Request) {
-		const { prefix, assetsDir } = this.config;
+		const { prefix, assetsDir } = this.getConfig();
 		const isAbsolute = assetsDir.startsWith("/");
 
 		const filePath = isAbsolute
@@ -64,7 +64,7 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 	}
 
 	#getHeaders(etag?: string) {
-		const { immutable, maxAge } = this.config;
+		const { immutable, maxAge } = this.getConfig();
 		const headers = new Headers();
 
 		let cacheControl = "no-cache";
@@ -87,7 +87,7 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 	public async onInit() {
 		this.logger.info(
 			"StaticModule initialized. Public path: {prefix}",
-			this.config,
+			this.getConfig(),
 		);
 	}
 
@@ -96,7 +96,7 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 		const { request, serverUrl } = context.store;
 
 		// remove slash from serverUrl
-		const prefix = `${serverUrl.slice(0, -1)}${this.config.prefix}`;
+		const prefix = `${serverUrl.slice(0, -1)}${this.getConfig().prefix}`;
 
 		if (!request.url.startsWith(prefix)) {
 			return;
@@ -109,7 +109,7 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 			ignorePatterns,
 			eTag,
 			index,
-		} = this.config;
+		} = this.getConfig();
 
 		// file is directory
 		if (index && url.pathname.endsWith("/")) {

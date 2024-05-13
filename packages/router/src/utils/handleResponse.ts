@@ -1,9 +1,13 @@
 import { HttpException } from "@vermi/core";
-import { InternalServerError } from "../exceptions";
-import type { RouteObject } from "../interfaces";
+import { ValidationException } from "typebox-validators";
+import { BadRequest, InternalServerError } from "../exceptions";
+import type { RouteMatch } from "../interfaces";
 import { Res } from "./Res";
 
 export const defaultErrorHandler = (error: Error) => {
+	if (error instanceof ValidationException) {
+		return Res.error(new BadRequest(error.message, error));
+	}
 	if (error instanceof HttpException) {
 		return Res.error(error);
 	}
@@ -13,23 +17,26 @@ export const defaultErrorHandler = (error: Error) => {
 
 export const defaultResponseHandler = <T>(
 	result: T,
-	responseConfig: RouteObject["response"],
+	responses: RouteMatch["responses"],
 ) => {
 	if (result instanceof Response) {
 		return result;
 	}
 
-	if (responseConfig?.[204]) {
+	if (responses?.get(204)) {
 		return Res.empty();
 	}
 
-	const successStatus = 200;
-	if (responseConfig?.[201]) {
-		const { contentType } = responseConfig[successStatus];
+	if (responses?.get(201)) {
+		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		const { content } = responses.get(201)!;
+		const contentType = Object.keys(content)[0];
 		return Res.created(result, { "Content-Type": contentType });
 	}
-	if (responseConfig?.[200]) {
-		const { contentType } = responseConfig[successStatus];
+	if (responses?.get(200)) {
+		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		const { content } = responses.get(200)!;
+		const contentType = Object.keys(content)[0];
 		return Res.ok(result, { "Content-Type": contentType });
 	}
 

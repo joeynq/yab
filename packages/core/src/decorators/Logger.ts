@@ -1,3 +1,3 @@
-import { Inject } from "./Inject";
+import { Scoped } from "./Scoped";
 
-export const Logger = Inject.bind(null, "logger");
+export const Logger = Scoped.bind(null, "logger");

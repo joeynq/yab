@@ -36,7 +36,7 @@ export interface _AppContext {
 	app: Vermi;
 	logger: LoggerAdapter;
 	hooks: Hooks<Dictionary<string>, Dictionary<MaybePromiseFunction>>;
-	config: Configuration;
+	configuration: Configuration;
 	[key: string]: unknown;
 }
 

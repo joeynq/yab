@@ -11,7 +11,7 @@ export class ConsolaLogger extends BaseLogger<ConsolaInstance> {
 	config: LogOptions<Partial<ConsolaOptions> & Dictionary>;
 
 	get level() {
-		return this.config.level;
+		return this.config.level
 	}
 
 	constructor(
