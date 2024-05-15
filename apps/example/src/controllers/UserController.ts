@@ -1,6 +1,5 @@
-import type { EntityManager } from "@mikro-orm/core";
+// import type { EntityManager } from "@mikro-orm/core";
 import { Logger, type LoggerAdapter } from "@vermi/core";
-import { Em } from "@vermi/mikro-orm";
 import { Body, Controller, Get, Params, Post, Query, Use } from "@vermi/router";
 import { AnyMiddleware } from "../middlewares";
 import {
@@ -13,10 +12,7 @@ import {
 @Controller("/users")
 export class UserController {
 	@Logger()
-	logger!: LoggerAdapter;
-
-	@Em()
-	em!: EntityManager;
+	public logger!: LoggerAdapter;
 
 	@Post("/")
 	createUser(@Body(UserQuerySchema) user: UserQuerySchemaDto) {
@@ -32,16 +28,15 @@ export class UserController {
 	}
 
 	@Use(AnyMiddleware)
-	// @Authorized()
 	@Get("/:id")
 	getUser(
 		@Query(UserQuerySchema) userQuery: UserQuerySchemaDto,
 		@Params(UserParamSchema) param: UserParamDto,
 	) {
-		this.logger.info("Get user");
+		this.logger.info(param);
 		return {
 			user: {
-				userQuery,
+				query: userQuery,
 				param,
 			},
 		};

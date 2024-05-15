@@ -1,1 +1,1 @@
-export const HookMetadataKey: unique symbol = Symbol("Hook");
+// export const HookMetadataKey: unique symbol = Symbol("Hook");

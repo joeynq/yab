@@ -1,6 +1,6 @@
 import { deepmerge } from "deepmerge-ts";
 import type {
-	AnyClass,
+	Class,
 	Dictionary,
 	Path,
 	PathValue,
@@ -22,7 +22,7 @@ export const isPlainObject = (value: unknown): value is object => {
 	return proto === Object.prototype || proto === null;
 };
 
-export const isClass = <T = any>(value: any): value is AnyClass<T> => {
+export const isClass = <T = any>(value: any): value is Class<T> => {
 	return typeof value === "function" && /^\s*class\s+/.test(value.toString());
 };
 
@@ -110,7 +110,7 @@ export const flatten = <T extends Dictionary>(obj: unknown): T => {
 	return flattened;
 };
 
-export const toPlainObject = <T extends object>(obj: AnyClass): T => {
+export const toPlainObject = <T extends object>(obj: Class<T>): T => {
 	return JSON.parse(JSON.stringify(obj));
 };
 

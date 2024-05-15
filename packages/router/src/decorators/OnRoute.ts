@@ -1,23 +1,11 @@
-import { deepMerge } from "@vermi/utils";
+import { hookStore } from "@vermi/core";
 import type { RouterEvent } from "../event";
-import { getMiddlewareMetadata, setMiddlewareMetadata } from "../utils";
 
-export const OnRoute = (
-	event: RouterEvent,
-	order?: number,
-): MethodDecorator => {
+export const OnRoute = (event: RouterEvent) => {
 	return (target: any, propertyKey: string | symbol) => {
-		const existing = getMiddlewareMetadata(target.constructor);
-
-		const merged = deepMerge(existing, {
-			target: target.constructor,
-			handler: {
-				[propertyKey.toString()]: {
-					order,
-					event,
-				},
-			},
+		hookStore.apply(target.constructor as any).addHandler(event, {
+			target: target.constructor as any,
+			handler: target[propertyKey],
 		});
-		setMiddlewareMetadata(target.constructor, merged);
 	};
 };

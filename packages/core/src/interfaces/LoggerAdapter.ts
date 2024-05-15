@@ -17,10 +17,10 @@ export type LoggerContext = Pick<
 
 export interface LogOptions<Logger extends Dictionary | object> {
 	context?: LoggerContext;
-	noColor: boolean;
-	level: LogLevel;
-	stackTrace: boolean;
-	options: Logger extends Dictionary | object ? Logger : never;
+	noColor?: boolean;
+	level?: LogLevel;
+	stackTrace?: boolean;
+	options?: Logger extends Dictionary | object ? Logger : never;
 }
 
 export interface LogFn {

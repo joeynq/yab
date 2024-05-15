@@ -49,7 +49,7 @@ export class ConsoleLogger extends BaseLogger<Console> {
 	log = console;
 
 	get level(): LogLevel {
-		return this.opts.level;
+		return this.opts.level ?? "info";
 	}
 
 	get chalk(): ChalkInstance {
@@ -142,7 +142,7 @@ export class ConsoleLogger extends BaseLogger<Console> {
 	}
 
 	protected logEntry(level: LogLevel, message: string) {
-		const date = this.opts.options.formatDate(new Date());
+		const date = this.opts.options?.formatDate(new Date());
 
 		const coloredLevels = {
 			error: this.chalk.red,

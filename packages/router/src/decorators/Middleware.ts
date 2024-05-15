@@ -1,7 +1,5 @@
-import { AutoHook } from "@vermi/core";
+import { InjectOn, Injectable, useDecorators } from "@vermi/core";
 
 export const Middleware = () => {
-	return (target: any) => {
-		AutoHook("router:init", true)(target);
-	};
+	return useDecorators(InjectOn("router:init"), Injectable("SCOPED"));
 };

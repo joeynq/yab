@@ -1,4 +1,10 @@
-import { AppHook, Module, type RequestContext, VermiModule } from "@vermi/core";
+import {
+	AppHook,
+	type Configuration,
+	Module,
+	type RequestContext,
+	VermiModule,
+} from "@vermi/core";
 
 export type CorsConfig = {
 	origin?: string[];
@@ -13,59 +19,61 @@ export type CorsConfig = {
 
 @Module()
 export class CorsModule extends VermiModule<CorsConfig> {
-	constructor(public config: CorsConfig) {
+	constructor(protected configuration: Configuration) {
 		super();
 	}
 
 	@AppHook("app:response")
 	async corsHook(_: RequestContext, response: Response) {
-		if (this.config.origin) {
-			response.headers.set(
-				"Access-Control-Allow-Origin",
-				this.config.origin.join(", "),
-			);
+		const {
+			origin,
+			methods,
+			allowedHeaders,
+			exposedHeaders,
+			credentials,
+			maxAge,
+			preflightContinue,
+			optionsSuccessStatus,
+		} = this.getConfig();
+
+		if (origin) {
+			response.headers.set("Access-Control-Allow-Origin", origin.join(", "));
 		}
 
-		if (this.config.methods) {
-			response.headers.set(
-				"Access-Control-Allow-Methods",
-				this.config.methods.join(", "),
-			);
+		if (methods) {
+			response.headers.set("Access-Control-Allow-Methods", methods.join(", "));
 		}
 
-		if (this.config.allowedHeaders) {
+		if (allowedHeaders) {
 			response.headers.set(
 				"Access-Control-Allow-Headers",
-				this.config.allowedHeaders.join(", "),
+				allowedHeaders.join(", "),
 			);
 		}
 
-		if (this.config.exposedHeaders) {
+		if (exposedHeaders) {
 			response.headers.set(
 				"Access-Control-Expose-Headers",
-				this.config.exposedHeaders.join(", "),
+				exposedHeaders.join(", "),
 			);
 		}
 
-		if (this.config.credentials) {
+		if (credentials) {
 			response.headers.set("Access-Control-Allow-Credentials", "true");
 		}
 
-		if (this.config.maxAge) {
-			response.headers.set(
-				"Access-Control-Max-Age",
-				this.config.maxAge.toString(),
-			);
+		if (maxAge) {
+			response.headers.set("Access-Control-Max-Age", maxAge.toString());
 		}
 
-		if (this.config.preflightContinue) {
+		if (preflightContinue) {
 			response.headers.set("Access-Control-Continue", "true");
 		}
 
-		if (this.config.optionsSuccessStatus) {
+		if (optionsSuccessStatus) {
 			response.headers.set(
 				"Access-Control-Options-Success",
-				this.config.optionsSuccessStatus.toString(),
+				optionsSuccessStatus.toString(),
 			);
 		}
 

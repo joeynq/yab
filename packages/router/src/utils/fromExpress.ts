@@ -1,11 +1,8 @@
-import { AutoHook, type RequestContext } from "@vermi/core";
-import { type AnyClass, deepMerge } from "@vermi/utils";
+import { type RequestContext, hookStore } from "@vermi/core";
+import type { Class } from "@vermi/utils";
 import type { NextFunction } from "express";
+import { Middleware } from "../decorators";
 import { RouterEvent } from "../event";
-import {
-	getMiddlewareMetadata,
-	setMiddlewareMetadata,
-} from "./middlewareMetadata";
 
 type ExpressMiddleware = (
 	req: Express.Request,
@@ -37,7 +34,7 @@ type ExpressMiddleware = (
  */
 export const fromExpressMiddleware = (
 	expressMiddleware: ExpressMiddleware,
-): AnyClass<any> => {
+): Class<any> => {
 	const ExpressMiddlewareAdapter = class {
 		#expressMiddleware = expressMiddleware;
 
@@ -54,19 +51,13 @@ export const fromExpressMiddleware = (
 		}
 	};
 
-	const existing = getMiddlewareMetadata(ExpressMiddlewareAdapter);
-
-	const merged = deepMerge(existing, {
-		target: ExpressMiddlewareAdapter,
-		handler: {
-			run: {
-				event: RouterEvent.BeforeHandle,
-			},
-		},
-	});
-	setMiddlewareMetadata(ExpressMiddlewareAdapter, merged);
-
-	AutoHook("router:init")(ExpressMiddlewareAdapter);
+	hookStore
+		.apply(ExpressMiddlewareAdapter)
+		.addHandler(RouterEvent.BeforeHandle, {
+			target: ExpressMiddlewareAdapter,
+			handler: new ExpressMiddlewareAdapter().run as any,
+		});
+	Middleware()(ExpressMiddlewareAdapter);
 
 	return ExpressMiddlewareAdapter;
 };

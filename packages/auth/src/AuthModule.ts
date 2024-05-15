@@ -1,7 +1,7 @@
 import {
 	type AppContext,
 	AppHook,
-	Logger,
+	type Configuration,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -29,10 +29,10 @@ export const AuthModuleKey = "auth:strategy";
 export class AuthModule<S extends Strategy<any>> extends VermiModule<
 	AuthModuleConfig<S>
 > {
-	@Logger()
-	logger!: LoggerAdapter;
-
-	constructor(public config: AuthModuleConfig<S>) {
+	constructor(
+		protected configuration: Configuration,
+		private logger: LoggerAdapter,
+	) {
 		super();
 	}
 

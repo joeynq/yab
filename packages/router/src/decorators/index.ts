@@ -8,7 +8,7 @@ export * from "./Get";
 export * from "./Middleware";
 export * from "./OnRoute";
 export * from "./Param";
-export * from "./Parameter";
+export * from "./Arg";
 export * from "./Patch";
 export * from "./Post";
 export * from "./Put";

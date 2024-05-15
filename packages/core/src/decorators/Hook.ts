@@ -1,31 +1,19 @@
 import type { EnumValues } from "@vermi/utils";
-import { HookMetadataKey } from "../symbols";
-import { mergeMetadata } from "../utils";
+import { hookStore } from "../store";
 
 export interface HookOptions {
-	position?: "before" | "after";
 	scoped?: boolean;
 }
 
-export function Hook<EventType extends { [key: string]: string }>(
+export const Hook = <EventType extends { [key: string]: string }>(
 	event: EnumValues<EventType>,
 	options: HookOptions = {},
-): MethodDecorator {
-	const { position = "after", scoped } = options;
-	return (target, key) => {
-		mergeMetadata(
-			HookMetadataKey,
-			{
-				[event]: [
-					{
-						target: scoped ? target.constructor : undefined,
-						method: key,
-						scoped: undefined,
-					},
-				],
-			},
-			target,
-			position,
-		);
+) => {
+	return (target: any, methodName: string | symbol) => {
+		hookStore.apply(target.constructor).addHandler(String(event), {
+			handler: target[methodName],
+			target: target.constructor,
+			scope: options.scoped ? String(methodName) : undefined,
+		});
 	};
-}
+};

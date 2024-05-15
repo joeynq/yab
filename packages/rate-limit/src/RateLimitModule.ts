@@ -1,6 +1,7 @@
 import {
 	type AppContext,
 	AppHook,
+	type Configuration,
 	HttpException,
 	Module,
 	type RequestContext,
@@ -58,10 +59,11 @@ export class RateLimitModule<
 > extends VermiModule<RateLimitConfig<M, N>> {
 	#rateLimiter: RateLimiter;
 
-	constructor(public config: RateLimitConfig<M, N>) {
+	constructor(protected configuration: Configuration) {
 		super();
 
-		this.#rateLimiter = new (adapterMap as any)[config.adapter](config.options);
+		const { adapter, options } = this.config;
+		this.#rateLimiter = new (adapterMap as any)[adapter](options);
 	}
 
 	async #handle(context: RequestContext) {

@@ -1,5 +1,5 @@
 import type { UseModule } from "@vermi/core";
-import type { AnyClass } from "@vermi/utils";
+import type { Class } from "@vermi/utils";
 import {
 	type AdapterMap,
 	type RateLimitConfig,
@@ -9,7 +9,7 @@ import {
 export const rateLimit = <M extends AdapterMap, N extends keyof M>(
 	adapter: N,
 	options: RateLimitConfig<M, N>["options"],
-): UseModule<AnyClass<RateLimitModule<M, N, any>>> => ({
+): UseModule<Class<RateLimitModule<M, N, any>>, RateLimitConfig<M, N>> => ({
 	module: RateLimitModule,
-	args: [{ adapter, options }],
+	args: { adapter, options },
 });

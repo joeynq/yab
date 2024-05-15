@@ -1,4 +1,10 @@
-import { AppHook, Module, type RequestContext, VermiModule } from "@vermi/core";
+import {
+	AppHook,
+	type Configuration,
+	Module,
+	type RequestContext,
+	VermiModule,
+} from "@vermi/core";
 
 export type HelmetOptions = {
 	contentSecurityPolicy?: boolean | Record<string, any>;
@@ -16,56 +22,70 @@ export type HelmetOptions = {
 
 @Module()
 export class HelmetModule extends VermiModule<HelmetOptions> {
-	constructor(public config: HelmetOptions) {
+	constructor(protected configuration: Configuration) {
 		super();
 	}
 
 	@AppHook("app:response")
 	async helmetHook(_: RequestContext, response: Response) {
-		if (this.config.contentSecurityPolicy) {
+		const {
+			contentSecurityPolicy,
+			dnsPrefetchControl,
+			expectCt,
+			frameguard,
+			hidePoweredBy,
+			hsts,
+			ieNoOpen,
+			noSniff,
+			permittedCrossDomainPolicies,
+			referrerPolicy,
+			xssFilter,
+		} = this.getConfig();
+
+		if (contentSecurityPolicy) {
 			response.headers.set("Content-Security-Policy", "default-src 'self';");
 		}
 
-		if (this.config.dnsPrefetchControl) {
+		if (dnsPrefetchControl) {
 			response.headers.set("X-DNS-Prefetch-Control", "off");
 		}
 
-		if (this.config.expectCt) {
+		if (expectCt) {
 			response.headers.set("Expect-CT", "max-age=0");
 		}
 
-		if (this.config.frameguard) {
+		if (frameguard) {
 			response.headers.set("X-Frame-Options", "SAMEORIGIN");
 		}
 
-		if (this.config.hidePoweredBy) {
+		if (hidePoweredBy) {
 			response.headers.set("X-Powered-By", "Vermi");
 		}
 
-		if (this.config.hsts) {
+		if (hsts) {
 			response.headers.set(
 				"Strict-Transport-Security",
 				"max-age=15552000; includeSubDomains",
 			);
 		}
 
-		if (this.config.ieNoOpen) {
+		if (ieNoOpen) {
 			response.headers.set("X-Download-Options", "noopen");
 		}
 
-		if (this.config.noSniff) {
+		if (noSniff) {
 			response.headers.set("X-Content-Type-Options", "nosniff");
 		}
 
-		if (this.config.permittedCrossDomainPolicies) {
+		if (permittedCrossDomainPolicies) {
 			response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
 		}
 
-		if (this.config.referrerPolicy) {
+		if (referrerPolicy) {
 			response.headers.set("Referrer-Policy", "no-referrer");
 		}
 
-		if (this.config.xssFilter) {
+		if (xssFilter) {
 			response.headers.set("X-XSS-Protection", "1; mode=block");
 		}
 

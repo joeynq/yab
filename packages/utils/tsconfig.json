@@ -30,6 +30,6 @@
 		"noPropertyAccessFromIndexSignature": false,
 
 		// type
-		"types": ["@types/bun", "reflect-metadata"]
+		"types": ["@types/bun", "reflect-metadata", "type-fest"]
 	}
 }

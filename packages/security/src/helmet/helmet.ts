@@ -1,10 +1,10 @@
 import type { UseModule } from "@vermi/core";
-import type { AnyClass } from "../../../utils/dist";
+import type { Class } from "@vermi/utils";
 import { HelmetModule, type HelmetOptions } from "./HelmetModule";
 
 export const helmet = (
 	config: HelmetOptions = {},
-): UseModule<AnyClass<HelmetModule>> => ({
+): UseModule<Class<HelmetModule>, HelmetOptions> => ({
 	module: HelmetModule,
-	args: [config],
+	args: config,
 });

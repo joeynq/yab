@@ -1,23 +1,31 @@
-import type { TObject } from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { parse } from "fast-querystring";
 import type { FindResult } from "memoirist";
 import { StandardValidator, ValidationException } from "typebox-validators";
-import type { RouteMatch, RouteParameter, ValidationFn } from "../interfaces";
+import type { RouteMatch, ValidationFn } from "../interfaces";
+import type { Parameter, RequestBody } from "../interfaces/schema";
+
+const isFormData = (request: Request) => {
+	const contentType = request.headers.get("content-type");
+	return contentType?.includes("application/x-www-form-urlencoded");
+};
+
+const isMultiPart = (request: Request) => {
+	const contentType = request.headers.get("content-type");
+	return contentType?.includes("multipart/form-data");
+};
 
 const getFromRequest = async (
 	request: Request,
-	from: "query" | "body" | "headers" | "cookie",
+	from: "query" | "header" | "cookie" | "body",
 ) => {
 	const url = new URL(request.url);
-	const body = await request.json();
 
 	switch (from) {
 		case "query":
 			return parse(url.search.replace("?", ""));
-		case "body":
-			return body;
-		case "headers":
+		case "header":
 			return Object.fromEntries(request.headers);
 		case "cookie":
 			return Object.fromEntries(
@@ -27,31 +35,33 @@ const getFromRequest = async (
 					.map((cookie) => cookie.split("=")) || [],
 			);
 		default:
-			return undefined;
 	}
+
+	if (isMultiPart(request)) {
+		return request.formData();
+	}
+
+	return isFormData(request) ? parse(await request.text()) : request.json();
 };
 
 export const getRequestPayload = async (
 	request: Request,
 	match: FindResult<RouteMatch>,
 ) => {
-	if (!match.store.parameters) {
+	if (!match.store.args) {
 		return [];
 	}
 
-	const args = match.store.parameters.sort(
-		(a: RouteParameter, b: RouteParameter) => a.index - b.index,
-	);
+	const args = match.store.args;
 
 	return Promise.all(
-		args.map(async (arg: RouteParameter) => {
+		args.map(async (arg: RequestBody | Parameter) => {
 			const raw =
-				arg.in === "params"
+				arg.in === "path"
 					? match.params
 					: await getFromRequest(request, arg.in);
 
 			const payload = arg.schema ? transform(arg.schema, raw) : raw;
-
 			return {
 				...arg,
 				payload,
@@ -60,7 +70,7 @@ export const getRequestPayload = async (
 	);
 };
 
-export const transform = <T>(schema: TObject, value: any): T => {
+export const transform = <T>(schema: TSchema, value: any): T => {
 	return Value.Convert(schema, value) as T;
 };
 
@@ -73,4 +83,8 @@ export const validate: ValidationFn = async (schema, value): Promise<void> => {
 			throw new ValidationException("Validation failed", Array.from(errors));
 		}
 	}
+};
+
+export const getRequestScope = (method: string, path: string) => {
+	return `${method}${path}`.replace(/\/$/, "").toLowerCase();
 };

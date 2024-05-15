@@ -1,7 +1,7 @@
 import {
 	type AppContext,
 	AppHook,
-	Logger,
+	type Configuration,
 	type LoggerAdapter,
 	Module,
 	VermiModule,
@@ -18,10 +18,10 @@ export type CacheModuleOptions<Adapter extends CacheAdapter> = {
 export class CacheModule<Adapter extends CacheAdapter> extends VermiModule<
 	CacheModuleOptions<Adapter>
 > {
-	@Logger()
-	logger!: LoggerAdapter;
-
-	constructor(public config: CacheModuleOptions<Adapter>) {
+	constructor(
+		protected configuration: Configuration,
+		private logger: LoggerAdapter,
+	) {
 		super();
 	}
 

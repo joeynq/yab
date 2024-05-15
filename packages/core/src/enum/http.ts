@@ -62,3 +62,5 @@ export enum HttpRedirectCodes {
 	TemporaryRedirect = 307,
 	PermanentRedirect = 308,
 }
+
+export type HttpCodes = HttpErrorCodes | HttpSuccessCodes | HttpRedirectCodes;

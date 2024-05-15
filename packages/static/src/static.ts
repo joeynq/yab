@@ -1,5 +1,5 @@
 import type { UseModule } from "@vermi/core";
-import type { AnyClass } from "@vermi/utils";
+import type { Class } from "@vermi/utils";
 import {
 	type SlashedPath,
 	StaticModule,
@@ -9,12 +9,7 @@ import {
 export const statics = (
 	path: SlashedPath,
 	options: Omit<StaticModuleOptions, "prefix">,
-): UseModule<AnyClass<StaticModule>> => ({
+): UseModule<Class<StaticModule>, StaticModuleOptions> => ({
 	module: StaticModule,
-	args: [
-		{
-			...options,
-			prefix: path,
-		},
-	],
+	args: { ...options, prefix: path },
 });

@@ -1,33 +1,33 @@
-import { type HookHandler, HookMetadataKey, mergeMetadata } from "@vermi/core";
-import type { AnyClass } from "@vermi/utils";
-import {
-	getControllerMetadata,
-	getMiddlewareMetadata,
-	getRequestScope,
-} from "../utils";
+import { dependentStore, hookStore, useDecorators } from "@vermi/core";
+import type { Class } from "@vermi/utils";
+import { routeStore } from "../stores/routeStore";
 
-export const Use = <Middleware extends AnyClass>(
+export const Use = <Middleware extends Class<any>>(
 	middleware: Middleware,
 ): MethodDecorator => {
-	return (target: any, propertyKey: string | symbol) => {
-		const existing = getControllerMetadata(target.constructor);
-		if (!existing.routes[String(propertyKey)]) {
-			throw new Error("Path not found!");
-		}
+	return useDecorators(
+		(target: any) => {
+			dependentStore.apply(target.constructor).addDependent(middleware);
+		},
+		(target: any, propertyKey: string | symbol) => {
+			const middlewareHook = hookStore.apply(middleware).get();
 
-		const { method, path } = existing.routes[String(propertyKey)];
-		const midMetadata = getMiddlewareMetadata(middleware);
-		const hookValue: Record<string, HookHandler[]> = {};
+			const full = routeStore
+				.apply(target.constructor)
+				.findPath(target.constructor, propertyKey);
 
-		for (const [key, { event }] of Object.entries(midMetadata.handler)) {
-			hookValue[event] = [
-				{
-					target: middleware,
-					method: key,
-					scope: getRequestScope(method, `{prefix}${path}`),
-				},
-			];
-		}
-		mergeMetadata(HookMetadataKey, hookValue, target.constructor.prototype);
-	};
+			if (!full) {
+				return;
+			}
+
+			for (const [event, handlers] of middlewareHook.entries()) {
+				for (const handler of handlers) {
+					hookStore.apply(target.constructor).addHandler(event, {
+						...handler,
+						scope: full.replace(/\/$/g, ""),
+					});
+				}
+			}
+		},
+	);
 };

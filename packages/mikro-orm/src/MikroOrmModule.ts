@@ -2,10 +2,8 @@ import { type EntityManager, MikroORM, type Options } from "@mikro-orm/core";
 import {
 	type AppContext,
 	AppHook,
-	ContextService,
-	Inject,
+	type Configuration,
 	InjectionScope,
-	Logger,
 	type LoggerAdapter,
 	Module,
 	VermiModule,
@@ -25,20 +23,19 @@ export type MikroOrmModuleConfig = Options;
 export class MikroOrmModule extends VermiModule<MikroOrmModuleConfig> {
 	#orm!: MikroORM;
 
-	@Inject(ContextService)
-	contextService!: ContextService;
-
-	@Logger()
-	logger!: LoggerAdapter;
-
-	constructor(public config: MikroOrmModuleConfig) {
+	constructor(
+		protected configuration: Configuration,
+		private logger: LoggerAdapter,
+	) {
 		super();
 	}
 
 	@AppHook("app:init")
 	async init(context: AppContext) {
+		const config = this.getConfig();
+
 		this.#orm = await MikroORM.init({
-			...this.config,
+			...config,
 			context: () => context.resolve<EntityManager>("em"),
 		});
 
