@@ -7,7 +7,7 @@ import {
 	VermiModule,
 	asValue,
 } from "@vermi/core";
-import type { CacheAdapter } from "./interfaces/CacheAdapter";
+import type { CacheAdapter } from "./interfaces";
 
 export type CacheModuleOptions<Adapter extends CacheAdapter> = {
 	adapter: Adapter;

@@ -5,4 +5,6 @@ export * from "./event";
 export * from "./exceptions";
 export * from "./interfaces";
 export * from "./router";
+export * from "./services";
+export * from "./stores";
 export * from "./utils";

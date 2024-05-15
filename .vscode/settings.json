@@ -1,5 +1,6 @@
 {
 	"cSpell.words": [
+		"APIV",
 		"argtypes",
 		"awilix",
 		"biomejs",
@@ -23,6 +24,7 @@
 		"noopen",
 		"nosniff",
 		"notifme",
+		"openapi",
 		"paramtypes",
 		"pino",
 		"reviewdog",

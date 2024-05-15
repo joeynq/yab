@@ -1,6 +1,6 @@
 import { format, omitUndefined } from "@vermi/utils";
 import { Chalk, type ChalkInstance } from "chalk";
-import { logLevelOrder } from "../enum/logLevel";
+import { logLevelOrder } from "../enum";
 import type { LogLevel, LogOptions } from "../interfaces";
 import { BaseLogger } from "./BaseLogger";
 

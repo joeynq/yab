@@ -3,8 +3,12 @@ import { Value } from "@sinclair/typebox/value";
 import { parse } from "fast-querystring";
 import type { FindResult } from "memoirist";
 import { StandardValidator, ValidationException } from "typebox-validators";
-import type { RouteMatch, ValidationFn } from "../interfaces";
-import type { Parameter, RequestBody } from "../interfaces/schema";
+import type {
+	Parameter,
+	RequestBody,
+	RouteMatch,
+	ValidationFn,
+} from "../interfaces";
 
 const isFormData = (request: Request) => {
 	const contentType = request.headers.get("content-type");

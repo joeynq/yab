@@ -8,8 +8,11 @@ import {
 
 export const statics = (
 	path: SlashedPath,
-	options: Omit<StaticModuleOptions, "prefix">,
-): UseModule<Class<StaticModule>, StaticModuleOptions> => ({
+	options: StaticModuleOptions,
+): UseModule<
+	Class<StaticModule>,
+	Record<SlashedPath, StaticModuleOptions>
+> => ({
 	module: StaticModule,
-	args: { ...options, prefix: path },
+	args: { [path]: options },
 });

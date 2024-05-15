@@ -1,4 +1,4 @@
-import { injectStore } from "../store/injectStore";
+import { injectStore } from "../store";
 import { Hook } from "./Hook";
 
 export const InjectOn = (event: string) => {

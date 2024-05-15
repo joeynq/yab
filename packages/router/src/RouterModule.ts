@@ -11,14 +11,19 @@ import {
 	asClass,
 	dependentStore,
 	hookStore,
+	saveStoreData,
 } from "@vermi/core";
 import { type Class, ensure } from "@vermi/utils";
 import type { HttpMethod } from "./enums";
 import { RouterEvent, type RouterEventMap } from "./event";
-import type { RouteMatch, ValidationFn } from "./interfaces";
-import type { Routes, SlashedPath } from "./interfaces/schema";
-import { Router } from "./services/Router";
-import { routeStore } from "./stores/routeStore";
+import type {
+	RouteMatch,
+	Routes,
+	SlashedPath,
+	ValidationFn,
+} from "./interfaces";
+import { Router } from "./services";
+import { routeStore } from "./stores";
 import { defaultErrorHandler, defaultResponseHandler } from "./utils";
 
 export type RouterOptions = {
@@ -109,6 +114,8 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 			hookEvents = hookStore.combineStore(...controllers);
 			dependents = dependentStore.combineStore(...controllers) || [];
+
+			saveStoreData(routeStore.token, routeStore.combineStore(...controllers));
 		}
 
 		for (const dependent of dependents) {
@@ -139,6 +146,10 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		this.logger.info(`Request received: ${context.store.request.url}`);
 		const config = this.#getConfig(context.store.request);
 
+		if (!config) {
+			return;
+		}
+
 		const {
 			customValidation,
 			errorHandler = defaultErrorHandler,
@@ -154,7 +165,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			RequestContext
 		>;
 
-		await hooks.invoke(RouterEvent.Init, [context]).catch(console.error);
+		await hooks.invoke(RouterEvent.Init, [context]);
 
 		await hooks.invoke(RouterEvent.BeforeRoute, [context]);
 

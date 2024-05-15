@@ -1,14 +1,12 @@
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { BearerAuth, auth } from "@vermi/auth";
 import { cache } from "@vermi/cache";
 import { SqliteAdapter } from "@vermi/cache/sqlite";
 import { type LoggerAdapter, Vermi } from "@vermi/core";
 import { PinoLogger } from "@vermi/logger/pino";
-import { mikroOrm } from "@vermi/mikro-orm";
+import { openapi } from "@vermi/openapi";
 import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
 import { UserController } from "./controllers";
-import { User } from "./entities";
 
 /*
 
@@ -37,16 +35,18 @@ new Vermi({ log: { level: "info" } })
 			},
 		}),
 	)
-	.use(
-		mikroOrm({
-			clientUrl: String(import.meta.env.DATABASE_URL),
-			driver: PostgreSqlDriver,
-			entities: [User],
-		}),
-	)
+	// .use(
+	// 	mikroOrm({
+	// 		clientUrl: String(import.meta.env.DATABASE_URL),
+	// 		driver: PostgreSqlDriver,
+	// 		entities: [User],
+	// 	}),
+	// )
 	.use(statics("/public", { assetsDir: "./public" }))
+	.use(statics("/favicon.ico", { assetsDir: "./public", direct: true }))
 	// .use(rateLimit("redis", {}))
 	.use(router("/api", [UserController]))
+	.use(openapi("/docs"))
 	.start((context, { port }) => {
 		context.resolve<LoggerAdapter>("logger")?.info(`Server started at ${port}`);
 	});

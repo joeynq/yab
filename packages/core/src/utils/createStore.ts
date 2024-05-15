@@ -80,3 +80,14 @@ export function createStore<
 >(token: StoreToken, apis: APIFactory<T, API>, initialValue: () => T) {
 	return new Store(token, apis, initialValue);
 }
+
+const globalStores = new Map<StoreToken, any>();
+
+export const saveStoreData = <T>(token: StoreToken, data: T) => {
+	const current = globalStores.get(token);
+	globalStores.set(token, deepMerge(current, data) as T);
+};
+
+export const getStoreData = <T>(token: StoreToken) => {
+	return globalStores.get(token) as T;
+};

@@ -27,7 +27,12 @@ export interface EventObject<
 }
 
 interface InvokeOptions {
-	breakOn?: "null" | "result" | "error" | (<T>(result: T) => boolean);
+	breakOn?:
+		| "null"
+		| "result"
+		| "error"
+		| "resultOrError"
+		| (<T>(result: T) => boolean);
 	scope?: string;
 }
 
@@ -70,7 +75,10 @@ export class Hooks<
 			return true;
 		}
 
-		if (breakOn === "result" && !isNil(result)) {
+		if (
+			(breakOn === "result" || breakOn === "resultOrError") &&
+			!isNil(result)
+		) {
 			return true;
 		}
 
@@ -124,7 +132,7 @@ export class Hooks<
 					return result as any;
 				}
 			} catch (error) {
-				if (breakOn === "error") {
+				if (breakOn === "error" || breakOn === "resultOrError") {
 					throw error;
 				}
 			}

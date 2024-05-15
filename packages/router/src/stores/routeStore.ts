@@ -1,8 +1,7 @@
-import { createStore } from "@vermi/core";
+import { createStore, getStoreData } from "@vermi/core";
 import { type Class, format } from "@vermi/utils";
 import type { HttpMethod } from "../enums";
-import type { SlashedPath } from "../interfaces";
-import type { FullPath, Operation, Routes } from "../interfaces/schema";
+import type { FullPath, Operation, Routes, SlashedPath } from "../interfaces";
 
 export const RouterMetadataKey: unique symbol = Symbol("Router");
 
@@ -17,6 +16,7 @@ export type RouterAPI = {
 		propertyKey: string,
 		routeMetadata?: Pick<Operation, "args" | "responses">,
 	): Routes["paths"];
+	updateRoute(path: FullPath, updater: (current: Operation) => Operation): void;
 	updatePathPrefix(prefix: { [key: string]: SlashedPath }):
 		| Routes["paths"]
 		| undefined;
@@ -50,6 +50,16 @@ export const routeStore = createStore<Routes["paths"], RouterAPI>(
 			set(current);
 			return current;
 		},
+		updateRoute(path, updater) {
+			const current = get();
+			const route = current?.get(path);
+
+			if (!route || !current) return;
+
+			current.set(path, updater(route));
+
+			set(current);
+		},
 		updatePathPrefix(prefix) {
 			const current = get();
 			if (!current) return;
@@ -64,3 +74,7 @@ export const routeStore = createStore<Routes["paths"], RouterAPI>(
 	}),
 	() => new Map(),
 );
+
+export const getRoutes = () => {
+	return getStoreData<Routes["paths"]>(RouterMetadataKey);
+};
