@@ -1,6 +1,6 @@
 import { dependentStore, hookStore, useDecorators } from "@vermi/core";
 import type { Class } from "@vermi/utils";
-import { routeStore } from "../stores/routeStore";
+import { routeStore } from "../stores";
 
 export const Use = <Middleware extends Class<any>>(
 	middleware: Middleware,

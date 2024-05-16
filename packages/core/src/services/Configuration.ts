@@ -1,4 +1,4 @@
-import { type Dictionary, deepMerge } from "@vermi/utils";
+import { deepMerge } from "@vermi/utils";
 import { Injectable } from "../decorators";
 import type { AppOptions, ModuleConfig } from "../interfaces";
 
@@ -23,9 +23,7 @@ export class Configuration {
 		return module as ModuleConfig<Config> | undefined;
 	}
 
-	setModuleConfig<Config extends Dictionary = Dictionary>(
-		config: ModuleConfig<Config>,
-	) {
+	setModuleConfig<Config>(config: ModuleConfig<Config>) {
 		const existing = this.options.modules.get(config.module.name);
 		this.options.modules.set(config.module.name, deepMerge(existing, config));
 	}

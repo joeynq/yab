@@ -1,5 +1,5 @@
 import { containerRef } from "@vermi/core";
-import { getToken } from "../utils/getToken";
+import { getToken } from "../utils";
 
 export function Em(contextName = "default") {
 	return (target: any, propertyKey: string) => {

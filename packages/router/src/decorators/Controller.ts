@@ -1,6 +1,6 @@
 import { InjectOn, Injectable, hookStore, useDecorators } from "@vermi/core";
 import type { SlashedPath } from "../interfaces";
-import { routeStore } from "../stores/routeStore";
+import { routeStore } from "../stores";
 
 export const Controller = (prefix: SlashedPath) => {
 	return useDecorators(

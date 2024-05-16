@@ -1,6 +1,6 @@
 import { type Dictionary, format } from "@vermi/utils";
 import type { EventObject } from "../services";
-import { createStore } from "../utils/createStore";
+import { createStore } from "../utils";
 
 export const HookMetadataKey: unique symbol = Symbol("Hook");
 

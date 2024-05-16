@@ -3,8 +3,15 @@ import {
 	type LoggerAdapter,
 	type RequestContext,
 	asValue,
+	useDecorators,
 } from "@vermi/core";
-import { Before, Middleware, Unauthorized, Use } from "@vermi/router";
+import {
+	Before,
+	Middleware,
+	Unauthorized,
+	Use,
+	routeStore,
+} from "@vermi/router";
 
 @Middleware()
 class AuthorizedMiddleware {
@@ -12,19 +19,31 @@ class AuthorizedMiddleware {
 	logger!: LoggerAdapter;
 
 	@Before()
-	public authorize(ctx: RequestContext) {
-		return new Promise<void>((resolve, reject) => {
-			ctx.store
-				.verifyToken()
-				.then(({ payload }) => {
-					ctx.register({ userId: asValue(payload.sub) });
-					resolve();
-				})
-				.catch((err) => {
-					reject(new Unauthorized(err.message, err));
-				});
-		});
+	public async authorize<T>(ctx: RequestContext) {
+		const { payload } = await ctx.store.verifyToken<T>();
+
+		if (!payload.sub) {
+			this.logger.error("Unauthorized request");
+			throw new Unauthorized("Unauthorized request");
+		}
+
+		ctx.register("userId", asValue(payload.sub));
 	}
 }
 
-export const Authorized = () => Use(AuthorizedMiddleware);
+export const Authorized = (scopes: string[] = []) => {
+	return useDecorators(Use(AuthorizedMiddleware), (target, propertyKey) => {
+		const store = routeStore.apply((target as any).constructor);
+		const path = store.findPath((target as any).constructor, propertyKey);
+
+		if (!path) return;
+
+		store.updateRoute(path, (current) => {
+			if (!current.security) {
+				current.security = new Map();
+			}
+			current.security.set("bearerAuth", scopes);
+			return current;
+		});
+	});
+};

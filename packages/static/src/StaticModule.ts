@@ -1,6 +1,7 @@
 import {
 	AppHook,
 	type Configuration,
+	HttpException,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -11,7 +12,6 @@ import { generateETag, isCached } from "./utils";
 export type SlashedPath = `/${string}`;
 
 export type StaticModuleOptions = {
-	prefix: SlashedPath;
 	assetsDir: string;
 	ignorePatterns?: string[];
 	extensions?: string[];
@@ -19,6 +19,7 @@ export type StaticModuleOptions = {
 	maxAge?: number;
 	eTag?: boolean;
 	index?: string;
+	direct?: boolean;
 };
 
 const defaultStaticExtensions = [
@@ -41,7 +42,9 @@ const defaultStaticExtensions = [
 ];
 
 @Module()
-export class StaticModule extends VermiModule<StaticModuleOptions> {
+export class StaticModule extends VermiModule<
+	Record<SlashedPath, StaticModuleOptions>
+> {
 	constructor(
 		protected configuration: Configuration,
 		private logger: LoggerAdapter,
@@ -49,22 +52,44 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 		super();
 	}
 
-	#getFile(request: Request) {
-		const { prefix, assetsDir } = this.getConfig();
-		const isAbsolute = assetsDir.startsWith("/");
+	#getPrefix(request: Request) {
+		const path = new URL(request.url).pathname.split("/")[1];
+		const mount = `/${path}` as SlashedPath;
 
-		const filePath = isAbsolute
-			? `${assetsDir}${request.url.slice(prefix.length)}`
-			: Bun.resolveSync(
-					`${assetsDir}${request.url.slice(prefix.length)}`,
-					process.cwd(),
-				);
-
-		return Bun.file(filePath);
+		return Object.hasOwn(this.config, mount) ? mount : undefined;
 	}
 
-	#getHeaders(etag?: string) {
-		const { immutable, maxAge } = this.getConfig();
+	#getFile(config: StaticModuleOptions, request: Request, prefix: SlashedPath) {
+		const { assetsDir, direct } = config;
+		const isAbsolute = assetsDir.startsWith("/");
+
+		const url = new URL(request.url).pathname;
+
+		try {
+			if (!direct) {
+				const filePath = isAbsolute
+					? `${assetsDir}${url.slice(prefix.length)}`
+					: Bun.resolveSync(
+							`${assetsDir}${url.slice(prefix.length)}`,
+							process.cwd(),
+						);
+
+				console.log("filePath prefix", filePath);
+				return Bun.file(filePath);
+			}
+
+			const filePath = isAbsolute
+				? `${assetsDir}${prefix}`
+				: Bun.resolveSync(`${assetsDir}${prefix}`, process.cwd());
+			return Bun.file(filePath);
+		} catch (error) {
+			this.logger.error(error as Error);
+			throw new HttpException(404, "Not Found", error as Error);
+		}
+	}
+
+	#getHeaders(config: StaticModuleOptions, etag?: string) {
+		const { immutable, maxAge } = config;
 		const headers = new Headers();
 
 		let cacheControl = "no-cache";
@@ -95,21 +120,27 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 	public async onRequest(context: RequestContext) {
 		const { request, serverUrl } = context.store;
 
-		// remove slash from serverUrl
-		const prefix = `${serverUrl.slice(0, -1)}${this.getConfig().prefix}`;
+		const prefix = this.#getPrefix(request);
+		if (!prefix) {
+			return;
+		}
 
-		if (!request.url.startsWith(prefix)) {
+		const test = `${serverUrl.slice(0, -1)}${prefix}`;
+
+		if (!request.url.startsWith(test)) {
 			return;
 		}
 
 		const url = new URL(request.url);
+
+		const config = this.config[prefix];
 
 		const {
 			extensions = defaultStaticExtensions,
 			ignorePatterns,
 			eTag,
 			index,
-		} = this.getConfig();
+		} = config;
 
 		// file is directory
 		if (index && url.pathname.endsWith("/")) {
@@ -131,7 +162,7 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 			}
 		}
 
-		const file = this.#getFile(request);
+		const file = this.#getFile(config, request, prefix);
 
 		const etag = eTag ? await generateETag(file) : undefined;
 
@@ -139,6 +170,6 @@ export class StaticModule extends VermiModule<StaticModuleOptions> {
 			return new Response(null, { status: 304 });
 		}
 
-		return new Response(file, { headers: this.#getHeaders(etag) });
+		return new Response(file, { headers: this.#getHeaders(config, etag) });
 	}
 }

@@ -1,13 +1,25 @@
-import { type Static, Type } from "@sinclair/typebox";
+import { GenericModel, Integer, Model, Of, String } from "@vermi/openapi";
 
-export const UserQuerySchema = Type.Object({
-	email: Type.String(),
-});
+@GenericModel()
+export class Pagination<T> {
+	@Of()
+	data!: T[];
 
-export type UserQuerySchemaDto = Static<typeof UserQuerySchema>;
+	@Integer()
+	page!: number;
 
-export const UserParamSchema = Type.Object({
-	id: Type.Number(),
-});
+	@Integer()
+	limit!: number;
+}
 
-export type UserParamDto = Static<typeof UserParamSchema>;
+@Model()
+export class User {
+	@Integer()
+	id!: number;
+
+	@String()
+	name!: string;
+
+	@String()
+	email!: string;
+}

@@ -1,5 +1,5 @@
 import { containerRef } from "@vermi/core";
-import type { CacheAdapter } from "../interfaces/CacheAdapter";
+import type { CacheAdapter } from "../interfaces";
 
 export interface UseCacheOptions {
 	ttl: number;

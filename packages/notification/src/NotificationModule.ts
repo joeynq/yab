@@ -7,8 +7,7 @@ import {
 	VermiModule,
 	asValue,
 } from "@vermi/core";
-import type { AdapterConfigMap } from "./interfaces/channelMap";
-import type { Templates } from "./interfaces/interface";
+import type { AdapterConfigMap, Templates } from "./interfaces";
 import { NotificationService } from "./services";
 
 export type NotificationModuleConfig<T extends Templates> = {

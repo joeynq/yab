@@ -1,5 +1,5 @@
 import type { InjectionToken, RequestContext } from "../interfaces";
-import { injectStore } from "../store/injectStore";
+import { injectStore } from "../store";
 
 const injectionMethodName = Symbol("__injecting__");
 

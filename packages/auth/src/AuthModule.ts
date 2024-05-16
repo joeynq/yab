@@ -16,14 +16,13 @@ declare module "@vermi/core" {
 		token: string | undefined;
 		verifyToken<T>(): Promise<JWTVerifyResult<T>>;
 		userId: string | undefined;
+		authStrategy: Strategy<any>;
 	}
 }
 
 export type AuthModuleConfig<S extends Strategy<any>> = {
 	strategy: S;
 };
-
-export const AuthModuleKey = "auth:strategy";
 
 @Module()
 export class AuthModule<S extends Strategy<any>> extends VermiModule<
@@ -38,7 +37,7 @@ export class AuthModule<S extends Strategy<any>> extends VermiModule<
 
 	@AppHook("app:init")
 	async onInit(context: AppContext) {
-		context.register(AuthModuleKey.toString(), asValue(this.config.strategy));
+		context.register("authStrategy", asValue(this.config.strategy));
 		try {
 			await this.config.strategy.init?.();
 			this.logger.info("AuthModule initialized with {name}. Issuer: {issuer}", {

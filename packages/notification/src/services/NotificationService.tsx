@@ -1,7 +1,6 @@
 import { render } from "@react-email/render";
 import type { FC } from "react";
-import type { AdapterConfigMap } from "../interfaces/channelMap";
-import type { SendWithTemplateOptions } from "../interfaces/interface";
+import type { AdapterConfigMap, SendWithTemplateOptions } from "../interfaces";
 
 interface NotificationServiceOptions {
 	channels: Partial<AdapterConfigMap>;

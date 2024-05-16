@@ -16,15 +16,16 @@ export interface Handler {
 }
 
 interface WithSchema {
+	name?: string;
 	schema: TSchema;
 	required?: boolean;
 }
 
-interface MediaType extends WithSchema {
+export interface MediaType extends WithSchema {
 	mediaType?: string;
 }
 
-interface Response {
+export interface Response {
 	content: Map<ContentType, MediaType>;
 	headers?: Map<string, WithSchema>;
 }

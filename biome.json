@@ -9,10 +9,14 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noExplicitAny": "off"
+				"noExplicitAny": "off",
+				"noShadowRestrictedNames": "off"
 			},
 			"correctness": {
 				"noUnusedImports": "error"
+			},
+			"style": {
+				"useImportType": "off"
 			}
 		}
 	},

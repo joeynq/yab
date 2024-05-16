@@ -1,4 +1,4 @@
-import { type Class, type Dictionary, ensure, uuid } from "@vermi/utils";
+import { type Class, deepMerge, ensure, uuid } from "@vermi/utils";
 import {
 	type BuildResolver,
 	InjectionMode,
@@ -155,11 +155,18 @@ export class Vermi {
 							AppEvents.OnRequest,
 							[stored.expose()],
 							{
-								breakOn: "result",
+								breakOn: "resultOrError",
 							},
 						);
 
-						const response = result || new Response("OK", { status: 200 });
+						const url = new URL(request.url).pathname;
+
+						const defaultResponse =
+							url === "/"
+								? new Response("OK", { status: 200 })
+								: new Response("Not Found", { status: 404 });
+
+						const response = result || defaultResponse;
 
 						await hooks.invoke(AppEvents.OnResponse, [
 							stored.expose(),
@@ -202,11 +209,15 @@ export class Vermi {
 		return this;
 	}
 
-	use<M extends Class<any>, Config extends Dictionary>({
+	use<M extends Class<any>, Config>({
 		module,
 		args,
 	}: UseModule<M, Config>): this {
-		this.#options.modules.set(module.name, { module, config: args });
+		const current = this.#options.modules.get(module.name);
+		this.#options.modules.set(module.name, {
+			module,
+			config: deepMerge(current?.config, args),
+		});
 		return this;
 	}
 

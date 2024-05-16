@@ -1,6 +1,6 @@
 import type { HttpMethod } from "../enums";
-import type { Parameter, RequestBody, SlashedPath } from "../interfaces/schema";
-import { routeStore } from "../stores/routeStore";
+import type { Parameter, RequestBody, SlashedPath } from "../interfaces";
+import { routeStore } from "../stores";
 
 export const Action = (
 	method: HttpMethod,
