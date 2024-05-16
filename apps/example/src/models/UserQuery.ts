@@ -1,19 +1,8 @@
-import { GenericModel, Integer, Model, Of, String } from "@vermi/openapi";
+import { Integer, Model, Prop, String } from "@vermi/openapi";
+import { Resource, SearchParams } from "@vermi/restapi";
 
-@GenericModel()
-export class Pagination<T> {
-	@Of()
-	data!: T[];
-
-	@Integer()
-	page!: number;
-
-	@Integer()
-	limit!: number;
-}
-
-@Model()
-export class User {
+@Resource("user")
+export class UserDTO {
 	@Integer()
 	id!: number;
 
@@ -22,4 +11,10 @@ export class User {
 
 	@String()
 	email!: string;
+}
+
+@Model()
+export class UserSearch extends SearchParams<UserDTO> {
+	@Prop({ nullable: true })
+	filter?: UserDTO;
 }

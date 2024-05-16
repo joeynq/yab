@@ -1,26 +1,42 @@
-import { Authorized } from "@vermi/auth";
 import { Logger, type LoggerAdapter } from "@vermi/core";
-import { Responses, generic } from "@vermi/openapi";
-import { Controller, Post } from "@vermi/router";
-import { Pagination, User } from "../models";
+import { Query } from "@vermi/openapi";
+import {
+	Create,
+	Delete,
+	Read,
+	RestController,
+	Result,
+	Update,
+} from "@vermi/restapi";
+import { UserDTO, UserSearch } from "../models";
 
-// const schema = classStore.apply(UserQuery).get();
-
-@Controller("/users")
+@RestController(UserDTO)
 export class UserController {
 	@Logger()
 	public logger!: LoggerAdapter;
 
-	@Authorized()
-	@Responses(200, generic(Pagination).of(User))
-	@Post("/:id")
+	@Read(UserDTO)
 	getUser() {
-		// this.logger.info(param);
-		// return {
-		// 	user: {
-		// 		query: userQuery,
-		// 		param,
-		// 	},
-		// };
+		return Result.single(new UserDTO());
+	}
+
+	@Read([UserDTO])
+	getUsers(@Query() search: UserSearch) {
+		return Result.multiple([new UserDTO()]);
+	}
+
+	@Create(UserDTO)
+	createUser() {
+		return Result.single(new UserDTO());
+	}
+
+	@Update(UserDTO)
+	updateUser() {
+		return Result.single(new UserDTO());
+	}
+
+	@Delete(UserDTO)
+	deleteUser() {
+		return Result.empty();
 	}
 }

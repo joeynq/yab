@@ -1,15 +1,17 @@
 import { Type } from "@sinclair/typebox";
 import type { Parameter } from "@vermi/router";
+import { pascalCase } from "@vermi/utils";
 import { isPrimitive } from "../../utils";
 import { SchemaKey } from "../Model";
 
 export type ArgOptions = {
 	nullable?: boolean;
+	name?: string;
 };
 
 export const Arg = (
 	from: Parameter["in"],
-	{ nullable = false }: ArgOptions = {},
+	{ nullable = false, name }: ArgOptions = {},
 ) => {
 	return (target: any, propertyKey: string, parameterIndex: number) => {
 		const typeClass = Reflect.getMetadata(
@@ -21,7 +23,7 @@ export const Arg = (
 		const schema = typeClass[SchemaKey] || Type.Any();
 
 		if (!isPrimitive(typeClass)) {
-			schema.$id = `#/components/schemas/${typeClass.name}`;
+			schema.$id = `#/components/schemas/${pascalCase(name ?? typeClass.name)}`;
 		}
 
 		Reflect.defineMetadata(
@@ -33,7 +35,7 @@ export const Arg = (
 					schema,
 					required: !nullable,
 					index: parameterIndex,
-					name: typeClass.name,
+					name: pascalCase(name ?? typeClass.name),
 				} satisfies Parameter,
 			],
 			target,

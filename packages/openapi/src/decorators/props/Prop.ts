@@ -1,9 +1,9 @@
-import { type TSchema, Type } from "@sinclair/typebox";
+import { type TKind, type TSchema, Type } from "@sinclair/typebox";
 import type { Class } from "@vermi/utils";
 import { modelStore, propsStore } from "../../stores";
 import { guessType } from "../../utils";
 
-export type PropOptions<T extends TSchema> = T & {
+export type PropOptions<T extends TSchema> = Omit<T, keyof TKind> & {
 	nullable?: boolean;
 };
 

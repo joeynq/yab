@@ -4,17 +4,20 @@ import type { Class } from "@vermi/utils";
 import { SchemaKey } from "../decorators";
 import { ModelStoreKey } from "../stores";
 
-type Builder = <T extends TSchema>(T: T, name: string) => TSchema;
+export type GenericBuilder = <T extends TSchema>(T: T, name: string) => TSchema;
 
 export const generic = (model: Class<any>) => {
 	const genericBuilder = Reflect.getMetadata(
 		"generic:builder",
 		model,
-	) as Builder;
+	) as GenericBuilder;
 	return {
 		of(type: Class<any>) {
-			const T = (type as any)[SchemaKey];
-			const name = `${model.name}Of${type.name}`;
+			const T = (type as any)[SchemaKey] as TSchema;
+
+			const typeName = T.$id?.split("/").pop();
+
+			const name = `${model.name}Of${typeName || type.name}`;
 			const schema = genericBuilder(T, name);
 
 			saveStoreData(ModelStoreKey, [schema, T]);

@@ -74,7 +74,6 @@ export class StaticModule extends VermiModule<
 							process.cwd(),
 						);
 
-				console.log("filePath prefix", filePath);
 				return Bun.file(filePath);
 			}
 

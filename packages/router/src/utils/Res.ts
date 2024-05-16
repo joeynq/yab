@@ -39,10 +39,10 @@ export const Res = {
 		return response(HttpSuccessCodes.NoContent, null, headers);
 	},
 	ok(data: unknown, headers: Record<string, any> = defaultHeaders) {
-		return response(HttpSuccessCodes.Ok, { data }, headers);
+		return response(HttpSuccessCodes.Ok, data, headers);
 	},
 	created(data: unknown, headers: Record<string, any> = defaultHeaders) {
-		return response(HttpSuccessCodes.Created, { data }, headers);
+		return response(HttpSuccessCodes.Created, data, headers);
 	},
 	error(error: Error, headers: Record<string, any> = defaultHeaders) {
 		if (error instanceof HttpException) {

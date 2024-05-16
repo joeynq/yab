@@ -48,8 +48,6 @@ export class Router {
 			url.pathname,
 		);
 
-		console.log(match);
-
 		ensure(match, new NotFound(`${request.method} ${request.url} not found`));
 
 		this.#route = match;
@@ -139,7 +137,6 @@ export class Router {
 
 			return responseHandler(result, this.route.store.responses);
 		} catch (error) {
-			console.error(error);
 			logger.error(error as Error, `${request.method} ${request.url} failed`);
 			return errorHandler(error as Error, this.#route?.store.responses);
 		}
