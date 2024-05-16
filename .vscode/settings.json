@@ -27,6 +27,7 @@
 		"openapi",
 		"paramtypes",
 		"pino",
+		"restapi",
 		"reviewdog",
 		"rlflx",
 		"SAMEORIGIN",

@@ -4,11 +4,14 @@ import { type PropsStoreDto, propsStore } from "../stores";
 import { Model } from "./Model";
 import { Prop } from "./props";
 
-export const GenericModel = (options?: ObjectOptions) => {
+export const Generic = (options?: ObjectOptions) => {
 	return useDecorators(Model(options), (target: any) => {
 		const props = propsStore.apply(target).get();
-		const genericKeys: Array<{ key: string; isArray: boolean }> =
-			Reflect.getMetadata("generic:keys", target) || [];
+		const genericKeys: Array<{
+			key: string;
+			isArray: boolean;
+			nullable?: boolean;
+		}> = Reflect.getMetadata("generic:keys", target) || [];
 
 		const genericBuilder = <T extends TSchema>(T: T, name: string) => {
 			const propsWithGenerics = Object.entries(props).reduce(
@@ -16,10 +19,11 @@ export const GenericModel = (options?: ObjectOptions) => {
 					const genericKey = genericKeys.find((k) => k.key === key);
 
 					if (genericKey) {
-						const { isArray } = genericKey;
+						const { isArray, nullable } = genericKey;
 						const ref = T.$id ? Type.Ref(T) : T;
 						const generic = isArray ? Type.Array(ref) : ref;
-						acc[key] = generic;
+
+						acc[key] = nullable ? Type.Optional(generic) : generic;
 					} else {
 						acc[key] = value;
 					}
@@ -37,7 +41,7 @@ export const GenericModel = (options?: ObjectOptions) => {
 	});
 };
 
-export const Of = () => {
+export const Of = ({ nullable }: { nullable?: boolean } = {}) => {
 	return useDecorators<PropertyDecorator>(
 		Prop(Type.Any()),
 		(target: any, key: string | symbol) => {
@@ -45,8 +49,11 @@ export const Of = () => {
 
 			const isArray = type === Array;
 
-			const genericKeys: Array<{ key: string; isArray: boolean }> =
-				Reflect.getMetadata("generic:keys", target) || [];
+			const genericKeys: Array<{
+				key: string;
+				isArray: boolean;
+				nullable?: boolean;
+			}> = Reflect.getMetadata("generic:keys", target) || [];
 
 			if (genericKeys.some((k) => k.key === key)) {
 				return;
@@ -54,7 +61,7 @@ export const Of = () => {
 
 			Reflect.defineMetadata(
 				"generic:keys",
-				[...genericKeys, { key, isArray }],
+				[...genericKeys, { key, isArray, nullable }],
 				target.constructor,
 			);
 		},

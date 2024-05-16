@@ -12,6 +12,7 @@
 		"@vermi/mikro-orm": "link:@vermi/mikro-orm",
 		"@vermi/notification": "link:@vermi/notification",
 		"@vermi/openapi": "link:@vermi/openapi",
+		"@vermi/restapi": "link:@vermi/restapi",
 		"@vermi/rate-limit": "link:@vermi/rate-limit",
 		"@vermi/router": "link:@vermi/router",
 		"@vermi/security": "link:@vermi/security",
