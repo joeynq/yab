@@ -32,7 +32,7 @@ export const guessType = (PropType: any): TSchema | undefined => {
 	}
 
 	if (isClass(PropType)) {
-		return Type.Ref((PropType as any)[SchemaKey]);
+		return (PropType as any)[SchemaKey];
 	}
 
 	return Type.Any();

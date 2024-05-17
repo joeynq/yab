@@ -99,7 +99,6 @@ export class ConsoleLogger extends BaseLogger<Console> {
 		this.writeLog("trace", ...args);
 	}
 
-	// writeLog, return stack trace if level is error or trace
 	protected writeLog(level: LogLevel, ...args: any[]) {
 		if (!this.allowLevel(level)) return;
 

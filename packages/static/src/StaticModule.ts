@@ -141,18 +141,15 @@ export class StaticModule extends VermiModule<
 			index,
 		} = config;
 
-		// file is directory
 		if (index && url.pathname.endsWith("/")) {
 			url.pathname += index;
 		}
 
-		// file extension is not static
 		const ext = url.pathname.split(".").pop();
 		if (!ext || !extensions.includes(`.${ext}`)) {
 			return;
 		}
 
-		// file is ignored
 		if (ignorePatterns) {
 			for (const pattern of ignorePatterns) {
 				if (RegExp(pattern).exec(url.pathname)) {

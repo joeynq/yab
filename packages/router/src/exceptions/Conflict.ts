@@ -1,8 +1,8 @@
 import { HttpErrorCodes } from "@vermi/core";
 import { RouterException } from "./RouterException";
 
-export class NotFound extends RouterException {
+export class Conflict extends RouterException {
 	constructor(message: string, cause?: Error) {
-		super(HttpErrorCodes.NotFound, message, cause);
+		super(HttpErrorCodes.Conflict, message, cause);
 	}
 }

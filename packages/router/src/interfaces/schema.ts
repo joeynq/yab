@@ -31,7 +31,7 @@ export interface Response {
 }
 
 interface CommonArg extends WithSchema {
-	index: number;
+	index?: number;
 	pipes?: Class<Mapper<any, any>>[];
 }
 

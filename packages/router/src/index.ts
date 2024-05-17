@@ -1,4 +1,5 @@
 export * from "./RouterModule";
+export * from "./allExceptions";
 export * from "./decorators";
 export * from "./enums";
 export * from "./event";

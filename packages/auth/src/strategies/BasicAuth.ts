@@ -1,4 +1,5 @@
 import { ensure } from "@vermi/utils";
+import type { SecurityScheme } from "../interfaces";
 import { Strategy } from "./Strategy";
 
 export type BasicTokenAuthorize = {
@@ -8,6 +9,11 @@ export type BasicTokenAuthorize = {
 };
 
 export class BasicAuth extends Strategy<BasicTokenAuthorize> {
+	readonly securityScheme: SecurityScheme = {
+		type: "http",
+		scheme: "basic",
+	};
+
 	tokenType = "Basic";
 	#encodeCredentials() {
 		return btoa(

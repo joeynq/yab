@@ -8,6 +8,7 @@
 		"watch": "tsc -w"
 	},
 	"devDependencies": {
+		"@sinclair/typebox": "^0.32.30",
 		"@types/bun": "latest",
 		"@types/pluralize": "^0.0.33",
 		"@vermi/core": "link:@vermi/core",
@@ -16,10 +17,10 @@
 		"@vermi/utils": "link:@vermi/utils"
 	},
 	"peerDependencies": {
+		"@sinclair/typebox": "^0.32.30",
 		"typescript": "^5.4.5"
 	},
 	"dependencies": {
-		"@sinclair/typebox": "^0.32.30",
 		"pluralize": "^8.0.0"
 	}
 }

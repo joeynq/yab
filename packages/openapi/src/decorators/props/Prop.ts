@@ -1,6 +1,6 @@
 import { type TKind, type TSchema, Type } from "@sinclair/typebox";
 import type { Class } from "@vermi/utils";
-import { modelStore, propsStore } from "../../stores";
+import { propsStore } from "../../stores";
 import { guessType } from "../../utils";
 
 export type PropOptions<T extends TSchema> = Omit<T, keyof TKind> & {
@@ -43,14 +43,15 @@ export function Prop<T extends TSchema>(
 			return;
 		}
 
-		opts && Object.assign(T, opts);
-
-		if (opts?.nullable) {
-			T = Type.Optional(T);
+		const nullable = Boolean(opts?.nullable);
+		if (opts) {
+			// biome-ignore lint/performance/noDelete: <explanation>
+			delete opts.nullable;
+			Object.assign(T, opts);
 		}
 
-		if (T.$id) {
-			modelStore.apply(target.constructor).addSchema(T);
+		if (nullable) {
+			T = Type.Optional(T);
 		}
 
 		propsStore.apply(target.constructor).addProperty(key.toString(), T);

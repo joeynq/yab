@@ -8,6 +8,7 @@
 		"watch": "tsc -w"
 	},
 	"devDependencies": {
+		"@sinclair/typebox": "^0.32.30",
 		"@types/bun": "latest",
 		"@types/react": "^18.3.2",
 		"@types/react-dom": "^18.3.0",
@@ -17,11 +18,10 @@
 		"@vermi/utils": "link:@vermi/utils"
 	},
 	"peerDependencies": {
+		"@sinclair/typebox": "^0.32.30",
 		"typescript": "^5.4.5"
 	},
 	"dependencies": {
-		"@sinclair/typebox": "^0.32.30",
-		"openapi-types": "^12.1.3",
 		"openapi3-ts": "^4.3.1",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"

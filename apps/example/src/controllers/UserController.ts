@@ -1,3 +1,4 @@
+import { Authorized } from "@vermi/auth";
 import { Logger, type LoggerAdapter } from "@vermi/core";
 import { Query } from "@vermi/openapi";
 import {
@@ -15,6 +16,7 @@ export class UserController {
 	@Logger()
 	public logger!: LoggerAdapter;
 
+	@Authorized("BearerAuth")
 	@Read(UserDTO)
 	getUser() {
 		return Result.single(new UserDTO());

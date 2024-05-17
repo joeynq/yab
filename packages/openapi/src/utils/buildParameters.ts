@@ -6,8 +6,11 @@ export const buildParameters = (parameters: Parameter[]) => {
 	const result: ParameterObject[] = [];
 	for (const arg of parameters) {
 		const inKey = arg.in;
-		const params: ParameterObject[] = Object.entries(arg.schema.properties).map(
-			([key, value]) => {
+
+		const params: ParameterObject[] = [];
+
+		if (arg.schema.type === "object") {
+			Object.entries(arg.schema.properties).map(([key, value]) => {
 				const schema = value as TSchema;
 
 				const param: ParameterObject = {
@@ -17,9 +20,18 @@ export const buildParameters = (parameters: Parameter[]) => {
 					schema: schema.$id ? Type.Ref(schema) : schema,
 				};
 
-				return param;
-			},
-		);
+				params.push(param);
+			});
+		} else {
+			const param: ParameterObject = {
+				name: arg.name || "",
+				in: inKey,
+				required: arg.required,
+				schema: arg.schema,
+			};
+
+			params.push(param);
+		}
 
 		result.push(...params);
 	}

@@ -30,23 +30,18 @@ new Vermi({ log: { level: "info" } })
 	.use(cache({}, SqliteAdapter))
 	.use(
 		auth(BearerAuth, {
-			options: {
-				issuer: String(import.meta.env.ISSUER),
+			config: {
+				options: {
+					issuer: String(import.meta.env.ISSUER),
+				},
 			},
 		}),
 	)
-	// .use(
-	// 	mikroOrm({
-	// 		clientUrl: String(import.meta.env.DATABASE_URL),
-	// 		driver: PostgreSqlDriver,
-	// 		entities: [User],
-	// 	}),
-	// )
 	.use(statics("/public", { assetsDir: "./public" }))
 	.use(statics("/favicon.ico", { assetsDir: "./public", direct: true }))
 	// .use(rateLimit("redis", {}))
 	.use(router("/api", [UserController]))
-	.use(openapi("/docs"))
+	.use(openapi("/docs", { specs: { security: [{ BearerAuth: [] }] } }))
 	.start((context, { port }) => {
 		context.resolve<LoggerAdapter>("logger")?.info(`Server started at ${port}`);
 	});

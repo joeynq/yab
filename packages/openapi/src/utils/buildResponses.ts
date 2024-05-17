@@ -10,6 +10,9 @@ export const buildResponses = (responses: Map<HttpCodes, Response>) => {
 			description: `HTTP ${code} Response`,
 			content: Object.fromEntries(
 				Array.from(response.content).map(([key, { schema }]) => {
+					if (schema.type === "null") {
+						return [key, {}];
+					}
 					return [
 						key,
 						{

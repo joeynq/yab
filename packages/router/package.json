@@ -8,16 +8,17 @@
 		"watch": "tsc -w"
 	},
 	"devDependencies": {
+		"@sinclair/typebox": "^0.32.30",
 		"@types/bun": "latest",
 		"@types/express": "^4.17.21",
 		"@vermi/core": "link:@vermi/core",
 		"@vermi/utils": "link:@vermi/utils"
 	},
 	"peerDependencies": {
+		"@sinclair/typebox": "^0.32.30",
 		"typescript": "^5.4.5"
 	},
 	"dependencies": {
-		"@sinclair/typebox": "^0.32.25",
 		"fast-querystring": "^1.1.2",
 		"memoirist": "^0.1.10",
 		"reflect-metadata": "^0.2.2",

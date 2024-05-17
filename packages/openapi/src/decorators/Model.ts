@@ -5,18 +5,28 @@ import { ModelStoreKey, modelStore, propsStore } from "../stores";
 
 export const SchemaKey = Symbol("Schema");
 
-export const Model = <T>(options?: ObjectOptions, name?: string) => {
+export interface ModelOptions {
+	name?: string;
+	abstract?: boolean;
+}
+
+export const Model = <T>(
+	schemaOptions?: ObjectOptions,
+	options?: ModelOptions,
+) => {
 	return (target: Class<T>) => {
 		const props = propsStore.apply(target).get();
 		const schema = Type.Object(props, {
-			...options,
-			$id: `#/components/schemas/${pascalCase(name || target.name)}`,
+			...schemaOptions,
+			$id: `#/components/schemas/${pascalCase(options?.name || target.name)}`,
 		});
 
 		const store = modelStore.apply(target);
 		store.addSchema(schema);
 
-		saveStoreData(ModelStoreKey, store.get());
+		if (!options?.abstract) {
+			saveStoreData(ModelStoreKey, store.get());
+		}
 
 		Object.defineProperty(target, SchemaKey, {
 			value: schema,

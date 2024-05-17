@@ -124,10 +124,9 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 		context.register(registering);
 
-		// console.table(this.#router.debug);
+		console.table(this.#router.debug);
 		this.logger.info(`${this.#router.debug.length} routes registered`);
 
-		// register hooks
 		if (hookEvents) {
 			for (const [event, handlers] of hookEvents.entries()) {
 				for (const { target, handler, scope } of handlers) {
