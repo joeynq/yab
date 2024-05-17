@@ -1,6 +1,7 @@
-import { HttpErrorCodes, HttpException } from "@vermi/core";
+import { HttpErrorCodes } from "@vermi/core";
+import { RouterException } from "./RouterException";
 
-export class TooManyRequests extends HttpException {
+export class TooManyRequests extends RouterException {
 	constructor(message: string, cause?: Error) {
 		super(HttpErrorCodes.TooManyRequests, message, cause);
 	}

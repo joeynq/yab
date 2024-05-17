@@ -1,5 +1,3 @@
-import type { TSchema } from "@sinclair/typebox";
-import { UseCache } from "@vermi/cache";
 import {
 	AppHook,
 	type Configuration,
@@ -7,38 +5,41 @@ import {
 	Module,
 	type RequestContext,
 	VermiModule,
-	getStoreData,
 } from "@vermi/core";
-import { type Parameter, type RequestBody, getRoutes } from "@vermi/router";
+import { Res } from "@vermi/router";
 import { deepMerge } from "@vermi/utils";
 import {
 	type OpenAPIObject,
-	OpenApiBuilder,
-	type OperationObject,
+	type SecuritySchemeObject,
 } from "openapi3-ts/oas31";
 import { renderToString } from "react-dom/server";
 import { ScalarPage } from "./components";
-import { ModelStoreKey } from "./stores";
-import {
-	buildParameters,
-	buildRequestBody,
-	buildResponses,
-	getNames,
-} from "./utils";
+import { OpenAPIService } from "./services/OpenAPIService";
+
+type AuthConfig = Record<
+	string,
+	{
+		scheme: Record<string, SecuritySchemeObject>;
+	}
+>;
 
 export interface OpenAPIConfig {
 	path?: string;
 	fileName?: string;
-	specs?: OpenAPIObject;
+	specs?: Partial<OpenAPIObject>;
 	override?: boolean;
 	title?: string;
 }
 
 const defaultSpecs: OpenAPIObject = {
-	openapi: "3.1",
+	openapi: "3.1.0",
 	info: {
 		title: "Vermi API",
 		version: "1.0.0",
+		license: {
+			name: "MIT",
+			url: "https://opensource.org/licenses/MIT",
+		},
 	},
 	components: {},
 	paths: {},
@@ -46,7 +47,7 @@ const defaultSpecs: OpenAPIObject = {
 
 @Module()
 export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
-	#builder = new OpenApiBuilder();
+	#service: OpenAPIService;
 
 	constructor(
 		protected configuration: Configuration,
@@ -56,72 +57,28 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 
 		let specs: OpenAPIObject;
 		if (this.config.override) {
-			specs = this.config.specs || defaultSpecs;
+			specs = (this.config.specs as OpenAPIObject) || defaultSpecs;
 		} else {
 			specs = deepMerge(defaultSpecs, this.config.specs || {}) as OpenAPIObject;
 		}
 
-		this.#builder.rootDoc = specs;
-	}
-
-	@UseCache()
-	protected async buildSpecs() {
-		const routes = getRoutes();
-
-		const schemas = getStoreData<TSchema[]>(ModelStoreKey);
-
-		for (const schema of schemas) {
-			if (schema.$id) {
-				const name = schema.$id.split("/").pop();
-				this.#builder.addSchema(name || schema.$id, schema);
-			}
-		}
-
-		for (const [path, operation] of routes) {
-			const { method, route, operationId } = getNames(path, operation);
-
-			const item: OperationObject = {
-				operationId: operationId,
-				responses: operation.responses,
-			};
-
-			const parameterArgs = operation.args?.filter(
-				(arg) => arg.in !== "body",
-			) as Parameter[] | undefined;
-
-			if (parameterArgs) {
-				item.parameters = buildParameters(parameterArgs);
-			}
-
-			const requestBody = operation.args?.find((arg) => arg.in === "body") as
-				| RequestBody
-				| undefined;
-
-			if (requestBody) {
-				requestBody.name = requestBody.name || `${operationId}Body`;
-				item.requestBody = buildRequestBody(requestBody);
-			}
-
-			if (operation.security) {
-				item.security = [Object.fromEntries(operation.security)];
-			}
-
-			if (operation.responses) {
-				item.responses = {
-					...item.responses,
-					...buildResponses(operation.responses),
-				};
-			}
-
-			this.#builder.addTitle(this.config.title || "Vermi API");
-			this.#builder.addPath(route, { [method]: item });
-		}
-
-		return this.#builder.getSpecAsJson();
+		this.#service = new OpenAPIService(specs);
 	}
 
 	@AppHook("app:init")
 	async init() {
+		const authConfig = this.configuration.getModuleConfig("AuthModule")
+			?.config as AuthConfig | undefined;
+
+		if (authConfig) {
+			const schemes = Object.values(authConfig).reduce(
+				// biome-ignore lint/performance/noAccumulatingSpread: <explanation>
+				(acc, { scheme }) => ({ ...acc, ...scheme }),
+				{} as Record<string, SecuritySchemeObject>,
+			);
+			this.#service.addSecuritySchemes(schemes);
+		}
+
 		this.logger.info("OpenAPI Module initialized on {path}", {
 			path: this.config.path || "/openapi",
 		});
@@ -143,22 +100,17 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 		const url = new URL(context.store.request.url);
 
 		if (url.pathname === fileUrl) {
-			const specs = await this.buildSpecs();
-			return new Response(specs, {
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
+			const specs = await this.#service.buildSpecs(
+				context.store.serverUrl,
+				this.config.title || "Vermi API",
+			);
+
+			return Res.ok(specs);
 		}
 
 		if (url.pathname.startsWith(path)) {
 			const page = renderToString(<ScalarPage url={fileUrl} title={title} />);
-
-			return new Response(`<!doctype html>${page}`, {
-				headers: {
-					"Content-Type": "text/html",
-				},
-			});
+			return Res.html(`<!doctype html>${page}`);
 		}
 	}
 }

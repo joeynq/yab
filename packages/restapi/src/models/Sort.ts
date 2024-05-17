@@ -1,4 +1,4 @@
-import { Enum, Model, String } from "@vermi/openapi";
+import { Model, String, StringEnum } from "@vermi/openapi";
 
 export enum SortDirection {
 	Ascending = "asc",
@@ -10,6 +10,6 @@ export class Sort {
 	@String()
 	prop!: string;
 
-	@Enum(SortDirection, { default: SortDirection.Ascending })
+	@StringEnum(SortDirection, { default: SortDirection.Ascending })
 	direction: SortDirection = SortDirection.Ascending;
 }

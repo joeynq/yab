@@ -2,6 +2,7 @@ import { URL } from "node:url";
 import { UseCache } from "@vermi/cache";
 import { ensure } from "@vermi/utils";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import type { SecurityScheme } from "../interfaces";
 import { Strategy } from "./Strategy";
 
 export type BearerTokenAuthorize = {
@@ -10,6 +11,12 @@ export type BearerTokenAuthorize = {
 };
 
 export class BearerAuth extends Strategy<BearerTokenAuthorize> {
+	readonly securityScheme: SecurityScheme = {
+		type: "http",
+		bearerFormat: "JWT",
+		scheme: "bearer",
+	};
+
 	tokenType = "Bearer";
 	openIdConfig:
 		| {

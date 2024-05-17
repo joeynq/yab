@@ -1,8 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import type { Parameter } from "@vermi/router";
 import { pascalCase } from "@vermi/utils";
-import { isPrimitive } from "../../utils";
-import { SchemaKey } from "../Model";
+import { guessType, isPrimitive } from "../../utils";
 
 export type ArgOptions = {
 	nullable?: boolean;
@@ -20,7 +19,7 @@ export const Arg = (
 			propertyKey,
 		)[parameterIndex];
 
-		const schema = typeClass[SchemaKey] || Type.Any();
+		const schema = guessType(typeClass) || Type.Any();
 
 		if (!isPrimitive(typeClass)) {
 			schema.$id = `#/components/schemas/${pascalCase(name ?? typeClass.name)}`;

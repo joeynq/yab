@@ -12,10 +12,15 @@ export class Paging {
 	})
 	size = 20;
 
+	@Integer({ readOnly: true, description: "Number of objects to skip." })
 	get offset() {
 		return this.page ? this.page * this.limit : 0;
 	}
 
+	@Integer({
+		readOnly: true,
+		description: "Maximum number of objects to return.",
+	})
 	get limit() {
 		return this.size;
 	}

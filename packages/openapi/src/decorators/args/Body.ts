@@ -1,7 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import type { BodyOptions, RequestBody } from "@vermi/router";
-import { isPrimitive } from "../../utils";
-import { SchemaKey } from "../Model";
+import { guessType, isPrimitive } from "../../utils";
 
 export const Body = ({
 	nullable = false,
@@ -14,7 +13,7 @@ export const Body = ({
 			propertyKey,
 		)[parameterIndex];
 
-		const schema = typeClass[SchemaKey] || Type.Any();
+		const schema = guessType(typeClass) || Type.Any();
 
 		if (isPrimitive(typeClass)) {
 			schema.$id = `#/components/schemas/${typeClass.name}`;

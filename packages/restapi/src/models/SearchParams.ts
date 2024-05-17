@@ -1,9 +1,9 @@
 import { Model, Prop } from "@vermi/openapi";
-import type { Paging } from "./Paging";
-import type { Sort } from "./Sort";
+import { Paging } from "./Paging";
+import { Sort } from "./Sort";
 
 // @ts-expect-error
-@Model()
+@Model(undefined, { abstract: true })
 export abstract class SearchParams<T> {
 	abstract filter?: T;
 

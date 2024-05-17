@@ -6,6 +6,7 @@ import {
 	useDecorators,
 } from "@vermi/core";
 import {
+	BadRequest,
 	Before,
 	Middleware,
 	Unauthorized,
@@ -31,7 +32,7 @@ class AuthorizedMiddleware {
 	}
 }
 
-export const Authorized = (scopes: string[] = []) => {
+export const Authorized = (scheme: string, scopes: string[] = []) => {
 	return useDecorators(Use(AuthorizedMiddleware), (target, propertyKey) => {
 		const store = routeStore.apply((target as any).constructor);
 		const path = store.findPath((target as any).constructor, propertyKey);
@@ -42,7 +43,30 @@ export const Authorized = (scopes: string[] = []) => {
 			if (!current.security) {
 				current.security = new Map();
 			}
-			current.security.set("bearerAuth", scopes);
+			current.security.set(scheme, scopes);
+
+			current.responses?.set(401, {
+				content: new Map([
+					[
+						"application/json",
+						{
+							schema: new Unauthorized("").toSchema(),
+						},
+					],
+				]),
+			});
+
+			current.responses?.set(403, {
+				content: new Map([
+					[
+						"application/json",
+						{
+							schema: new BadRequest("").toSchema(),
+						},
+					],
+				]),
+			});
+
 			return current;
 		});
 	});

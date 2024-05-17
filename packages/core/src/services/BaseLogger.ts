@@ -50,7 +50,6 @@ export abstract class BaseLogger<Logger extends AbstractLogger>
 	}
 
 	#formatMessage(arg: any, ...args: any[]): any[] {
-		// if first arg is string, then it's a message, second arg is interpolation context
 		if (
 			typeof arg === "string" &&
 			args.length > 0 &&
@@ -59,7 +58,6 @@ export abstract class BaseLogger<Logger extends AbstractLogger>
 			const message = format(arg, args[0]);
 			return [message, ...args.slice(1)];
 		}
-		// if first arg is object, then it's a log object, last rule applies to second arg
 		if (
 			typeof arg === "object" &&
 			args.length > 0 &&

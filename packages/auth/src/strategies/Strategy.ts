@@ -1,6 +1,9 @@
 import { type RequestContext, asValue } from "@vermi/core";
+import type { SecurityScheme } from "../interfaces";
 
 export abstract class Strategy<S> {
+	abstract readonly securityScheme: SecurityScheme;
+
 	abstract readonly tokenType: string;
 
 	init?: () => Promise<void>;

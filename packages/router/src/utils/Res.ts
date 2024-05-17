@@ -22,7 +22,15 @@ const response = (
 			headerInit.set(key, value);
 		}
 	}
-	return new Response(data ? JSON.stringify(data) : null, {
+
+	const returnData: string | null =
+		typeof data === "string"
+			? data
+			: data === null
+				? null
+				: JSON.stringify(data);
+
+	return new Response(returnData, {
 		status,
 		headers: headerInit,
 	});
@@ -30,6 +38,11 @@ const response = (
 
 export const Res = {
 	response,
+	html(data: string) {
+		return response(HttpSuccessCodes.Ok, data, {
+			"Content-Type": "text/html",
+		});
+	},
 	file(data: BunFile) {
 		return response(HttpSuccessCodes.Ok, data, {
 			"Content-Type": "application/octet-stream",
