@@ -11,6 +11,7 @@
 		"@types/bun": "latest",
 		"@types/react": "^18.3.2",
 		"@types/react-dom": "^18.3.0",
+		"@vermi/cache": "link:@vermi/cache",
 		"@vermi/core": "link:@vermi/core",
 		"@vermi/router": "link:@vermi/router",
 		"@vermi/utils": "link:@vermi/utils"

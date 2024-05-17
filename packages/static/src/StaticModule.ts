@@ -82,7 +82,7 @@ export class StaticModule extends VermiModule<
 				: Bun.resolveSync(`${assetsDir}${prefix}`, process.cwd());
 			return Bun.file(filePath);
 		} catch (error) {
-			this.logger.error(error as Error);
+			this.logger.error(error as Error, "File not found: {path}", url);
 			throw new HttpException(404, "Not Found", error as Error);
 		}
 	}
