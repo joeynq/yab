@@ -1,4 +1,5 @@
 import type { TSchema } from "@sinclair/typebox";
+import { UseCache } from "@vermi/cache";
 import {
 	AppHook,
 	type Configuration,
@@ -63,8 +64,8 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 		this.#builder.rootDoc = specs;
 	}
 
-	@AppHook("app:init")
-	async init() {
+	@UseCache()
+	protected async buildSpecs() {
 		const routes = getRoutes();
 
 		const schemas = getStoreData<TSchema[]>(ModelStoreKey);
@@ -116,9 +117,17 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 			this.#builder.addPath(route, { [method]: item });
 		}
 
-		this.logger.info(
-			`OpenAPI page running at ${this.config.path || "/openapi"}`,
-		);
+		return this.#builder.getSpecAsJson();
+	}
+
+	@AppHook("app:init")
+	async init() {
+		this.logger.info("OpenAPI Module initialized on {path}", {
+			path: this.config.path || "/openapi",
+		});
+		this.logger.info("OpenAPI Specs: {fileName}", {
+			fileName: this.config.fileName || "openapi.json",
+		});
 	}
 
 	@AppHook("app:request")
@@ -134,7 +143,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 		const url = new URL(context.store.request.url);
 
 		if (url.pathname === fileUrl) {
-			const specs = this.#builder.getSpecAsJson();
+			const specs = await this.buildSpecs();
 			return new Response(specs, {
 				headers: {
 					"Content-Type": "application/json",
