@@ -85,6 +85,7 @@ export class Vermi {
 				lifetime: Lifetime.SCOPED,
 			},
 			configuration: asClass(Configuration),
+			contextService: asClass(ContextService),
 			hooks: asValue(this.#hooks),
 		});
 	}

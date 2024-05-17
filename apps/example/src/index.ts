@@ -2,12 +2,13 @@ import { BearerAuth, auth } from "@vermi/auth";
 import { cache } from "@vermi/cache";
 import { SqliteAdapter } from "@vermi/cache/sqlite";
 import { type LoggerAdapter, Vermi } from "@vermi/core";
+import { initEvent } from "@vermi/event";
 import { PinoLogger } from "@vermi/logger/pino";
 import { openapi } from "@vermi/openapi";
 import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
 import { UserController } from "./controllers";
-
+import { UserEvent } from "./events/UserEvent";
 /*
 
 new Vermi()
@@ -28,6 +29,7 @@ new Vermi({ log: { level: "info" } })
 	// SqliteAdapter recommended for development.
 	// RedisAdapter is recommended for production.
 	.use(cache({}, SqliteAdapter))
+	.use(initEvent([UserEvent]))
 	.use(
 		auth(BearerAuth, {
 			config: {
@@ -38,7 +40,7 @@ new Vermi({ log: { level: "info" } })
 		}),
 	)
 	.use(statics("/public", { assetsDir: "./public" }))
-	.use(statics("/favicon.ico", { assetsDir: "./public", direct: true }))
+	.use(statics("/favicon.ico", { assetsDir: "./public" }))
 	// .use(rateLimit("redis", {}))
 	.use(
 		router("/api", [UserController], {

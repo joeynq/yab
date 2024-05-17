@@ -1,5 +1,6 @@
 import { Authorized } from "@vermi/auth";
 import { Logger, type LoggerAdapter } from "@vermi/core";
+import { Emit } from "@vermi/event";
 import { Query } from "@vermi/openapi";
 import {
 	Create,
@@ -23,6 +24,7 @@ export class UserController {
 	}
 
 	// @Authorized("BearerAuth")
+	@Emit("test")
 	@Read([UserDTO])
 	getUsers(@Query({ nullable: true }) search: UserSearch) {
 		return Result.multiple([search]);
