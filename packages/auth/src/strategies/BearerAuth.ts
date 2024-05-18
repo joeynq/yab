@@ -15,6 +15,8 @@ export class BearerAuth extends Strategy<BearerTokenAuthorize> {
 		type: "http",
 		bearerFormat: "JWT",
 		scheme: "bearer",
+		description:
+			"A bearer token in the format of a JWS and conformato to the specifications included in RFC8725.",
 	};
 
 	tokenType = "Bearer";

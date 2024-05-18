@@ -1,0 +1,621 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "Vermi API",
+		"version": "1.0.0",
+		"license": { "name": "MIT", "url": "https://opensource.org/licenses/MIT" }
+	},
+	"components": {
+		"securitySchemes": {
+			"BearerAuth": {
+				"type": "http",
+				"bearerFormat": "JWT",
+				"scheme": "bearer",
+				"description": "A bearer token in the format of a JWS and conformato to the specifications included in RFC8725."
+			}
+		},
+		"headers": {
+			"X-RateLimit-Limit": {
+				"description": "The maximum number of requests that the consumer is permitted to make in a given period.",
+				"schema": { "type": "integer", "format": "int32" }
+			},
+			"X-RateLimit-Remaining": {
+				"description": "The number of requests remaining in the current rate limit window.",
+				"schema": { "type": "integer", "format": "int32" }
+			},
+			"X-RateLimit-Reset": {
+				"description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+				"schema": { "type": "integer", "format": "int32" }
+			},
+			"Access-Control-Allow-Origin": {
+				"description": "Indicates whether the response can be shared with requesting code from the given origin.",
+				"schema": { "type": "string" }
+			}
+		},
+		"schemas": {
+			"Paging": {
+				"type": "object",
+				"properties": {
+					"page": {
+						"format": "int32",
+						"type": "integer",
+						"minimum": 0,
+						"default": 0,
+						"description": "Page number."
+					},
+					"size": {
+						"format": "int32",
+						"type": "integer",
+						"minimum": 1,
+						"default": 20,
+						"description": "Number of objects per page."
+					},
+					"offset": {
+						"format": "int32",
+						"type": "integer",
+						"readOnly": true,
+						"description": "Number of objects to skip."
+					},
+					"limit": {
+						"format": "int32",
+						"type": "integer",
+						"readOnly": true,
+						"description": "Maximum number of objects to return."
+					}
+				},
+				"required": ["page", "size", "offset", "limit"]
+			},
+			"Sort": {
+				"type": "object",
+				"properties": {
+					"prop": { "type": "string" },
+					"direction": {
+						"enum": ["asc", "desc"],
+						"default": "asc",
+						"type": "string"
+					}
+				},
+				"required": ["prop", "direction"]
+			},
+			"User": {
+				"type": "object",
+				"properties": {
+					"id": { "format": "int32", "type": "integer" },
+					"firstName": { "type": "string" },
+					"lastName": { "type": "string" },
+					"email": { "type": "string" }
+				},
+				"required": ["id", "firstName", "lastName", "email"],
+				"description": "Filter options"
+			},
+			"SingleOfUser": {
+				"type": "object",
+				"properties": {
+					"data": {
+						"type": "object",
+						"properties": {
+							"id": { "format": "int32", "type": "integer" },
+							"firstName": { "type": "string" },
+							"lastName": { "type": "string" },
+							"email": { "type": "string" }
+						},
+						"required": ["id", "firstName", "lastName", "email"],
+						"description": "Filter options"
+					}
+				},
+				"required": ["data"]
+			},
+			"PaginationOfUser": {
+				"type": "object",
+				"properties": {
+					"data": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": { "format": "int32", "type": "integer" },
+								"firstName": { "type": "string" },
+								"lastName": { "type": "string" },
+								"email": { "type": "string" }
+							},
+							"required": ["id", "firstName", "lastName", "email"],
+							"description": "Filter options"
+						}
+					},
+					"total": { "format": "int32", "type": "integer", "minimum": 0 },
+					"page": { "format": "int32", "type": "integer", "minimum": 1 },
+					"limit": { "format": "int32", "type": "integer", "minimum": 1 }
+				},
+				"required": ["data", "total", "page", "limit"]
+			},
+			"BadRequest": {
+				"type": "object",
+				"properties": {
+					"status": { "default": 400, "type": "number" },
+					"message": { "default": "", "type": "string" },
+					"errors": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"message": { "type": "string" },
+								"path": { "type": "string" },
+								"type": {
+									"enum": [
+										0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+										17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+										32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
+										47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
+										62, 63
+									],
+									"type": "number"
+								},
+								"value": {}
+							},
+							"required": ["message", "path", "type", "value"]
+						}
+					}
+				},
+				"required": ["status", "message", "errors"]
+			},
+			"Conflict": {
+				"type": "object",
+				"properties": {
+					"status": { "default": 409, "type": "number" },
+					"message": { "default": "", "type": "string" }
+				},
+				"required": ["status", "message"]
+			},
+			"NotFound": {
+				"type": "object",
+				"properties": {
+					"status": { "default": 404, "type": "number" },
+					"message": { "default": "", "type": "string" }
+				},
+				"required": ["status", "message"]
+			},
+			"Unauthorized": {
+				"type": "object",
+				"properties": {
+					"status": { "default": 401, "type": "number" },
+					"message": { "default": "", "type": "string" }
+				},
+				"required": ["status", "message"]
+			}
+		}
+	},
+	"paths": {
+		"/api/users/{user_id}": {
+			"get": {
+				"operationId": "get_user",
+				"responses": {
+					"200": {
+						"description": "HTTP 200 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/SingleOfUser" }
+							}
+						}
+					},
+					"400": {
+						"description": "HTTP 400 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/BadRequest" }
+							}
+						}
+					},
+					"401": {
+						"description": "HTTP 401 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/Unauthorized" }
+							}
+						}
+					},
+					"403": {
+						"description": "HTTP 403 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/BadRequest" }
+							}
+						}
+					},
+					"404": {
+						"description": "HTTP 404 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/NotFound" }
+							}
+						}
+					}
+				},
+				"summary": "GET /api/users/{user_id}",
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string" }
+					}
+				],
+				"security": [{ "BearerAuth": [] }]
+			},
+			"put": {
+				"operationId": "replace_user",
+				"responses": {
+					"200": {
+						"description": "HTTP 200 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/SingleOfUser" }
+							}
+						}
+					},
+					"400": {
+						"description": "HTTP 400 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/BadRequest" }
+							}
+						}
+					},
+					"404": {
+						"description": "HTTP 404 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/NotFound" }
+							}
+						}
+					}
+				},
+				"summary": "PUT /api/users/{user_id}",
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string" }
+					}
+				]
+			},
+			"delete": {
+				"operationId": "delete_user",
+				"responses": {
+					"204": { "description": "HTTP 204 Response" },
+					"400": {
+						"description": "HTTP 400 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/BadRequest" }
+							}
+						}
+					},
+					"404": {
+						"description": "HTTP 404 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/NotFound" }
+							}
+						}
+					}
+				},
+				"summary": "DELETE /api/users/{user_id}",
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string" }
+					}
+				]
+			}
+		},
+		"/api/users": {
+			"get": {
+				"operationId": "list_users",
+				"responses": {
+					"200": {
+						"description": "HTTP 200 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/PaginationOfUser" }
+							}
+						}
+					},
+					"400": {
+						"description": "HTTP 400 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/BadRequest" }
+							}
+						}
+					},
+					"404": {
+						"description": "HTTP 404 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/NotFound" }
+							}
+						}
+					}
+				},
+				"summary": "GET /api/users",
+				"parameters": [
+					{
+						"name": "paging",
+						"in": "query",
+						"schema": { "$ref": "#/components/schemas/Paging" }
+					},
+					{
+						"name": "sort",
+						"in": "query",
+						"schema": { "$ref": "#/components/schemas/Sort" }
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"schema": { "$ref": "#/components/schemas/User" }
+					}
+				]
+			},
+			"post": {
+				"operationId": "create_userdto",
+				"responses": {
+					"201": {
+						"description": "HTTP 201 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/SingleOfUser" }
+							}
+						}
+					},
+					"400": {
+						"description": "HTTP 400 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/BadRequest" }
+							}
+						}
+					},
+					"409": {
+						"description": "HTTP 409 Response",
+						"headers": {
+							"X-RateLimit-Limit": {
+								"$ref": "#/components/headers/X-RateLimit-Limit"
+							},
+							"X-RateLimit-Remaining": {
+								"$ref": "#/components/headers/X-RateLimit-Remaining"
+							},
+							"X-RateLimit-Reset": {
+								"$ref": "#/components/headers/X-RateLimit-Reset"
+							},
+							"Access-Control-Allow-Origin": {
+								"$ref": "#/components/headers/Access-Control-Allow-Origin"
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/Conflict" }
+							}
+						}
+					}
+				},
+				"summary": "POST /api/users",
+				"parameters": []
+			}
+		}
+	},
+	"security": [{ "BearerAuth": [] }],
+	"servers": [{ "url": "http://localhost:3000", "x-internal": true }]
+}

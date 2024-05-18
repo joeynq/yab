@@ -29,6 +29,8 @@ export interface OpenAPIConfig {
 	specs?: Partial<OpenAPIObject>;
 	override?: boolean;
 	title?: string;
+	useRateLimit?: boolean;
+	useCors?: boolean;
 }
 
 const defaultSpecs: OpenAPIObject = {
@@ -79,6 +81,13 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 			this.#service.addSecuritySchemes(schemes);
 		}
 
+		if (this.config.useRateLimit) {
+			this.#service.enableRateLimit();
+		}
+		if (this.config.useCors) {
+			this.#service.enableCors();
+		}
+
 		this.logger.info("OpenAPI Module initialized on {path}", {
 			path: this.config.path || "/openapi",
 		});
@@ -100,10 +109,12 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 		const url = new URL(context.store.request.url);
 
 		if (url.pathname === fileUrl) {
-			const specs = await this.#service.buildSpecs(
-				context.store.serverUrl,
-				this.config.title || "Vermi API",
-			);
+			const specs = await this.#service
+				.buildSpecs(context.store.serverUrl, this.config.title || "Vermi API")
+				.catch((err) => {
+					this.logger.error(err, "Error building OpenAPI specs");
+					return Res.error(err.message);
+				});
 
 			return Res.ok(specs);
 		}

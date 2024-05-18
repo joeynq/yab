@@ -17,9 +17,15 @@ import {
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
 import { removeUnused } from "../utils/removeUnused";
+import { corsSchema, rateLimitSchemas } from "./builtin";
 
 export class OpenAPIService {
 	#builder: OpenApiBuilder;
+
+	#features: { cors?: boolean; rateLimit?: boolean } = {
+		cors: false,
+		rateLimit: false,
+	};
 
 	constructor(rootDoc: OpenAPIObject) {
 		this.#builder = new OpenApiBuilder();
@@ -56,15 +62,45 @@ export class OpenAPIService {
 			item.security = [Object.fromEntries(operation.security)];
 		}
 
+		const options: utils.ResponseOptions = {};
+		if (this.#features.rateLimit) {
+			if (!options.headers) options.headers = {};
+			options.headers["X-RateLimit-Limit"] = {
+				$ref: "#/components/headers/X-RateLimit-Limit",
+			};
+			options.headers["X-RateLimit-Remaining"] = {
+				$ref: "#/components/headers/X-RateLimit-Remaining",
+			};
+			options.headers["X-RateLimit-Reset"] = {
+				$ref: "#/components/headers/X-RateLimit-Reset",
+			};
+		}
+		if (this.#features.cors) {
+			if (!options.headers) options.headers = {};
+			options.headers["Access-Control-Allow-Origin"] = {
+				$ref: "#/components/headers/Access-Control-Allow-Origin",
+			};
+		}
+
 		if (operation.responses) {
 			item.responses = {
 				...item.responses,
-				...utils.buildResponses(operation.responses),
+				...utils.buildResponses(operation.responses, options),
 			};
 		}
 
 		this.#builder.addPath(route, { [method]: item });
 	};
+
+	#addSchema(schema: TSchema) {}
+
+	enableRateLimit() {
+		this.#features.rateLimit = true;
+	}
+
+	enableCors() {
+		this.#features.cors = true;
+	}
 
 	addSecuritySchemes(scheme: Record<string, SecuritySchemeObject>) {
 		for (const [key, value] of Object.entries(scheme)) {
@@ -81,10 +117,22 @@ export class OpenAPIService {
 		const url = serverUrl.replace(/\/$/, "");
 
 		if (!this.#builder.rootDoc.servers?.some((server) => server.url === url)) {
-			this.#builder.addServer({ url });
+			this.#builder.addServer({ url, "x-internal": true });
 		}
 
 		this.#builder.addTitle(title);
+
+		if (this.#features.rateLimit) {
+			this.#builder.addHeader("X-RateLimit-Limit", rateLimitSchemas.limit);
+			this.#builder.addHeader(
+				"X-RateLimit-Remaining",
+				rateLimitSchemas.remaining,
+			);
+			this.#builder.addHeader("X-RateLimit-Reset", rateLimitSchemas.reset);
+		}
+		if (this.#features.cors) {
+			this.#builder.addHeader("Access-Control-Allow-Origin", corsSchema);
+		}
 
 		for (const schema of schemas) {
 			if (schema.type === "null") {
@@ -92,9 +140,8 @@ export class OpenAPIService {
 			}
 			if (schema.$id) {
 				const name = schema.$id.split("/").pop();
-				// biome-ignore lint/performance/noDelete: <explanation>
-				delete schema.$id;
-				this.#builder.addSchema(String(name), schema);
+				const { $id, ...rest } = schema;
+				this.#builder.addSchema(String(name), rest);
 			}
 		}
 
@@ -102,9 +149,8 @@ export class OpenAPIService {
 			const schema = new Exception("").toSchema();
 			if (schema.$id) {
 				const name = schema.$id.split("/").pop() || Exception.name;
-				// biome-ignore lint/performance/noDelete: <explanation>
-				delete schema.$id;
-				this.#builder.addSchema(name, schema);
+				const { $id, ...rest } = schema;
+				this.#builder.addSchema(name, rest);
 			}
 		}
 

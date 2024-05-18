@@ -1,11 +1,17 @@
 import { Type } from "@sinclair/typebox";
 import type { HttpMethod } from "../enums";
-import type { Parameter, RequestBody, SlashedPath } from "../interfaces";
+import type {
+	Operation,
+	Parameter,
+	RequestBody,
+	SlashedPath,
+} from "../interfaces";
 import { routeStore } from "../stores";
 
 export const Action = (
 	method: HttpMethod,
 	path: SlashedPath,
+	options?: Pick<Operation, "operationId">,
 ): MethodDecorator => {
 	return (target: any, propertyKey: string | symbol) => {
 		const parameters =
@@ -36,6 +42,7 @@ export const Action = (
 				propertyKey.toString(),
 				{
 					args: parameters,
+					operationId: options?.operationId,
 				},
 			);
 	};

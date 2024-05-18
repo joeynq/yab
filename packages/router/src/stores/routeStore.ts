@@ -14,7 +14,7 @@ export type RouterAPI = {
 		method: HttpMethod,
 		path: SlashedPath,
 		propertyKey: string,
-		routeMetadata?: Pick<Operation, "args" | "responses">,
+		routeMetadata?: Pick<Operation, "args" | "responses" | "operationId">,
 	): Routes["paths"];
 	updateRoute(path: FullPath, updater: (current: Operation) => Operation): void;
 	updatePathPrefix(prefix: { [key: string]: SlashedPath }):
@@ -34,7 +34,7 @@ export const routeStore = createStore<Routes["paths"], RouterAPI>(
 				if (opId === key) return path;
 			}
 		},
-		addRoute(method, path, propertyKey, { args } = {}) {
+		addRoute(method, path, propertyKey, { args, operationId } = {}) {
 			const current = get() || new Map<FullPath, Operation>();
 
 			const full = `${method}${path}` as FullPath;
@@ -45,6 +45,7 @@ export const routeStore = createStore<Routes["paths"], RouterAPI>(
 					action: propertyKey,
 				},
 				args,
+				operationId,
 			});
 
 			set(current);

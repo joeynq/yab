@@ -6,10 +6,10 @@ export const PluralName = Symbol("PluralName");
 
 export function Resource(name?: string) {
 	return (target: any) => {
-		const resourceName = name || target.name.toLowerCase();
+		const resourceName = name || target.name;
 
 		target.prototype[SingularName] = resourceName;
 		target.prototype[PluralName] = pluralize(resourceName);
-		Model({}, resourceName)(target);
+		Model({}, { name: resourceName })(target);
 	};
 }
