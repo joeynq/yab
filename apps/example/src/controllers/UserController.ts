@@ -22,21 +22,25 @@ export class UserController {
 		return Result.single(new UserDTO());
 	}
 
+	@Authorized("BearerAuth")
 	@Read([UserDTO])
 	getUsers(@Query() search: UserSearch) {
 		return Result.multiple([new UserDTO()]);
 	}
 
+	@Authorized("BearerAuth")
 	@Create(UserDTO)
 	createUser() {
 		return Result.single(new UserDTO());
 	}
 
+	@Authorized("BearerAuth")
 	@Update(UserDTO)
 	updateUser() {
 		return Result.single(new UserDTO());
 	}
 
+	@Authorized("BearerAuth")
 	@Delete(UserDTO)
 	deleteUser() {
 		return Result.empty();

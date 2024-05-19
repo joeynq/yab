@@ -79,16 +79,7 @@ export class RateLimitModule<
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new TooManyRequests(
-				"Rate limit exceeded",
-				{
-					limit: this.config.options.points,
-					reset: Math.ceil(Date.now() / 1000) + this.#rateLimiter.blockDuration,
-					remaining: 0,
-					retryAfter: this.#rateLimiter.blockDuration,
-				},
-				error as Error,
-			);
+			throw new TooManyRequests("Rate limit exceeded", error as Error);
 		}
 	}
 

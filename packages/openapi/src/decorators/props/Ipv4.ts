@@ -1,6 +1,6 @@
-import { type TString, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { StringOptions } from "@sinclair/typebox";
+import { String } from "./String";
 
-export function Ipv4(options?: TString & { nullable?: boolean }) {
-	return Prop(() => Type.String({ format: "ipv4" }), options);
+export function IpV4(options?: StringOptions & { nullable?: boolean }) {
+	return String({ ...options, format: "ipv4", maxLength: 15, minLength: 7 });
 }

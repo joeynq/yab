@@ -5,6 +5,8 @@ export const rateLimitSchemas = {
 		schema: {
 			type: "integer",
 			format: "int32",
+			minimum: 1,
+			maximum: 10000,
 		},
 	},
 	remaining: {
@@ -13,6 +15,8 @@ export const rateLimitSchemas = {
 		schema: {
 			type: "integer",
 			format: "int32",
+			minimum: 0,
+			maximum: 10000,
 		},
 	},
 	reset: {
@@ -21,6 +25,8 @@ export const rateLimitSchemas = {
 		schema: {
 			type: "integer",
 			format: "int32",
+			minimum: 0,
+			maximum: 9999999999999,
 		},
 	},
 	retryAfter: {
@@ -29,6 +35,8 @@ export const rateLimitSchemas = {
 		schema: {
 			type: "integer",
 			format: "int32",
+			minimum: 0,
+			maximum: 9999999999999,
 		},
 	},
 } as const;
@@ -38,5 +46,6 @@ export const corsSchema = {
 		"Indicates whether the response can be shared with requesting code from the given origin.",
 	schema: {
 		type: "string",
+		maxLength: 255,
 	},
 } as const;

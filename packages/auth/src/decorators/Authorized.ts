@@ -5,10 +5,11 @@ import {
 	asValue,
 	useDecorators,
 } from "@vermi/core";
+import { Returns } from "@vermi/openapi";
 import {
-	BadRequest,
 	Before,
 	Middleware,
+	RouterException,
 	Unauthorized,
 	Use,
 	routeStore,
@@ -33,41 +34,23 @@ class AuthorizedMiddleware {
 }
 
 export const Authorized = (scheme: string, scopes: string[] = []) => {
-	return useDecorators(Use(AuthorizedMiddleware), (target, propertyKey) => {
-		const store = routeStore.apply((target as any).constructor);
-		const path = store.findPath((target as any).constructor, propertyKey);
+	return useDecorators(
+		Use(AuthorizedMiddleware),
+		Returns(401, RouterException.schema),
+		(target, propertyKey) => {
+			const store = routeStore.apply((target as any).constructor);
+			const path = store.findPath((target as any).constructor, propertyKey);
 
-		if (!path) return;
+			if (!path) return;
 
-		store.updateRoute(path, (current) => {
-			if (!current.security) {
-				current.security = new Map();
-			}
-			current.security.set(scheme, scopes);
+			store.updateRoute(path, (current) => {
+				if (!current.security) {
+					current.security = new Map();
+				}
+				current.security.set(scheme, scopes);
 
-			current.responses?.set(401, {
-				content: new Map([
-					[
-						"application/json",
-						{
-							schema: new Unauthorized("").toSchema(),
-						},
-					],
-				]),
+				return current;
 			});
-
-			current.responses?.set(403, {
-				content: new Map([
-					[
-						"application/json",
-						{
-							schema: new BadRequest("").toSchema(),
-						},
-					],
-				]),
-			});
-
-			return current;
-		});
-	});
+		},
+	);
 };

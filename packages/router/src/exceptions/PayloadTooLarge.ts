@@ -1,10 +1,10 @@
 import { HttpErrorCodes } from "@vermi/core";
 import { RouterException } from "./RouterException";
 
-export class Conflict extends RouterException {
-	code = "router:conflict";
+export class PayloadTooLarge extends RouterException {
+	code = "router:payload_too_large";
 
 	constructor(message: string, cause?: Error) {
-		super(HttpErrorCodes.Conflict, message, cause);
+		super(HttpErrorCodes.PayloadTooLarge, message, cause);
 	}
 }

@@ -2,12 +2,10 @@ import { type TSchema } from "@sinclair/typebox";
 import { UseCache } from "@vermi/cache";
 import { getStoreData } from "@vermi/core";
 import {
-	InternalServerError,
 	type Operation,
 	type Parameter,
 	type RequestBody,
-	TooManyRequests,
-	exceptions,
+	RouterException,
 	getRoutes,
 } from "@vermi/router";
 import {
@@ -18,7 +16,6 @@ import {
 } from "openapi3-ts/oas31";
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
-import { createExceptionResponse } from "../utils/createResponse";
 import { referTo } from "../utils/referTo";
 import { removeUnused } from "../utils/removeUnused";
 import { corsSchema, rateLimitSchemas } from "./builtin";
@@ -88,19 +85,12 @@ export class OpenAPIService {
 					"Retry-After",
 				]),
 			};
-			operation.responses?.set(429, createExceptionResponse(TooManyRequests));
 		}
 		if (this.#features.cors) {
 			options.headers = {
 				...options.headers,
 				...referTo("headers", ["Access-Control-Allow-Origin"]),
 			};
-		}
-		if (this.#features.default500) {
-			operation.responses?.set(
-				500,
-				createExceptionResponse(InternalServerError),
-			);
 		}
 
 		if (operation.responses) {
@@ -167,14 +157,11 @@ export class OpenAPIService {
 			}
 		}
 
-		for (const Exception of exceptions) {
-			// @ts-expect-error
-			const schema = new Exception("", {}).toSchema();
-			if (schema.$id) {
-				const name = schema.$id.split("/").pop() || Exception.name;
-				const { $id, ...rest } = schema;
-				this.#builder.addSchema(name, rest);
-			}
+		const schema = RouterException.schema;
+		if (schema.$id) {
+			const name = schema.$id.split("/").pop() || "Exception";
+			const { $id, ...rest } = schema;
+			this.#builder.addSchema(name, rest);
 		}
 
 		for (const [path, operation] of routes) {

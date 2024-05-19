@@ -1,6 +1,6 @@
-import { type TString, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { StringOptions } from "@sinclair/typebox";
+import { String } from "./String";
 
-export function Uuid(options?: TString & { nullable?: boolean }) {
-	return Prop(() => Type.String({ format: "uuid" }), options);
+export function Uuid(options?: StringOptions) {
+	return String({ ...options, format: "uuid", minLength: 36, maxLength: 36 });
 }

@@ -1,8 +1,13 @@
-import { type TString, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { StringOptions } from "@sinclair/typebox";
+import { limitSettings } from "../../settings/values";
+import { String } from "./String";
 
-export function File(options?: TString & { nullable?: boolean }) {
-	return Prop(() => Type.String({ format: "binary" }), options);
+export function File(options?: StringOptions & { nullable?: boolean }) {
+	return String({
+		...options,
+		format: "binary",
+		maxLength: limitSettings.maxFileLength,
+	});
 }
 
 export { File as Binary };

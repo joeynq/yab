@@ -29,7 +29,7 @@ export const Action = (
 					name,
 					in: "path",
 					required: true,
-					schema: Type.String(),
+					schema: Type.String({ maxLength: 32 }),
 				});
 			}
 		}

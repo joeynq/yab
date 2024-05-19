@@ -1,8 +1,7 @@
-import { type TInteger, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import { Integer, type IntegerOptions } from "@sinclair/typebox";
 
-export function BigInt(options?: TInteger & { nullable?: boolean }) {
-	return Prop(() => Type.Integer({ format: "int64" }), options);
+export function BigInt(options?: IntegerOptions & { nullable: boolean }) {
+	return Integer({ ...options, format: "int64" });
 }
 
 export { BigInt as Long };

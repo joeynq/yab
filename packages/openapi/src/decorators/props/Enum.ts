@@ -1,13 +1,24 @@
-import { type SchemaOptions, type TEnumKey, Type } from "@sinclair/typebox";
+import {
+	type NumberOptions,
+	type StringOptions,
+	type TEnumKey,
+	Type,
+} from "@sinclair/typebox";
 import { getEnumValues } from "@vermi/router";
 import { propsStore } from "../../stores";
 
 export function NumberEnum<T extends Record<TEnumKey, number>>(
 	item: T,
-	options?: SchemaOptions & { nullable?: boolean },
+	options?: NumberOptions & { nullable?: boolean },
 ) {
 	return (target: any, propertyKey: string) => {
-		let schema = getEnumValues("number", item, options);
+		const maximum = Math.max(...Object.values(item));
+		const minimum = Math.min(...Object.values(item));
+		let schema = getEnumValues("number", item, {
+			...options,
+			maximum,
+			minimum,
+		});
 
 		if (options?.nullable) {
 			schema = Type.Optional(schema);
@@ -19,10 +30,16 @@ export function NumberEnum<T extends Record<TEnumKey, number>>(
 
 export function StringEnum<T extends Record<TEnumKey, string>>(
 	item: T,
-	options?: SchemaOptions & { nullable?: boolean },
+	options?: StringOptions & { nullable?: boolean },
 ) {
 	return (target: any, propertyKey: string) => {
-		let schema = getEnumValues("string", item, options);
+		const maxLength = Math.max(...Object.values(item).map((v) => v.length));
+		const minLength = Math.min(...Object.values(item).map((v) => v.length));
+		let schema = getEnumValues("string", item, {
+			...options,
+			maxLength,
+			minLength,
+		});
 
 		if (options?.nullable) {
 			schema = Type.Optional(schema);

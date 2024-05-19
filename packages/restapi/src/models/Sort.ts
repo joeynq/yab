@@ -7,7 +7,7 @@ export enum SortDirection {
 
 @Model()
 export class Sort {
-	@String()
+	@String({ maxLength: 255 })
 	prop!: string;
 
 	@StringEnum(SortDirection, { default: SortDirection.Ascending })

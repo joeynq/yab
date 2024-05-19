@@ -1,5 +1,11 @@
-import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
+import {
+	type ArrayOptions,
+	type ObjectOptions,
+	type TSchema,
+	Type,
+} from "@sinclair/typebox";
 import { useDecorators } from "@vermi/core";
+import { limitSettings } from "../settings/values";
 import { type PropsStoreDto, propsStore } from "../stores";
 import { Model, type ModelOptions } from "./Model";
 import { Prop } from "./props";
@@ -18,14 +24,23 @@ export const Generic = (
 				nullable?: boolean;
 			}> = Reflect.getMetadata("generic:keys", target) || [];
 
-			const genericBuilder = <T extends TSchema>(T: T, name: string) => {
+			const genericBuilder = <T extends TSchema>(
+				T: T,
+				name: string,
+				arrayOptions?: ArrayOptions,
+			) => {
 				const propsWithGenerics = Object.entries(props).reduce(
 					(acc, [key, value]) => {
 						const genericKey = genericKeys.find((k) => k.key === key);
 
 						if (genericKey) {
 							const { isArray, nullable } = genericKey;
-							const generic = isArray ? Type.Array(T) : T;
+							const generic = isArray
+								? Type.Array(T, {
+										maxItems: limitSettings.arrayMaxItems,
+										...arrayOptions,
+									})
+								: T;
 
 							acc[key] = nullable ? Type.Optional(generic) : generic;
 						} else {

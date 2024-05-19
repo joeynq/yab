@@ -1,8 +1,12 @@
-import { type TString, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { StringOptions } from "@sinclair/typebox";
+import { String } from "./String";
 
 export function RelativeJsonPointer(
-	options?: TString & { nullable?: boolean },
+	options?: StringOptions & { nullable?: boolean },
 ) {
-	return Prop(() => Type.String({ format: "relative-json-pointer" }), options);
+	return String({
+		...options,
+		format: "relative-json-pointer",
+		maxLength: 256,
+	});
 }

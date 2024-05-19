@@ -8,10 +8,10 @@ export interface IPagination<Resource> extends IMany<Resource> {
 
 @Generic()
 export class Pagination<T> extends Many<T> implements IPagination<T> {
-	@Integer({ minimum: 1 })
+	@Integer({ minimum: 1, maximum: 9999 })
 	page!: number;
 
-	@Integer({ minimum: 1 })
+	@Integer({ minimum: 1, maximum: 100 })
 	limit!: number;
 
 	constructor(data: T[], total: number, page: number, limit: number) {

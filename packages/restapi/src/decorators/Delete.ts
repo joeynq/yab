@@ -1,7 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import { useDecorators } from "@vermi/core";
-import { Responses } from "@vermi/openapi";
-import { BadRequest, NotFound, Delete as RouterDelete } from "@vermi/router";
+import { Returns } from "@vermi/openapi";
+import { Delete as RouterDelete, RouterException } from "@vermi/router";
 import { type Class, snakeCase } from "@vermi/utils";
 import { SingularName } from "./Resource";
 
@@ -11,8 +11,7 @@ export function Delete(resource: Class<any>) {
 		RouterDelete(`/:${name.toLowerCase()}_id`, {
 			operationId: snakeCase(`delete_${name}`),
 		}),
-		Responses(204, Type.Null()),
-		Responses(400, new BadRequest("").toSchema()),
-		Responses(404, new NotFound("").toSchema()),
+		Returns(204, Type.Null()),
+		Returns(401, RouterException.schema),
 	);
 }

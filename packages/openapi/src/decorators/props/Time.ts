@@ -1,6 +1,6 @@
-import { type TString, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { StringOptions } from "@sinclair/typebox";
+import { String } from "./String";
 
-export function Time(options?: TString & { nullable?: boolean }) {
-	return Prop(() => Type.String({ format: "time" }), options);
+export function Time(options?: StringOptions & { nullable?: boolean }) {
+	return String({ ...options, format: "time", maxLength: 8, minLength: 8 });
 }

@@ -3,3 +3,19 @@ type StringValues<T> = {
 }[keyof T];
 
 export type EnumValues<T> = `${StringValues<T>}`;
+
+export function getKeyByValue<
+	TEnumKey extends string,
+	TEnumVal extends string | number,
+>(myEnum: { [key in TEnumKey]: TEnumVal }, enumValue: TEnumVal): string {
+	const keys = (Object.keys(myEnum) as TEnumKey[]).filter(
+		(x) => myEnum[x] === enumValue,
+	);
+	return keys.length > 0 ? keys[0] : "";
+}
+
+export function getEnumValues<TEnum extends Record<string, string | number>>(
+	myEnum: TEnum,
+): string[] {
+	return Object.values(myEnum).filter((s) => typeof s === "string") as string[];
+}

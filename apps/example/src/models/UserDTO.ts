@@ -1,18 +1,18 @@
-import { Integer, Model, Prop, String } from "@vermi/openapi";
+import { Email, Model, Prop, String, Uuid } from "@vermi/openapi";
 import { Resource, SearchParams } from "@vermi/restapi";
 
 @Resource("User")
 export class UserDTO {
-	@Integer()
-	id!: number;
+	@Uuid()
+	id!: string;
 
-	@String()
+	@String({ maxLength: 255 })
 	firstName!: string;
 
-	@String()
+	@String({ maxLength: 255 })
 	lastName!: string;
 
-	@String()
+	@Email()
 	email!: string;
 }
 

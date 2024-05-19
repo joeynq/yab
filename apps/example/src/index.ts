@@ -47,8 +47,6 @@ new Vermi({ log: { level: "info" } })
 			features: {
 				rateLimit: true,
 				cors: true,
-				default500: true,
-				forceAuth: true,
 			},
 		}),
 	)

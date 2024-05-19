@@ -43,12 +43,9 @@ export function Prop<T extends TSchema>(
 			return;
 		}
 
-		const nullable = Boolean(opts?.nullable);
-		if (opts) {
-			// biome-ignore lint/performance/noDelete: <explanation>
-			delete opts.nullable;
-			Object.assign(T, opts);
-		}
+		const { nullable, ...rest } = opts ?? {};
+
+		Object.assign(T, rest);
 
 		if (nullable) {
 			T = Type.Optional(T);

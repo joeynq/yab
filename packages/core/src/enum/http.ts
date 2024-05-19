@@ -63,4 +63,14 @@ export enum HttpRedirectCodes {
 	PermanentRedirect = 308,
 }
 
-export type HttpCodes = HttpErrorCodes | HttpSuccessCodes | HttpRedirectCodes;
+// cover 4XX and 5XX
+export enum RangeErrorCodes {
+	ApplicationError = "4XX",
+	ServerError = "5XX",
+}
+
+export type HttpCodes =
+	| HttpErrorCodes
+	| HttpSuccessCodes
+	| HttpRedirectCodes
+	| RangeErrorCodes;

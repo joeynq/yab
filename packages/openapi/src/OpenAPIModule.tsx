@@ -18,6 +18,8 @@ import {
 	type OpenAPIFeatures,
 	OpenAPIService,
 } from "./services/OpenAPIService";
+import { setDefaultLimit } from "./settings/setDefaultLimit";
+import type { LimitSettings } from "./settings/values";
 
 type AuthConfig = Record<
 	string,
@@ -33,8 +35,8 @@ export interface OpenAPIConfig {
 	override?: boolean;
 	title?: string;
 	features?: OpenAPIFeatures;
+	limits?: Partial<LimitSettings>;
 }
-
 const defaultSpecs: OpenAPIObject = {
 	openapi: "3.1.0",
 	info: {
@@ -61,6 +63,8 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 		} else {
 			specs = deepMerge(defaultSpecs, this.config.specs || {}) as OpenAPIObject;
 		}
+
+		this.config.limits && setDefaultLimit(this.config.limits);
 
 		this.#service = new OpenAPIService(specs, this.config.features);
 	}

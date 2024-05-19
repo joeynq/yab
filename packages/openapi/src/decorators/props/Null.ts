@@ -1,6 +1,6 @@
-import { type TNull, Type } from "@sinclair/typebox";
+import { type SchemaOptions, Type } from "@sinclair/typebox";
 import { Prop } from "./Prop";
 
-export function Null(options?: TNull & { nullable?: boolean }) {
+export function Null(options?: SchemaOptions & { nullable?: boolean }) {
 	return Prop(() => Type.Null(), options);
 }

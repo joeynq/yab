@@ -1,6 +1,6 @@
 import { useDecorators } from "@vermi/core";
-import { Responses, generic } from "@vermi/openapi";
-import { BadRequest, Get, NotFound } from "@vermi/router";
+import { Returns, generic } from "@vermi/openapi";
+import { Get, RouterException } from "@vermi/router";
 import { type Class, snakeCase } from "@vermi/utils";
 import { Pagination, Single } from "../models";
 import { PluralName, SingularName } from "./Resource";
@@ -16,10 +16,9 @@ export function Read(resource: Class<any> | [Class<any>]) {
 		Get(isSingle ? `/:${singular.toLowerCase()}_id` : "/", {
 			operationId: snakeCase(isSingle ? `get_${singular}` : `list_${plural}`),
 		}),
+		Returns(401, RouterException.schema),
 		isSingle
-			? Responses(200, generic(Single).of(ResourceClass))
-			: Responses(200, generic(Pagination).of(ResourceClass)),
-		Responses(400, new BadRequest("").toSchema()),
-		Responses(404, new NotFound("").toSchema()),
+			? Returns(200, generic(Single).of(ResourceClass))
+			: Returns(200, generic(Pagination).of(ResourceClass)),
 	);
 }
