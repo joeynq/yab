@@ -44,8 +44,12 @@ new Vermi({ log: { level: "info" } })
 	.use(
 		openapi("/docs", {
 			specs: { security: [{ BearerAuth: [] }] },
-			useRateLimit: true,
-			useCors: true,
+			features: {
+				rateLimit: true,
+				cors: true,
+				default500: true,
+				forceAuth: true,
+			},
 		}),
 	)
 	.start((context, { port }) => {

@@ -23,6 +23,14 @@ export const rateLimitSchemas = {
 			format: "int32",
 		},
 	},
+	retryAfter: {
+		description:
+			"The number of seconds until the consumer can make another request.",
+		schema: {
+			type: "integer",
+			format: "int32",
+		},
+	},
 } as const;
 
 export const corsSchema = {

@@ -20,6 +20,7 @@ export const removeUnused = (source: OpenAPIObject) => {
 
 	source.components.schemas = schemas;
 
+	// Remove all $id
 	const idPattern = /"\$id":\s*"\#\/components\/schemas\/[^"]*",/g;
 
 	const newSource = JSON.parse(

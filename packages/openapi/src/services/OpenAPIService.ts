@@ -1,10 +1,12 @@
-import type { TSchema } from "@sinclair/typebox";
+import { type TSchema } from "@sinclair/typebox";
 import { UseCache } from "@vermi/cache";
 import { getStoreData } from "@vermi/core";
 import {
+	InternalServerError,
 	type Operation,
 	type Parameter,
 	type RequestBody,
+	TooManyRequests,
 	exceptions,
 	getRoutes,
 } from "@vermi/router";
@@ -16,20 +18,32 @@ import {
 } from "openapi3-ts/oas31";
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
+import { createExceptionResponse } from "../utils/createResponse";
+import { referTo } from "../utils/referTo";
 import { removeUnused } from "../utils/removeUnused";
 import { corsSchema, rateLimitSchemas } from "./builtin";
+
+export interface OpenAPIFeatures {
+	cors?: boolean;
+	rateLimit?: boolean;
+	default500?: boolean;
+}
 
 export class OpenAPIService {
 	#builder: OpenApiBuilder;
 
-	#features: { cors?: boolean; rateLimit?: boolean } = {
+	#features: OpenAPIFeatures = {
 		cors: false,
 		rateLimit: false,
 	};
 
-	constructor(rootDoc: OpenAPIObject) {
+	constructor(rootDoc: OpenAPIObject, features?: OpenAPIFeatures) {
 		this.#builder = new OpenApiBuilder();
 		this.#builder.rootDoc = rootDoc;
+
+		if (features) {
+			this.#features = features;
+		}
 	}
 
 	#buildOperation = (path: string, operation: Operation) => {
@@ -63,23 +77,30 @@ export class OpenAPIService {
 		}
 
 		const options: utils.ResponseOptions = {};
+
 		if (this.#features.rateLimit) {
-			if (!options.headers) options.headers = {};
-			options.headers["X-RateLimit-Limit"] = {
-				$ref: "#/components/headers/X-RateLimit-Limit",
+			options.headers = {
+				...options.headers,
+				...referTo("headers", [
+					"X-RateLimit-Limit",
+					"X-RateLimit-Remaining",
+					"X-RateLimit-Reset",
+					"Retry-After",
+				]),
 			};
-			options.headers["X-RateLimit-Remaining"] = {
-				$ref: "#/components/headers/X-RateLimit-Remaining",
-			};
-			options.headers["X-RateLimit-Reset"] = {
-				$ref: "#/components/headers/X-RateLimit-Reset",
-			};
+			operation.responses?.set(429, createExceptionResponse(TooManyRequests));
 		}
 		if (this.#features.cors) {
-			if (!options.headers) options.headers = {};
-			options.headers["Access-Control-Allow-Origin"] = {
-				$ref: "#/components/headers/Access-Control-Allow-Origin",
+			options.headers = {
+				...options.headers,
+				...referTo("headers", ["Access-Control-Allow-Origin"]),
 			};
+		}
+		if (this.#features.default500) {
+			operation.responses?.set(
+				500,
+				createExceptionResponse(InternalServerError),
+			);
 		}
 
 		if (operation.responses) {
@@ -94,12 +115,22 @@ export class OpenAPIService {
 
 	#addSchema(schema: TSchema) {}
 
-	enableRateLimit() {
-		this.#features.rateLimit = true;
+	#enableCors() {
+		if (this.#features.cors) {
+			this.#builder.addHeader("Access-Control-Allow-Origin", corsSchema);
+		}
 	}
 
-	enableCors() {
-		this.#features.cors = true;
+	#enableRateLimit() {
+		if (this.#features.rateLimit) {
+			this.#builder.addHeader("X-RateLimit-Limit", rateLimitSchemas.limit);
+			this.#builder.addHeader(
+				"X-RateLimit-Remaining",
+				rateLimitSchemas.remaining,
+			);
+			this.#builder.addHeader("X-RateLimit-Reset", rateLimitSchemas.reset);
+			this.#builder.addHeader("Retry-After", rateLimitSchemas.retryAfter);
+		}
 	}
 
 	addSecuritySchemes(scheme: Record<string, SecuritySchemeObject>) {
@@ -122,17 +153,8 @@ export class OpenAPIService {
 
 		this.#builder.addTitle(title);
 
-		if (this.#features.rateLimit) {
-			this.#builder.addHeader("X-RateLimit-Limit", rateLimitSchemas.limit);
-			this.#builder.addHeader(
-				"X-RateLimit-Remaining",
-				rateLimitSchemas.remaining,
-			);
-			this.#builder.addHeader("X-RateLimit-Reset", rateLimitSchemas.reset);
-		}
-		if (this.#features.cors) {
-			this.#builder.addHeader("Access-Control-Allow-Origin", corsSchema);
-		}
+		this.#enableCors();
+		this.#enableRateLimit();
 
 		for (const schema of schemas) {
 			if (schema.type === "null") {
@@ -146,7 +168,8 @@ export class OpenAPIService {
 		}
 
 		for (const Exception of exceptions) {
-			const schema = new Exception("").toSchema();
+			// @ts-expect-error
+			const schema = new Exception("", {}).toSchema();
 			if (schema.$id) {
 				const name = schema.$id.split("/").pop() || Exception.name;
 				const { $id, ...rest } = schema;

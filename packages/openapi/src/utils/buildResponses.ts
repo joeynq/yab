@@ -20,6 +20,7 @@ export const buildResponses = (
 		if (code === 204) {
 			responsesObj[String(code)] = {
 				description: `HTTP ${code} Response`,
+				...options,
 			} satisfies ResponseObject;
 			continue;
 		}

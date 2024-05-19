@@ -40,7 +40,7 @@ export class RateLimitMiddleware {
 		);
 		response.headers.set(
 			"X-RateLimit-Reset",
-			new Date(Date.now() + limit.msBeforeNext).toISOString(),
+			(new Date(Date.now() + limit.msBeforeNext).getTime() / 1000).toString(),
 		);
 	}
 }
