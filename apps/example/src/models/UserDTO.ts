@@ -1,13 +1,16 @@
 import { Integer, Model, Prop, String } from "@vermi/openapi";
 import { Resource, SearchParams } from "@vermi/restapi";
 
-@Resource("user")
+@Resource("User")
 export class UserDTO {
 	@Integer()
 	id!: number;
 
 	@String()
-	name!: string;
+	firstName!: string;
+
+	@String()
+	lastName!: string;
 
 	@String()
 	email!: string;
@@ -15,6 +18,6 @@ export class UserDTO {
 
 @Model()
 export class UserSearch extends SearchParams<UserDTO> {
-	@Prop({ nullable: true })
+	@Prop({ nullable: true, description: "Filter options" })
 	filter?: UserDTO;
 }

@@ -41,7 +41,17 @@ new Vermi({ log: { level: "info" } })
 	.use(statics("/favicon.ico", { assetsDir: "./public", direct: true }))
 	// .use(rateLimit("redis", {}))
 	.use(router("/api", [UserController]))
-	.use(openapi("/docs", { specs: { security: [{ BearerAuth: [] }] } }))
+	.use(
+		openapi("/docs", {
+			specs: { security: [{ BearerAuth: [] }] },
+			features: {
+				rateLimit: true,
+				cors: true,
+				default500: true,
+				forceAuth: true,
+			},
+		}),
+	)
 	.start((context, { port }) => {
 		context.resolve<LoggerAdapter>("logger")?.info(`Server started at ${port}`);
 	});

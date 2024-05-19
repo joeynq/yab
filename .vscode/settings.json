@@ -7,6 +7,7 @@
 		"bodytypes",
 		"bunx",
 		"commitlint",
+		"conformato",
 		"Consola",
 		"datasource",
 		"deburr",
@@ -25,11 +26,13 @@
 		"nosniff",
 		"notifme",
 		"openapi",
+		"owasp",
 		"paramtypes",
 		"pino",
 		"restapi",
 		"reviewdog",
 		"rlflx",
+		"ruleset",
 		"SAMEORIGIN",
 		"sindresorhus",
 		"sonarjs",
@@ -57,5 +60,8 @@
 	},
 	"[typescript]": {
 		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[yaml]": {
+		"editor.defaultFormatter": "redhat.vscode-yaml"
 	}
 }

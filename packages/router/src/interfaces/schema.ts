@@ -45,6 +45,7 @@ export interface RequestBody extends CommonArg {
 }
 
 export interface Operation {
+	operationId?: string;
 	responses?: Map<HttpCodes, Response>;
 	security?: Map<string, string[]>;
 	handler: Handler;

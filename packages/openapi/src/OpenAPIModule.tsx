@@ -6,7 +6,7 @@ import {
 	type RequestContext,
 	VermiModule,
 } from "@vermi/core";
-import { Res } from "@vermi/router";
+import { InternalServerError, Res } from "@vermi/router";
 import { deepMerge } from "@vermi/utils";
 import {
 	type OpenAPIObject,
@@ -14,7 +14,10 @@ import {
 } from "openapi3-ts/oas31";
 import { renderToString } from "react-dom/server";
 import { ScalarPage } from "./components";
-import { OpenAPIService } from "./services/OpenAPIService";
+import {
+	type OpenAPIFeatures,
+	OpenAPIService,
+} from "./services/OpenAPIService";
 
 type AuthConfig = Record<
 	string,
@@ -29,6 +32,7 @@ export interface OpenAPIConfig {
 	specs?: Partial<OpenAPIObject>;
 	override?: boolean;
 	title?: string;
+	features?: OpenAPIFeatures;
 }
 
 const defaultSpecs: OpenAPIObject = {
@@ -36,10 +40,6 @@ const defaultSpecs: OpenAPIObject = {
 	info: {
 		title: "Vermi API",
 		version: "1.0.0",
-		license: {
-			name: "MIT",
-			url: "https://opensource.org/licenses/MIT",
-		},
 	},
 	components: {},
 	paths: {},
@@ -62,7 +62,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 			specs = deepMerge(defaultSpecs, this.config.specs || {}) as OpenAPIObject;
 		}
 
-		this.#service = new OpenAPIService(specs);
+		this.#service = new OpenAPIService(specs, this.config.features);
 	}
 
 	@AppHook("app:init")
@@ -100,17 +100,32 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 		const url = new URL(context.store.request.url);
 
 		if (url.pathname === fileUrl) {
-			const specs = await this.#service.buildSpecs(
-				context.store.serverUrl,
-				this.config.title || "Vermi API",
-			);
-
-			return Res.ok(specs);
+			try {
+				const specs = await this.#service.buildSpecs(
+					context.store.serverUrl,
+					this.config.title || "Vermi API",
+				);
+				return Res.ok(specs);
+			} catch (err) {
+				this.logger.error(err, "Error building OpenAPI specs");
+				return new InternalServerError(
+					"Error building OpenAPI specs",
+					err as Error,
+				).toResponse();
+			}
 		}
 
 		if (url.pathname.startsWith(path)) {
-			const page = renderToString(<ScalarPage url={fileUrl} title={title} />);
-			return Res.html(`<!doctype html>${page}`);
+			try {
+				const page = renderToString(<ScalarPage url={fileUrl} title={title} />);
+				return Res.html(`<!doctype html>${page}`);
+			} catch (err) {
+				this.logger.error(err, "Error rendering OpenAPI page");
+				return new InternalServerError(
+					"Error rendering OpenAPI page",
+					err as Error,
+				).toResponse();
+			}
 		}
 	}
 }

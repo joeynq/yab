@@ -25,8 +25,7 @@ export const Generic = (
 
 						if (genericKey) {
 							const { isArray, nullable } = genericKey;
-							const ref = T.$id ? Type.Ref(T) : T;
-							const generic = isArray ? Type.Array(ref) : ref;
+							const generic = isArray ? Type.Array(T) : T;
 
 							acc[key] = nullable ? Type.Optional(generic) : generic;
 						} else {

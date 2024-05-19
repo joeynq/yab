@@ -9,7 +9,7 @@ import {
 	asValue,
 } from "@vermi/core";
 import { TooManyRequests } from "@vermi/router";
-import type { AnyClass } from "@vermi/utils";
+import type { Class } from "@vermi/utils";
 import {
 	type RateLimiterAbstract,
 	RateLimiterDynamo,
@@ -38,7 +38,7 @@ export type AdapterMap = typeof adapterMap;
 
 export type RateLimitConfig<M extends typeof adapterMap, N extends keyof M> = {
 	adapter: N;
-	options: ConstructorParameters<AnyClass<M[N]>>[0];
+	options: ConstructorParameters<Class<M[N]>>[0];
 };
 
 declare module "@vermi/core" {
@@ -79,7 +79,16 @@ export class RateLimitModule<
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new TooManyRequests("Rate limit exceeded", error as Error);
+			throw new TooManyRequests(
+				"Rate limit exceeded",
+				{
+					limit: this.config.options.points,
+					reset: Math.ceil(Date.now() / 1000) + this.#rateLimiter.blockDuration,
+					remaining: 0,
+					retryAfter: this.#rateLimiter.blockDuration,
+				},
+				error as Error,
+			);
 		}
 	}
 

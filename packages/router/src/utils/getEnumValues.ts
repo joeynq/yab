@@ -21,8 +21,10 @@ export const getEnumValues = <
 		if (type === "string" && typeof value[n] === "string")
 			values.push(value[n]);
 	}
-	return Type.Unsafe<T[K]>({
-		type,
+
+	const returns = type === "number" ? Type.Number : Type.String;
+
+	return returns({
 		enum: values,
 		...options,
 	});
