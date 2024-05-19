@@ -39,6 +39,7 @@
 		"tseslint",
 		"tslog",
 		"typebox",
+		"typeorm",
 		"Vermi",
 		"workdir"
 	],
