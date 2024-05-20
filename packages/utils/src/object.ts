@@ -10,16 +10,11 @@ import type {
 import { isUndefined } from "./nullish";
 
 export const isObject = (value: unknown): value is object => {
-	return Object(value) !== value;
+	return value !== null && typeof value === "object";
 };
 
 export const isPlainObject = (value: unknown): value is object => {
-	if (!isObject(value)) {
-		return false;
-	}
-
-	const proto = Object.getPrototypeOf(value);
-	return proto === Object.prototype || proto === null;
+	return isObject(value) && !isPrimitive(value);
 };
 
 export const isClass = <T = any>(value: any): value is Class<T> => {
@@ -35,9 +30,7 @@ export const isInstance = <T extends abstract new (...args: any) => any>(
 };
 
 export const isPrimitive = (value: any): value is Primitive => {
-	return (
-		value === null || (typeof value !== "function" && typeof value !== "object")
-	);
+	return value == null || /^[sbn]/.test(typeof value);
 };
 
 export const deepMerge = deepmerge;
@@ -157,6 +150,31 @@ export const setVal = <
 	);
 	target[lastKey as keyof object] = value;
 	return obj;
+};
+
+// change case of object keys, support nested objects
+export const changeObjectCase = <T extends object>(
+	obj: T,
+	fn: (key: string) => string,
+) => {
+	const input = toPlainObject(obj as any);
+	const result = {} as any;
+
+	for (const key in input) {
+		// @ts-expect-error
+		const value = input[key as keyof T];
+		if (Array.isArray(value)) {
+			result[fn(key)] = value.map((item) =>
+				isPlainObject(item) ? changeObjectCase(item, fn) : item,
+			);
+		} else if (isPlainObject(value)) {
+			result[fn(key)] = changeObjectCase(value, fn);
+		} else {
+			result[fn(key)] = value;
+		}
+	}
+
+	return result;
 };
 
 export * from "./internal/object";

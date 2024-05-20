@@ -1,4 +1,5 @@
 import {
+	type AppContext,
 	AppHook,
 	type Configuration,
 	type LoggerAdapter,
@@ -70,7 +71,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 	}
 
 	@AppHook("app:init")
-	async init() {
+	async init(context: AppContext) {
 		const authConfig = this.configuration.getModuleConfig("AuthModule")
 			?.config as AuthConfig | undefined;
 

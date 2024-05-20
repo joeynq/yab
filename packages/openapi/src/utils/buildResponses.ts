@@ -1,6 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { type HttpCodes } from "@vermi/core";
-import { type Response, RouterException } from "@vermi/router";
+import { type Response } from "@vermi/router";
 import type {
 	HeadersObject,
 	ResponseObject,
@@ -18,22 +18,16 @@ export const buildResponses = (
 	const responsesObj: ResponsesObject = {};
 
 	responsesObj["4XX"] = {
-		description: "Client Error",
-		...options,
-		content: Type.Ref(RouterException.schema),
-	} satisfies ResponseObject;
+		$ref: "#/components/responses/RouterException",
+	};
 
 	responsesObj["429"] = {
-		description: "Client Error",
-		...options,
-		content: Type.Ref(RouterException.schema),
-	} satisfies ResponseObject;
+		$ref: "#/components/responses/RouterException",
+	};
 
 	responsesObj["500"] = {
-		description: "Internal Server Error",
-		...options,
-		content: Type.Ref(RouterException.schema),
-	} satisfies ResponseObject;
+		$ref: "#/components/responses/RouterException",
+	};
 
 	for (const [code, response] of responses) {
 		if (code === 204) {

@@ -1,5 +1,5 @@
 {
-	"include": ["src"],
+	"include": ["src", "../router/src/services/CasingService.ts"],
 	"exclude": ["node_modules", "dist", "coverage"],
 	"compilerOptions": {
 		// Enable latest features

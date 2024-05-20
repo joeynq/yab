@@ -40,7 +40,11 @@ new Vermi({ log: { level: "info" } })
 	.use(statics("/public", { assetsDir: "./public" }))
 	.use(statics("/favicon.ico", { assetsDir: "./public", direct: true }))
 	// .use(rateLimit("redis", {}))
-	.use(router("/api", [UserController]))
+	.use(
+		router("/api", [UserController], {
+			casing: { payload: "camel", response: "snake" },
+		}),
+	)
 	.use(
 		openapi("/docs", {
 			specs: { security: [{ BearerAuth: [] }] },

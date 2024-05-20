@@ -1,7 +1,6 @@
 extends:
   - "@stoplight/spectral-owasp-ruleset"
   - "spectral:oas"
+  - "@stoplight/spectral-documentation"
 formats:
   - oas3_1
-rules:
-  oas3-schema: off # need to rework this rule

@@ -17,7 +17,16 @@ export class UserDTO {
 }
 
 @Model()
-export class UserSearch extends SearchParams<UserDTO> {
+export class UserFilter {
+	@String({ nullable: true, description: "First name" })
+	firstName?: string;
+
+	@String({ nullable: true, description: "Last name" })
+	lastName?: string;
+}
+
+@Model()
+export class UserSearch extends SearchParams<UserFilter> {
 	@Prop({ nullable: true, description: "Filter options" })
-	filter?: UserDTO;
+	filter?: UserFilter;
 }

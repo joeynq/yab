@@ -22,10 +22,10 @@ export class UserController {
 		return Result.single(new UserDTO());
 	}
 
-	@Authorized("BearerAuth")
+	// @Authorized("BearerAuth")
 	@Read([UserDTO])
 	getUsers(@Query() search: UserSearch) {
-		return Result.multiple([new UserDTO()]);
+		return Result.multiple([search]);
 	}
 
 	@Authorized("BearerAuth")

@@ -16,6 +16,7 @@ import {
 } from "openapi3-ts/oas31";
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
+import { buildExceptionResponses } from "../utils/buildExceptionResponses";
 import { referTo } from "../utils/referTo";
 import { removeUnused } from "../utils/removeUnused";
 import { corsSchema, rateLimitSchemas } from "./builtin";
@@ -163,6 +164,30 @@ export class OpenAPIService {
 			const { $id, ...rest } = schema;
 			this.#builder.addSchema(name, rest);
 		}
+
+		const options: utils.ResponseOptions = {};
+
+		if (this.#features.rateLimit) {
+			options.headers = {
+				...options.headers,
+				...referTo("headers", [
+					"X-RateLimit-Limit",
+					"X-RateLimit-Remaining",
+					"X-RateLimit-Reset",
+					"Retry-After",
+				]),
+			};
+		}
+		if (this.#features.cors) {
+			options.headers = {
+				...options.headers,
+				...referTo("headers", ["Access-Control-Allow-Origin"]),
+			};
+		}
+
+		const errorResponse = buildExceptionResponses(options);
+
+		this.#builder.addResponse("RouterException", errorResponse);
 
 		for (const [path, operation] of routes) {
 			this.#buildOperation(path, operation);

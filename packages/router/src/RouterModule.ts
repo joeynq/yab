@@ -9,11 +9,13 @@ import {
 	type RequestContext,
 	VermiModule,
 	asClass,
+	asValue,
 	dependentStore,
 	hookStore,
 	saveStoreData,
 } from "@vermi/core";
 import { type Class, ensure } from "@vermi/utils";
+import { parse } from "qs";
 import type { HttpMethod } from "./enums";
 import { RouterEvent, type RouterEventMap } from "./event";
 import type {
@@ -22,9 +24,20 @@ import type {
 	SlashedPath,
 	ValidationFn,
 } from "./interfaces";
-import { Router } from "./services";
+import { type CasingType, Router, casingFactory } from "./services";
 import { routeStore } from "./stores";
 import { defaultErrorHandler, defaultResponseHandler } from "./utils";
+
+declare module "@vermi/core" {
+	interface _RequestContext {
+		payload: {
+			query?: any;
+			body?: any;
+			headers?: any;
+			cookies?: any;
+		};
+	}
+}
 
 export type RouterOptions = {
 	middlewares?: Class<any>[];
@@ -37,6 +50,10 @@ export type RouterOptions = {
 		result: T,
 		responses?: RouteMatch["responses"],
 	) => Response;
+	casing?: {
+		payload?: CasingType; // query, body, params
+		response?: CasingType;
+	};
 };
 
 export type RouterModuleConfig = {
@@ -86,6 +103,54 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		return config[mount];
 	}
 
+	async #payloadCasing(casing: CasingType, context: RequestContext) {
+		const service = casingFactory(casing);
+		const { request } = context.store;
+
+		const query = new URL(request.url).search
+			? parse(new URL(request.url).search, {
+					ignoreQueryPrefix: true,
+					plainObjects: true,
+				})
+			: undefined;
+
+		const body = await request.text();
+
+		const headers = Object.fromEntries(request.headers);
+
+		const cookies = Object.fromEntries(
+			request.headers
+				.get("cookie")
+				?.split(";")
+				.map((cookie) => cookie.split("=")) || [],
+		);
+
+		context.register(
+			"payload",
+			asValue({
+				query: query ? service.convert(query) : undefined,
+				body: body ? service.convert(JSON.parse(body)) : undefined,
+				headers: service.convert(headers),
+				cookies: service.convert(cookies),
+			}),
+		);
+	}
+
+	async #responseCasing(
+		casing: CasingType,
+		_: RequestContext,
+		response: Response,
+	) {
+		const service = casingFactory(casing);
+
+		const body = await response.json();
+
+		return new Response(JSON.stringify(service.convert(body as object)), {
+			status: response.status,
+			headers: response.headers,
+		});
+	}
+
 	@Hook(AppEvents.OnInit)
 	initRoute(context: AppContext) {
 		const mounted = this.#getConfig();
@@ -96,7 +161,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 		let hookEvents: ReturnType<typeof hookStore.combineStore> = new Map();
 		let dependents: Class<any>[] = [];
-		for (const [prefix, { controllers }] of Object.entries(mounted)) {
+		for (const [prefix, { controllers, options }] of Object.entries(mounted)) {
 			ensure(controllers.length > 0, "No controllers provided");
 
 			for (const controller of controllers) {
@@ -116,6 +181,17 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			dependents = dependentStore.combineStore(...controllers) || [];
 
 			saveStoreData(routeStore.token, routeStore.combineStore(...controllers));
+
+			if (options?.casing?.payload) {
+				context.store.hooks.register(RouterEvent.BeforeRoute, {
+					handler: this.#payloadCasing.bind(this, options.casing.payload),
+				});
+			}
+			if (options?.casing?.response) {
+				context.store.hooks.register(RouterEvent.AfterRoute, {
+					handler: this.#responseCasing.bind(this, options.casing.response),
+				});
+			}
 		}
 
 		for (const dependent of dependents) {
@@ -173,8 +249,12 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			errorHandler,
 		);
 
-		await hooks.invoke(RouterEvent.AfterRoute, [context]);
+		const newResponse = await hooks.invoke(
+			RouterEvent.AfterRoute,
+			[context, response],
+			{ breakOn: (result) => result instanceof Response },
+		);
 
-		return response;
+		return newResponse;
 	}
 }
