@@ -24,7 +24,7 @@ export class UserController {
 
 	// @Authorized("BearerAuth")
 	@Read([UserDTO])
-	getUsers(@Query() search: UserSearch) {
+	getUsers(@Query({ nullable: true }) search: UserSearch) {
 		return Result.multiple([search]);
 	}
 

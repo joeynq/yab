@@ -42,11 +42,12 @@ new Vermi({ log: { level: "info" } })
 	// .use(rateLimit("redis", {}))
 	.use(
 		router("/api", [UserController], {
-			casing: { payload: "camel", response: "snake" },
+			casing: { internal: "camel", interfaces: "snake" },
 		}),
 	)
 	.use(
 		openapi("/docs", {
+			prefix: "/api",
 			specs: { security: [{ BearerAuth: [] }] },
 			features: {
 				rateLimit: true,

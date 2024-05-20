@@ -1,5 +1,4 @@
 import {
-	type AppContext,
 	AppHook,
 	type Configuration,
 	type LoggerAdapter,
@@ -7,7 +6,12 @@ import {
 	type RequestContext,
 	VermiModule,
 } from "@vermi/core";
-import { InternalServerError, Res } from "@vermi/router";
+import {
+	InternalServerError,
+	Res,
+	type RouterModuleConfig,
+	type SlashedPath,
+} from "@vermi/router";
 import { deepMerge } from "@vermi/utils";
 import {
 	type OpenAPIObject,
@@ -30,6 +34,7 @@ type AuthConfig = Record<
 >;
 
 export interface OpenAPIConfig {
+	prefix: SlashedPath;
 	path?: string;
 	fileName?: string;
 	specs?: Partial<OpenAPIObject>;
@@ -71,7 +76,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 	}
 
 	@AppHook("app:init")
-	async init(context: AppContext) {
+	async init() {
 		const authConfig = this.configuration.getModuleConfig("AuthModule")
 			?.config as AuthConfig | undefined;
 
@@ -95,21 +100,29 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 	@AppHook("app:request")
 	async request(context: RequestContext) {
 		const {
+			prefix,
 			path = "/openapi",
 			fileName = "openapi.json",
 			title = "Vermi API",
 		} = this.config;
 
-		const fileUrl = `${path}/${fileName}`;
+		const fileUrl = `${path}${prefix}/${fileName}`;
 
 		const url = new URL(context.store.request.url);
 
+		const routerConfig =
+			this.configuration.getModuleConfig<RouterModuleConfig>("RouterModule")
+				?.config[prefix];
+
+		const casing = routerConfig?.options?.casing?.interfaces;
+
 		if (url.pathname === fileUrl) {
 			try {
-				const specs = await this.#service.buildSpecs(
-					context.store.serverUrl,
-					this.config.title || "Vermi API",
-				);
+				const specs = await this.#service.buildSpecs({
+					serverUrl: context.store.serverUrl,
+					title: this.config.title || "Vermi API",
+					casing,
+				});
 				return Res.ok(specs);
 			} catch (err) {
 				this.logger.error(err, "Error building OpenAPI specs");
@@ -120,7 +133,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 			}
 		}
 
-		if (url.pathname.startsWith(path)) {
+		if (url.pathname.startsWith(`${path}${prefix}`)) {
 			try {
 				const page = renderToString(<ScalarPage url={fileUrl} title={title} />);
 				return Res.html(`<!doctype html>${page}`);

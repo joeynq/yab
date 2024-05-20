@@ -7,7 +7,7 @@ import type {
 import { ensure } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
 import { RouterEvent, type RouterEventMap } from "../event";
-import { NotFound } from "../exceptions";
+import { BadRequest, NotFound } from "../exceptions";
 import type { RouteMatch, ValidationFn } from "../interfaces";
 import { getRequestScope, validate } from "../utils";
 
@@ -87,12 +87,18 @@ export class Router {
 					break;
 			}
 
-			if (arg.schema) {
+			if (arg.required && value === undefined) {
+				throw new BadRequest(`Missing required parameter: ${arg.name}`);
+			}
+
+			if (arg.schema && value !== undefined) {
+				// value = Value.Clean(arg.schema, value);
 				await this.#validator(arg.schema, value, this.route);
-				if (arg.pipes) {
-					for (const pipe of arg.pipes) {
-						value = await this.context.build(pipe).map(value);
-					}
+			}
+
+			if (arg.pipes) {
+				for (const pipe of arg.pipes) {
+					value = await this.context.build(pipe).map(value);
 				}
 			}
 

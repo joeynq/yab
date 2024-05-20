@@ -51,8 +51,8 @@ export type RouterOptions = {
 		responses?: RouteMatch["responses"],
 	) => Response;
 	casing?: {
-		payload?: CasingType; // query, body, params
-		response?: CasingType;
+		interfaces?: CasingType; // query, body, params
+		internal?: CasingType;
 	};
 };
 
@@ -182,14 +182,14 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 			saveStoreData(routeStore.token, routeStore.combineStore(...controllers));
 
-			if (options?.casing?.payload) {
+			if (options?.casing?.internal) {
 				context.store.hooks.register(RouterEvent.BeforeRoute, {
-					handler: this.#payloadCasing.bind(this, options.casing.payload),
+					handler: this.#payloadCasing.bind(this, options.casing.internal),
 				});
 			}
-			if (options?.casing?.response) {
+			if (options?.casing?.interfaces) {
 				context.store.hooks.register(RouterEvent.AfterRoute, {
-					handler: this.#responseCasing.bind(this, options.casing.response),
+					handler: this.#responseCasing.bind(this, options.casing.interfaces),
 				});
 			}
 		}

@@ -17,6 +17,7 @@ export const Model = <T>(
 	return (target: Class<T>) => {
 		const props = propsStore.apply(target).get();
 		const schema = Type.Object(props, {
+			additionalProperties: false,
 			...schemaOptions,
 			$id: `#/components/schemas/${pascalCase(options?.name || target.name)}`,
 		});

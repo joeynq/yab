@@ -8,6 +8,7 @@ import {
 	RouterException,
 	getRoutes,
 } from "@vermi/router";
+import { camelCase, kebabCase, pascalCase, snakeCase } from "@vermi/utils";
 import {
 	type OpenAPIObject,
 	OpenApiBuilder,
@@ -17,6 +18,7 @@ import {
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
 import { buildExceptionResponses } from "../utils/buildExceptionResponses";
+import { changePropCase } from "../utils/changePropCase";
 import { referTo } from "../utils/referTo";
 import { removeUnused } from "../utils/removeUnused";
 import { corsSchema, rateLimitSchemas } from "./builtin";
@@ -27,6 +29,12 @@ export interface OpenAPIFeatures {
 	default500?: boolean;
 }
 
+interface BuildSpecsOptions {
+	serverUrl: string;
+	title: string;
+	casing?: "camel" | "snake" | "pascal" | "kebab";
+}
+
 export class OpenAPIService {
 	#builder: OpenApiBuilder;
 
@@ -35,20 +43,44 @@ export class OpenAPIService {
 		rateLimit: false,
 	};
 
+	#casingFn?: (str: string) => string;
+
 	constructor(rootDoc: OpenAPIObject, features?: OpenAPIFeatures) {
 		this.#builder = new OpenApiBuilder();
 		this.#builder.rootDoc = rootDoc;
+		this;
 
 		if (features) {
 			this.#features = features;
 		}
 	}
 
+	#chooseCasing(casing?: "camel" | "snake" | "pascal" | "kebab") {
+		switch (casing) {
+			case "camel":
+				this.#casingFn = camelCase;
+				break;
+			case "snake":
+				this.#casingFn = snakeCase;
+				break;
+			case "pascal":
+				this.#casingFn = pascalCase;
+				break;
+			case "kebab":
+				this.#casingFn = kebabCase;
+				break;
+		}
+	}
+
 	#buildOperation = (path: string, operation: Operation) => {
-		const { method, route, operationId } = utils.getNames(path, operation);
+		const { method, route, operationId } = utils.getNames(
+			path,
+			operation,
+			this.#casingFn,
+		);
 
 		const item: OperationObject = {
-			operationId: operationId,
+			operationId,
 			responses: operation.responses,
 			summary: `${method.toUpperCase()} ${route}`,
 		};
@@ -104,7 +136,22 @@ export class OpenAPIService {
 		this.#builder.addPath(route, { [method]: item });
 	};
 
-	#addSchema(schema: TSchema) {}
+	#addSchema(schema: TSchema) {
+		if (schema.type === "null") {
+			return;
+		}
+		if (schema.$id) {
+			const name = schema.$id.split("/").pop();
+			const { $id, ...rest } = schema;
+
+			let converted = rest;
+			if (this.#casingFn) {
+				converted = changePropCase(rest, this.#casingFn);
+			}
+
+			this.#builder.addSchema(String(name), converted);
+		}
+	}
 
 	#enableCors() {
 		if (this.#features.cors) {
@@ -131,7 +178,8 @@ export class OpenAPIService {
 	}
 
 	@UseCache()
-	async buildSpecs(serverUrl: string, title: string) {
+	async buildSpecs({ serverUrl, title, casing }: BuildSpecsOptions) {
+		this.#chooseCasing(casing);
 		const routes = getRoutes();
 
 		const schemas = getStoreData<TSchema[]>(ModelStoreKey);
@@ -148,22 +196,25 @@ export class OpenAPIService {
 		this.#enableRateLimit();
 
 		for (const schema of schemas) {
-			if (schema.type === "null") {
-				continue;
-			}
-			if (schema.$id) {
-				const name = schema.$id.split("/").pop();
-				const { $id, ...rest } = schema;
-				this.#builder.addSchema(String(name), rest);
-			}
+			this.#addSchema(schema);
+			// if (schema.type === "null") {
+			// 	continue;
+			// }
+			// if (schema.$id) {
+			// 	const name = schema.$id.split("/").pop();
+			// 	const { $id, ...rest } = schema;
+			// 	this.#builder.addSchema(String(name), rest);
+			// }
 		}
 
 		const schema = RouterException.schema;
-		if (schema.$id) {
-			const name = schema.$id.split("/").pop() || "Exception";
-			const { $id, ...rest } = schema;
-			this.#builder.addSchema(name, rest);
-		}
+		this.#addSchema(schema);
+		// if (schema.$id) {
+		// 	const name = schema.$id.split("/").pop() || "Exception";
+		// 	const { $id, ...rest } = schema;
+		// 	this.#addSchema(rest);
+		// 	this.#builder.addSchema(name, rest);
+		// }
 
 		const options: utils.ResponseOptions = {};
 
