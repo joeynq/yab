@@ -38,6 +38,7 @@ export const Generic = (
 							const generic = isArray
 								? Type.Array(T, {
 										maxItems: limitSettings.arrayMaxItems,
+										minItems: 0,
 										...arrayOptions,
 									})
 								: T;

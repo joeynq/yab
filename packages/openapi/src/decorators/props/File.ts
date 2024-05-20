@@ -7,6 +7,7 @@ export function File(options?: StringOptions & { nullable?: boolean }) {
 		...options,
 		format: "binary",
 		maxLength: limitSettings.maxFileLength,
+		minLength: 1,
 	});
 }
 

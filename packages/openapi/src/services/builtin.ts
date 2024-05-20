@@ -47,5 +47,7 @@ export const corsSchema = {
 	schema: {
 		type: "string",
 		maxLength: 255,
+		minLength: 1,
+		pattern: "^(\\*|[a-zA-Z0-9]+)$",
 	},
 } as const;

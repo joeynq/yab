@@ -1,4 +1,4 @@
-import { type TSchema } from "@sinclair/typebox";
+import { type TSchema, Type, TypeGuard } from "@sinclair/typebox";
 import { UseCache } from "@vermi/cache";
 import { getStoreData } from "@vermi/core";
 import {
@@ -13,14 +13,11 @@ import {
 	type OpenAPIObject,
 	OpenApiBuilder,
 	type OperationObject,
+	type PathItemObject,
 	type SecuritySchemeObject,
 } from "openapi3-ts/oas31";
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
-import { buildExceptionResponses } from "../utils/buildExceptionResponses";
-import { changePropCase } from "../utils/changePropCase";
-import { referTo } from "../utils/referTo";
-import { removeUnused } from "../utils/removeUnused";
 import { corsSchema, rateLimitSchemas } from "./builtin";
 
 export interface OpenAPIFeatures {
@@ -89,8 +86,8 @@ export class OpenAPIService {
 			| Parameter[]
 			| undefined;
 
-		if (parameterArgs) {
-			item.parameters = utils.buildParameters(parameterArgs);
+		if (parameterArgs?.length) {
+			item.parameters = utils.buildParameters(route, parameterArgs);
 		}
 
 		const requestBody = operation.args?.find((arg) => arg.in === "body") as
@@ -111,7 +108,7 @@ export class OpenAPIService {
 		if (this.#features.rateLimit) {
 			options.headers = {
 				...options.headers,
-				...referTo("headers", [
+				...utils.referTo("headers", [
 					"X-RateLimit-Limit",
 					"X-RateLimit-Remaining",
 					"X-RateLimit-Reset",
@@ -122,7 +119,7 @@ export class OpenAPIService {
 		if (this.#features.cors) {
 			options.headers = {
 				...options.headers,
-				...referTo("headers", ["Access-Control-Allow-Origin"]),
+				...utils.referTo("headers", ["Access-Control-Allow-Origin"]),
 			};
 		}
 
@@ -133,23 +130,61 @@ export class OpenAPIService {
 			};
 		}
 
-		this.#builder.addPath(route, { [method]: item });
+		const pathItem: PathItemObject = {
+			[method]: item,
+		};
+
+		const parameters = utils.buildPathParams(route, parameterArgs || []);
+		if (parameters) {
+			pathItem.parameters = parameters;
+		}
+
+		this.#builder.addPath(route, pathItem);
 	};
 
-	#addSchema(schema: TSchema) {
-		if (schema.type === "null") {
-			return;
+	#changeCase(schema: TSchema) {
+		if (this.#casingFn) {
+			return utils.changePropCase(schema, this.#casingFn);
 		}
-		if (schema.$id) {
-			const name = schema.$id.split("/").pop();
-			const { $id, ...rest } = schema;
+		return schema;
+	}
 
-			let converted = rest;
-			if (this.#casingFn) {
-				converted = changePropCase(rest, this.#casingFn);
+	#addSchemas(schemas: TSchema[]) {
+		// recursive function to find all nested schemas
+		const findNested = (schema: TSchema) => {
+			if (TypeGuard.IsObject(schema)) {
+				const properties = schema.properties || {};
+
+				for (const [name, value] of Object.entries(properties)) {
+					if (TypeGuard.IsObject(value)) {
+						if (value.$id) {
+							properties[name] = Type.Ref(value.$id);
+							schema.properties = properties;
+						}
+						findNested(value);
+					} else if (TypeGuard.IsArray(value)) {
+						// TODO: make array items to be ref
+						findNested(value);
+					}
+				}
 			}
 
-			this.#builder.addSchema(String(name), converted);
+			if (TypeGuard.IsArray(schema)) {
+				console.log(schema.items.$id, schema.$id);
+				if (schema.items?.$id) {
+					schema.items = Type.Ref(schema.items.$id);
+				}
+				findNested(schema.items);
+			}
+		};
+
+		for (const schema of schemas) {
+			findNested(schema);
+		}
+
+		for (const schema of schemas) {
+			const name = schema.$id?.split("/").pop();
+			name && this.#builder.addSchema(name, schema);
 		}
 	}
 
@@ -182,7 +217,12 @@ export class OpenAPIService {
 		this.#chooseCasing(casing);
 		const routes = getRoutes();
 
-		const schemas = getStoreData<TSchema[]>(ModelStoreKey);
+		const unfiltered = getStoreData<TSchema[]>(ModelStoreKey).filter(
+			(schema) => schema.$id,
+		);
+		const schemas = [
+			...new Map(unfiltered.map((pos) => [pos.$id, pos])).values(),
+		];
 
 		const url = serverUrl.replace(/\/$/, "");
 
@@ -195,33 +235,16 @@ export class OpenAPIService {
 		this.#enableCors();
 		this.#enableRateLimit();
 
-		for (const schema of schemas) {
-			this.#addSchema(schema);
-			// if (schema.type === "null") {
-			// 	continue;
-			// }
-			// if (schema.$id) {
-			// 	const name = schema.$id.split("/").pop();
-			// 	const { $id, ...rest } = schema;
-			// 	this.#builder.addSchema(String(name), rest);
-			// }
-		}
-
-		const schema = RouterException.schema;
-		this.#addSchema(schema);
-		// if (schema.$id) {
-		// 	const name = schema.$id.split("/").pop() || "Exception";
-		// 	const { $id, ...rest } = schema;
-		// 	this.#addSchema(rest);
-		// 	this.#builder.addSchema(name, rest);
-		// }
+		this.#addSchemas(
+			[...schemas, RouterException.schema].map((s) => this.#changeCase(s)),
+		);
 
 		const options: utils.ResponseOptions = {};
 
 		if (this.#features.rateLimit) {
 			options.headers = {
 				...options.headers,
-				...referTo("headers", [
+				...utils.referTo("headers", [
 					"X-RateLimit-Limit",
 					"X-RateLimit-Remaining",
 					"X-RateLimit-Reset",
@@ -232,11 +255,11 @@ export class OpenAPIService {
 		if (this.#features.cors) {
 			options.headers = {
 				...options.headers,
-				...referTo("headers", ["Access-Control-Allow-Origin"]),
+				...utils.referTo("headers", ["Access-Control-Allow-Origin"]),
 			};
 		}
 
-		const errorResponse = buildExceptionResponses(options);
+		const errorResponse = utils.buildExceptionResponses(options);
 
 		this.#builder.addResponse("RouterException", errorResponse);
 
@@ -244,6 +267,6 @@ export class OpenAPIService {
 			this.#buildOperation(path, operation);
 		}
 
-		return removeUnused(this.#builder.getSpec());
+		return utils.removeUnused(this.#builder.getSpec());
 	}
 }

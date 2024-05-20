@@ -8,5 +8,6 @@ export function RelativeJsonPointer(
 		...options,
 		format: "relative-json-pointer",
 		maxLength: 256,
+		minLength: 1,
 	});
 }

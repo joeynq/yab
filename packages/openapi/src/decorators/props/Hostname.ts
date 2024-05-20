@@ -6,5 +6,6 @@ export function Hostname(options?: StringOptions & { nullable?: boolean }) {
 		...options,
 		format: "hostname",
 		maxLength: 253,
+		minLength: 1,
 	});
 }

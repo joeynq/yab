@@ -1,6 +1,18 @@
 extends:
   - "@stoplight/spectral-owasp-ruleset"
-  - "spectral:oas"
-  - "@stoplight/spectral-documentation"
+  - "@ibm-cloud/openapi-ruleset"
+  # - "@stoplight/spectral-documentation"
 formats:
   - oas3_1
+rules:
+  ibm-schema-description: "off"
+  ibm-success-response-example: "off"
+  operation-tags: "off"
+  operation-description: "off"
+  ibm-parameter-description: "off"
+  ibm-property-description: "off"
+  openapi-tags: "off"
+  ibm-major-version-in-path: "off"
+  ibm-collection-array-property: "off"
+  ibm-schema-naming-convention: "off"
+  ibm-error-response-schemas: "off"

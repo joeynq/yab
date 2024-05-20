@@ -17,6 +17,7 @@ export const Array = <T extends TSchema>(
 
 				let typeArr = Type.Array(single, {
 					maxItems: limitSettings.arrayMaxItems,
+					minItems: 0,
 					...rest,
 				});
 				if (nullable) {
@@ -32,6 +33,7 @@ export const Array = <T extends TSchema>(
 				const oneOf = types.map((type) => type());
 				let typeArr = Type.Array(Type.Union(oneOf), {
 					maxItems: limitSettings.arrayMaxItems,
+					minItems: 0,
 					...rest,
 				});
 				if (nullable) {

@@ -1,4 +1,4 @@
-import { Model, String, StringEnum } from "@vermi/openapi";
+import { Model, Pattern, StringEnum } from "@vermi/openapi";
 
 export enum SortDirection {
 	Ascending = "asc",
@@ -7,7 +7,10 @@ export enum SortDirection {
 
 @Model()
 export class Sort {
-	@String({ maxLength: 255 })
+	@Pattern(/^[a-zA-Z0-9_]+$/, {
+		maxLength: 255,
+		minLength: 1,
+	})
 	prop!: string;
 
 	@StringEnum(SortDirection, { default: SortDirection.Ascending })

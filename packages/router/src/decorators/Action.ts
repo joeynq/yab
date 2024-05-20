@@ -1,4 +1,3 @@
-import { Type } from "@sinclair/typebox";
 import type { HttpMethod } from "../enums";
 import type {
 	Operation,
@@ -19,20 +18,6 @@ export const Action = (
 				| Parameter
 				| RequestBody
 			)[]) || [];
-
-		const pathParameters = path.match(/:(\w+)/g) || [];
-		for (const pathParam of pathParameters) {
-			const name = pathParam.slice(1);
-			const parameter = parameters.find((param) => param.name === name);
-			if (!parameter) {
-				parameters.push({
-					name,
-					in: "path",
-					required: true,
-					schema: Type.String({ maxLength: 32 }),
-				});
-			}
-		}
 
 		routeStore
 			.apply(target.constructor)
