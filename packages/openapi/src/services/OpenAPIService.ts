@@ -150,6 +150,14 @@ export class OpenAPIService {
 	}
 
 	#addSchemas(schemas: TSchema[]) {
+		const addMore = (schema: TSchema) => {
+			if (!schema.$id) {
+				return;
+			}
+			if (schemas.every((s) => s.$id !== schema.$id)) {
+				schemas.push(schema);
+			}
+		};
 		// recursive function to find all nested schemas
 		const findNested = (schema: TSchema) => {
 			if (TypeGuard.IsObject(schema)) {
@@ -158,30 +166,26 @@ export class OpenAPIService {
 				for (const [name, value] of Object.entries(properties)) {
 					if (TypeGuard.IsObject(value)) {
 						if (value.$id) {
+							addMore(value);
 							properties[name] = Type.Ref(value.$id);
 							schema.properties = properties;
 						}
 						findNested(value);
 					} else if (TypeGuard.IsArray(value)) {
-						// TODO: make array items to be ref
-						findNested(value);
+						if (value.items?.$id) {
+							addMore(value.items);
+							properties[name].items = Type.Ref(value.items.$id);
+							schema.properties = properties;
+						}
+						findNested(value.items);
 					}
 				}
-			}
-
-			if (TypeGuard.IsArray(schema)) {
-				console.log(schema.items.$id, schema.$id);
-				if (schema.items?.$id) {
-					schema.items = Type.Ref(schema.items.$id);
-				}
-				findNested(schema.items);
 			}
 		};
 
 		for (const schema of schemas) {
 			findNested(schema);
 		}
-
 		for (const schema of schemas) {
 			const name = schema.$id?.split("/").pop();
 			name && this.#builder.addSchema(name, schema);

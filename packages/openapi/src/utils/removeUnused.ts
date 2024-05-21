@@ -13,7 +13,7 @@ export const removeUnused = (source: OpenAPIObject) => {
 
 	for (const key of keys) {
 		const id = `"#/components/schemas/${key}"`;
-		if (json.split(id).length < 2) {
+		if (json.split(id).length <= 2) {
 			delete schemas[key];
 		}
 	}
