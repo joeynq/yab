@@ -51,8 +51,7 @@
 		"/packages/utils/src/internal",
 		"/packages/cache/src/adapters",
 		"/packages/logger/src/loggers",
-		"/packages/router/src/services/index.ts",
-		"/packages/router/src/exceptions/RouterException.ts"
+		"/packages/openapi/src/settings"
 	],
 	"editor.defaultFormatter": "biomejs.biome",
 	"biome.rename": true,
@@ -64,5 +63,8 @@
 	},
 	"[yaml]": {
 		"editor.defaultFormatter": "redhat.vscode-yaml"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome"
 	}
 }

@@ -1,6 +1,10 @@
-import { type TBoolean, Type } from "@sinclair/typebox";
+import { type SchemaOptions, Type } from "@sinclair/typebox";
 import { Prop } from "./Prop";
 
-export function Boolean(options?: TBoolean & { nullable?: boolean }) {
+export interface BooleanOptions extends SchemaOptions {
+	nullable?: boolean;
+}
+
+export function Boolean(options?: BooleanOptions) {
 	return Prop(() => Type.Boolean(), options);
 }

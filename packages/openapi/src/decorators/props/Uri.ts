@@ -1,6 +1,6 @@
-import { type TString, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { StringOptions } from "@sinclair/typebox";
+import { String } from "./String";
 
-export function Uri(options?: TString & { nullable?: boolean }) {
-	return Prop(() => Type.String({ format: "uri" }), options);
+export function Uri(options?: StringOptions & { nullable?: boolean }) {
+	return String({ ...options, format: "uri", maxLength: 2083, minLength: 1 });
 }

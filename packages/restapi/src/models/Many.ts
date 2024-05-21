@@ -10,7 +10,7 @@ export class Many<T> implements IMany<T> {
 	@Of()
 	data!: T[];
 
-	@Integer({ minimum: 0 })
+	@Integer({ minimum: 0, maximum: 999999 })
 	total!: number;
 
 	constructor(data: T[], total: number) {

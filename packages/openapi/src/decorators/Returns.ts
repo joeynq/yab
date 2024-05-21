@@ -4,14 +4,14 @@ import { type ContentType, type MediaType, routeStore } from "@vermi/router";
 import { type Class } from "@vermi/utils";
 import { SchemaKey } from "./Model";
 
-export interface ResponsesOptions {
+export interface ReturnsOptions {
 	contentType?: ContentType;
 }
 
-export const Responses = <T extends TSchema>(
+export const Returns = <T extends TSchema>(
 	status: HttpCodes,
 	model: Class<any> | T,
-	options: ResponsesOptions = {},
+	options: ReturnsOptions = {},
 ) => {
 	return (target: any, propertyKey: string | symbol) => {
 		const store = routeStore.apply(target.constructor);

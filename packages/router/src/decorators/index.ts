@@ -14,4 +14,5 @@ export * from "./Patch";
 export * from "./Post";
 export * from "./Put";
 export * from "./Query";
+export * from "./RouterHook";
 export * from "./Use";

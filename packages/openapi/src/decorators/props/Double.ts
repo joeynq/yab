@@ -1,6 +1,6 @@
-import { type TNumber, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { NumberOptions } from "@sinclair/typebox";
+import { Number } from "./Number";
 
-export function Double(options?: TNumber & { nullable?: boolean }) {
-	return Prop(() => Type.Number({ format: "double" }), options);
+export function Double(options?: NumberOptions & { nullable?: boolean }) {
+	return Number({ ...options, format: "double" });
 }

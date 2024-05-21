@@ -4,7 +4,7 @@ import { type OpenAPIConfig, OpenAPIModule } from "./OpenAPIModule";
 
 export const openapi = (
 	path: string,
-	options?: Omit<OpenAPIConfig, "path">,
+	options: Omit<OpenAPIConfig, "path">,
 ): UseModule<Class<OpenAPIModule>, OpenAPIConfig> => {
 	return {
 		module: OpenAPIModule,

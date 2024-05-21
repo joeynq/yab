@@ -1,6 +1,7 @@
 {
 	"name": "vermi",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"build": "turbo build",
 		"watch": "turbo run watch --concurrency 20",
@@ -8,9 +9,11 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.7.1",
+		"@ibm-cloud/openapi-ruleset": "^1.16.0",
 		"@stoplight/spectral-documentation": "^1.3.1",
 		"@stoplight/spectral-owasp-ruleset": "^2.0",
 		"@types/bun": "latest",
+		"chalk": "4.1.2",
 		"globals": "^15.2.0",
 		"lefthook": "^1.6.10",
 		"turbo": "^1.13.3"
@@ -25,8 +28,6 @@
 		"@commitlint/config-conventional": "^19.2.2"
 	},
 	"trustedDependencies": ["@biomejs/biome", "@swc/core", "esbuild", "lefthook"],
-	"module": "index.ts",
-	"type": "module",
 	"peerDependencies": {
 		"typescript": "^5.4.5"
 	}

@@ -1,15 +1,12 @@
-import { type TString, Type } from "@sinclair/typebox";
-import { Prop } from "./Prop";
+import type { StringOptions } from "@sinclair/typebox";
+import { String } from "./String";
 
 export function Pattern(
 	pattern: RegExp | string,
-	options?: TString & { nullable?: boolean },
+	options?: StringOptions & { nullable?: boolean },
 ) {
-	return Prop(
-		() =>
-			Type.String({
-				pattern: typeof pattern === "string" ? pattern : pattern.source,
-			}),
-		options,
-	);
+	return String({
+		...options,
+		pattern: typeof pattern === "string" ? pattern : pattern.source,
+	});
 }

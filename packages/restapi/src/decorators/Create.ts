@@ -1,6 +1,6 @@
 import { useDecorators } from "@vermi/core";
-import { Responses, generic } from "@vermi/openapi";
-import { BadRequest, Conflict, Post } from "@vermi/router";
+import { Returns, generic } from "@vermi/openapi";
+import { Post, RouterException } from "@vermi/router";
 import { type Class, snakeCase } from "@vermi/utils";
 import { Single } from "../models";
 
@@ -9,8 +9,7 @@ export function Create(resource: Class<any>) {
 		Post("/", {
 			operationId: snakeCase(`create_${resource.name.toLowerCase()}`),
 		}),
-		Responses(201, generic(Single).of(resource)),
-		Responses(400, new BadRequest("").toSchema()),
-		Responses(409, new Conflict("").toSchema()),
+		Returns(201, generic(Single).of(resource)),
+		Returns(401, RouterException.schema),
 	);
 }

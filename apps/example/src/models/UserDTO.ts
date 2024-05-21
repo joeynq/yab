@@ -1,23 +1,32 @@
-import { Integer, Model, Prop, String } from "@vermi/openapi";
+import { Email, Model, Prop, String, Uuid } from "@vermi/openapi";
 import { Resource, SearchParams } from "@vermi/restapi";
 
 @Resource("User")
 export class UserDTO {
-	@Integer()
-	id!: number;
+	@Uuid()
+	id!: string;
 
-	@String()
+	@String({ maxLength: 255 })
 	firstName!: string;
 
-	@String()
+	@String({ maxLength: 255 })
 	lastName!: string;
 
-	@String()
+	@Email()
 	email!: string;
 }
 
 @Model()
-export class UserSearch extends SearchParams<UserDTO> {
+export class UserFilter {
+	@String({ nullable: true, description: "First name" })
+	firstName?: string;
+
+	@String({ nullable: true, description: "Last name" })
+	lastName?: string;
+}
+
+@Model()
+export class UserSearch extends SearchParams<UserFilter> {
 	@Prop({ nullable: true, description: "Filter options" })
-	filter?: UserDTO;
+	filter?: UserFilter;
 }

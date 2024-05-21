@@ -9,18 +9,9 @@ interface RateLimiterRes {
 }
 
 export class TooManyRequests extends RouterException {
-	constructor(
-		message: string,
-		protected rateLimit: RateLimiterRes,
-		cause?: Error,
-	) {
-		super(HttpErrorCodes.TooManyRequests, message, cause);
-	}
+	code = "router:too_many_requests";
 
-	toJSON() {
-		return {
-			...super.toJSON(),
-			rateLimit: this.rateLimit,
-		};
+	constructor(message: string, cause?: Error) {
+		super(HttpErrorCodes.TooManyRequests, message, cause);
 	}
 }

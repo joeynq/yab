@@ -1,32 +1,35 @@
-import { type TSchema } from "@sinclair/typebox";
+import { type TSchema, Type, TypeGuard } from "@sinclair/typebox";
 import { UseCache } from "@vermi/cache";
 import { getStoreData } from "@vermi/core";
 import {
-	InternalServerError,
 	type Operation,
 	type Parameter,
 	type RequestBody,
-	TooManyRequests,
-	exceptions,
+	RouterException,
 	getRoutes,
 } from "@vermi/router";
+import { camelCase, kebabCase, pascalCase, snakeCase } from "@vermi/utils";
 import {
 	type OpenAPIObject,
 	OpenApiBuilder,
 	type OperationObject,
+	type PathItemObject,
 	type SecuritySchemeObject,
 } from "openapi3-ts/oas31";
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
-import { createExceptionResponse } from "../utils/createResponse";
-import { referTo } from "../utils/referTo";
-import { removeUnused } from "../utils/removeUnused";
 import { corsSchema, rateLimitSchemas } from "./builtin";
 
 export interface OpenAPIFeatures {
 	cors?: boolean;
 	rateLimit?: boolean;
 	default500?: boolean;
+}
+
+interface BuildSpecsOptions {
+	serverUrl: string;
+	title: string;
+	casing?: "camel" | "snake" | "pascal" | "kebab";
 }
 
 export class OpenAPIService {
@@ -37,20 +40,44 @@ export class OpenAPIService {
 		rateLimit: false,
 	};
 
+	#casingFn?: (str: string) => string;
+
 	constructor(rootDoc: OpenAPIObject, features?: OpenAPIFeatures) {
 		this.#builder = new OpenApiBuilder();
 		this.#builder.rootDoc = rootDoc;
+		this;
 
 		if (features) {
 			this.#features = features;
 		}
 	}
 
+	#chooseCasing(casing?: "camel" | "snake" | "pascal" | "kebab") {
+		switch (casing) {
+			case "camel":
+				this.#casingFn = camelCase;
+				break;
+			case "snake":
+				this.#casingFn = snakeCase;
+				break;
+			case "pascal":
+				this.#casingFn = pascalCase;
+				break;
+			case "kebab":
+				this.#casingFn = kebabCase;
+				break;
+		}
+	}
+
 	#buildOperation = (path: string, operation: Operation) => {
-		const { method, route, operationId } = utils.getNames(path, operation);
+		const { method, route, operationId } = utils.getNames(
+			path,
+			operation,
+			this.#casingFn,
+		);
 
 		const item: OperationObject = {
-			operationId: operationId,
+			operationId,
 			responses: operation.responses,
 			summary: `${method.toUpperCase()} ${route}`,
 		};
@@ -59,8 +86,8 @@ export class OpenAPIService {
 			| Parameter[]
 			| undefined;
 
-		if (parameterArgs) {
-			item.parameters = utils.buildParameters(parameterArgs);
+		if (parameterArgs?.length) {
+			item.parameters = utils.buildParameters(route, parameterArgs);
 		}
 
 		const requestBody = operation.args?.find((arg) => arg.in === "body") as
@@ -81,26 +108,19 @@ export class OpenAPIService {
 		if (this.#features.rateLimit) {
 			options.headers = {
 				...options.headers,
-				...referTo("headers", [
+				...utils.referTo("headers", [
 					"X-RateLimit-Limit",
 					"X-RateLimit-Remaining",
 					"X-RateLimit-Reset",
 					"Retry-After",
 				]),
 			};
-			operation.responses?.set(429, createExceptionResponse(TooManyRequests));
 		}
 		if (this.#features.cors) {
 			options.headers = {
 				...options.headers,
-				...referTo("headers", ["Access-Control-Allow-Origin"]),
+				...utils.referTo("headers", ["Access-Control-Allow-Origin"]),
 			};
-		}
-		if (this.#features.default500) {
-			operation.responses?.set(
-				500,
-				createExceptionResponse(InternalServerError),
-			);
 		}
 
 		if (operation.responses) {
@@ -110,10 +130,67 @@ export class OpenAPIService {
 			};
 		}
 
-		this.#builder.addPath(route, { [method]: item });
+		const pathItem: PathItemObject = {
+			[method]: item,
+		};
+
+		const parameters = utils.buildPathParams(route, parameterArgs || []);
+		if (parameters) {
+			pathItem.parameters = parameters;
+		}
+
+		this.#builder.addPath(route, pathItem);
 	};
 
-	#addSchema(schema: TSchema) {}
+	#changeCase(schema: TSchema) {
+		if (this.#casingFn) {
+			return utils.changePropCase(schema, this.#casingFn);
+		}
+		return schema;
+	}
+
+	#addSchemas(schemas: TSchema[]) {
+		const addMore = (schema: TSchema) => {
+			if (!schema.$id) {
+				return;
+			}
+			if (schemas.every((s) => s.$id !== schema.$id)) {
+				schemas.push(schema);
+			}
+		};
+		// recursive function to find all nested schemas
+		const findNested = (schema: TSchema) => {
+			if (TypeGuard.IsObject(schema)) {
+				const properties = schema.properties || {};
+
+				for (const [name, value] of Object.entries(properties)) {
+					if (TypeGuard.IsObject(value)) {
+						if (value.$id) {
+							addMore(value);
+							properties[name] = Type.Ref(value.$id);
+							schema.properties = properties;
+						}
+						findNested(value);
+					} else if (TypeGuard.IsArray(value)) {
+						if (value.items?.$id) {
+							addMore(value.items);
+							properties[name].items = Type.Ref(value.items.$id);
+							schema.properties = properties;
+						}
+						findNested(value.items);
+					}
+				}
+			}
+		};
+
+		for (const schema of schemas) {
+			findNested(schema);
+		}
+		for (const schema of schemas) {
+			const name = schema.$id?.split("/").pop();
+			name && this.#builder.addSchema(name, schema);
+		}
+	}
 
 	#enableCors() {
 		if (this.#features.cors) {
@@ -140,10 +217,16 @@ export class OpenAPIService {
 	}
 
 	@UseCache()
-	async buildSpecs(serverUrl: string, title: string) {
+	async buildSpecs({ serverUrl, title, casing }: BuildSpecsOptions) {
+		this.#chooseCasing(casing);
 		const routes = getRoutes();
 
-		const schemas = getStoreData<TSchema[]>(ModelStoreKey);
+		const unfiltered = getStoreData<TSchema[]>(ModelStoreKey).filter(
+			(schema) => schema.$id,
+		);
+		const schemas = [
+			...new Map(unfiltered.map((pos) => [pos.$id, pos])).values(),
+		];
 
 		const url = serverUrl.replace(/\/$/, "");
 
@@ -156,31 +239,38 @@ export class OpenAPIService {
 		this.#enableCors();
 		this.#enableRateLimit();
 
-		for (const schema of schemas) {
-			if (schema.type === "null") {
-				continue;
-			}
-			if (schema.$id) {
-				const name = schema.$id.split("/").pop();
-				const { $id, ...rest } = schema;
-				this.#builder.addSchema(String(name), rest);
-			}
+		this.#addSchemas(
+			[...schemas, RouterException.schema].map((s) => this.#changeCase(s)),
+		);
+
+		const options: utils.ResponseOptions = {};
+
+		if (this.#features.rateLimit) {
+			options.headers = {
+				...options.headers,
+				...utils.referTo("headers", [
+					"X-RateLimit-Limit",
+					"X-RateLimit-Remaining",
+					"X-RateLimit-Reset",
+					"Retry-After",
+				]),
+			};
+		}
+		if (this.#features.cors) {
+			options.headers = {
+				...options.headers,
+				...utils.referTo("headers", ["Access-Control-Allow-Origin"]),
+			};
 		}
 
-		for (const Exception of exceptions) {
-			// @ts-expect-error
-			const schema = new Exception("", {}).toSchema();
-			if (schema.$id) {
-				const name = schema.$id.split("/").pop() || Exception.name;
-				const { $id, ...rest } = schema;
-				this.#builder.addSchema(name, rest);
-			}
-		}
+		const errorResponse = utils.buildExceptionResponses(options);
+
+		this.#builder.addResponse("RouterException", errorResponse);
 
 		for (const [path, operation] of routes) {
 			this.#buildOperation(path, operation);
 		}
 
-		return removeUnused(this.#builder.getSpec());
+		return utils.removeUnused(this.#builder.getSpec());
 	}
 }

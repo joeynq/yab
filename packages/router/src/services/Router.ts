@@ -1,10 +1,15 @@
-import type { AppContext, Hooks, RequestContext } from "@vermi/core";
+import type {
+	AppContext,
+	Hooks,
+	RequestContext,
+	_RequestContext,
+} from "@vermi/core";
 import { ensure } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
 import { RouterEvent, type RouterEventMap } from "../event";
-import { NotFound } from "../exceptions";
+import { BadRequest, NotFound } from "../exceptions";
 import type { RouteMatch, ValidationFn } from "../interfaces";
-import { getRequestPayload, getRequestScope, validate } from "../utils";
+import { getRequestScope, validate } from "../utils";
 
 type ConsoleTable = {
 	method: string;
@@ -54,21 +59,53 @@ export class Router {
 	}
 
 	async #getHandlerArguments() {
-		const request = this.context.resolve("request") as Request;
-		const args = await getRequestPayload(request, this.route);
-
-		for (const arg of args) {
-			if (arg.schema) {
-				await this.#validator(arg.schema, arg.payload, this.route);
-				if (arg.pipes) {
-					for (const pipe of arg.pipes) {
-						arg.payload = await this.context.build(pipe).map(arg.payload);
-					}
-				}
-			}
+		const payload = this.context.resolve<_RequestContext["payload"]>("payload");
+		const args = this.route.store.args;
+		if (!args) {
+			return [];
 		}
 
-		return args.map((el) => el.payload);
+		const values: any[] = [];
+
+		for (const arg of args) {
+			let value: any = undefined;
+			switch (arg.in) {
+				case "path":
+					value = this.route.params;
+					break;
+				case "query":
+					value = payload.query;
+					break;
+				case "body":
+					value = payload.body;
+					break;
+				case "header":
+					value = payload.headers;
+					break;
+				case "cookie":
+					value = payload.cookies;
+					break;
+			}
+
+			if (arg.required && value === undefined) {
+				throw new BadRequest(`Missing required parameter: ${arg.name}`);
+			}
+
+			if (arg.schema && value !== undefined) {
+				// value = Value.Clean(arg.schema, value);
+				await this.#validator(arg.schema, value, this.route);
+			}
+
+			if (arg.pipes) {
+				for (const pipe of arg.pipes) {
+					value = await this.context.build(pipe).map(value);
+				}
+			}
+
+			values.push(value);
+		}
+
+		return values;
 	}
 
 	addRoute(method: string, path: string, store: RouteMatch): RouteMatch {
