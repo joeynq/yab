@@ -226,11 +226,13 @@ export class Vermi {
 			this.#registerServices();
 			this.#initModules();
 
-			const { configuration, logger, hooks } = container.cradle;
+			const { hooks } = container.cradle;
 
 			hooks.useContext(container.expose());
 
 			await hooks.invoke(AppEvents.OnInit, [container.expose()]);
+
+			const { configuration, logger } = container.cradle;
 
 			// console.table(this.#hooks.debug);
 
