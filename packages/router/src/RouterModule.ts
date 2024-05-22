@@ -14,8 +14,14 @@ import {
 	hookStore,
 	saveStoreData,
 } from "@vermi/core";
-import { type Class, ensure } from "@vermi/utils";
-import { parse } from "qs";
+import {
+	type Class,
+	ensure,
+	getCookies,
+	parseQuery,
+	pathname,
+	stringify,
+} from "@vermi/utils";
 import type { HttpMethod } from "./enums";
 import { RouterEvent, type RouterEventMap } from "./event";
 import type {
@@ -89,7 +95,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 	}
 
 	#getConfig(): RouterModuleConfig;
-	#getConfig(request: Request): RouterOptions;
+	#getConfig(request: Request): RouterOptions & { mount: SlashedPath };
 	#getConfig(request?: Request) {
 		const config = this.getConfig();
 
@@ -97,33 +103,23 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			return config;
 		}
 
-		const path = new URL(request.url).pathname.split("/")[1];
+		const path = pathname(request.url).split("/")[1];
 		const mount = `/${path}` as SlashedPath;
 
-		return config[mount];
+		return { ...config[mount], mount };
 	}
 
 	async #payloadCasing(casing: CasingType, context: RequestContext) {
 		const service = casingFactory(casing);
 		const { request } = context.store;
 
-		const query = new URL(request.url).search
-			? parse(new URL(request.url).search, {
-					ignoreQueryPrefix: true,
-					plainObjects: true,
-				})
-			: undefined;
+		const query = parseQuery(request.url) || undefined;
 
 		const body = await request.text();
 
 		const headers = Object.fromEntries(request.headers);
 
-		const cookies = Object.fromEntries(
-			request.headers
-				.get("cookie")
-				?.split(";")
-				.map((cookie) => cookie.split("=")) || [],
-		);
+		const cookies = getCookies(request.headers.get("cookie") || "");
 
 		context.register(
 			"payload",
@@ -145,7 +141,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 		const body = await response.json();
 
-		return new Response(JSON.stringify(service.convert(body as object)), {
+		return new Response(stringify(service.convert(body as object)), {
 			status: response.status,
 			headers: response.headers,
 		});
@@ -182,14 +178,16 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 			saveStoreData(routeStore.token, routeStore.combineStore(...controllers));
 
-			if (options?.casing?.internal) {
+			const { interfaces, internal = "camel" } = options?.casing || {};
+
+			if (interfaces && internal && interfaces !== internal) {
 				context.store.hooks.register(RouterEvent.BeforeRoute, {
-					handler: this.#payloadCasing.bind(this, options.casing.internal),
+					handler: this.#payloadCasing.bind(this, internal),
+					scope: prefix,
 				});
-			}
-			if (options?.casing?.interfaces) {
 				context.store.hooks.register(RouterEvent.AfterRoute, {
-					handler: this.#responseCasing.bind(this, options.casing.interfaces),
+					handler: this.#responseCasing.bind(this, interfaces),
+					scope: prefix,
 				});
 			}
 		}
@@ -226,6 +224,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		}
 
 		const {
+			mount,
 			customValidation,
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
@@ -242,7 +241,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 		await hooks.invoke(RouterEvent.Init, [context]);
 
-		await hooks.invoke(RouterEvent.BeforeRoute, [context]);
+		await hooks.invoke(RouterEvent.BeforeRoute, [context], { scope: mount });
 
 		const response = await this.#router.handleRequest(
 			responseHandler,
@@ -252,7 +251,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		const newResponse = await hooks.invoke(
 			RouterEvent.AfterRoute,
 			[context, response],
-			{ breakOn: (result) => result instanceof Response },
+			{ breakOn: (result) => result instanceof Response, scope: mount },
 		);
 
 		return newResponse;

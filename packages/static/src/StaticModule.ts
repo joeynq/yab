@@ -7,6 +7,7 @@ import {
 	type RequestContext,
 	VermiModule,
 } from "@vermi/core";
+import { pathname } from "@vermi/utils";
 import { generateETag, isCached } from "./utils";
 
 export type SlashedPath = `/${string}`;
@@ -53,7 +54,7 @@ export class StaticModule extends VermiModule<
 	}
 
 	#getPrefix(request: Request) {
-		const path = new URL(request.url).pathname.split("/")[1];
+		const path = pathname(request.url).split("/")[1];
 		const mount = `/${path}` as SlashedPath;
 
 		return Object.hasOwn(this.config, mount) ? mount : undefined;
@@ -63,7 +64,7 @@ export class StaticModule extends VermiModule<
 		const { assetsDir, direct } = config;
 		const isAbsolute = assetsDir.startsWith("/");
 
-		const url = new URL(request.url).pathname;
+		const url = pathname(request.url);
 
 		try {
 			if (!direct) {
@@ -130,7 +131,7 @@ export class StaticModule extends VermiModule<
 			return;
 		}
 
-		const url = new URL(request.url);
+		let path = pathname(request.url);
 
 		const config = this.config[prefix];
 
@@ -141,18 +142,18 @@ export class StaticModule extends VermiModule<
 			index,
 		} = config;
 
-		if (index && url.pathname.endsWith("/")) {
-			url.pathname += index;
+		if (index && path.endsWith("/")) {
+			path += index;
 		}
 
-		const ext = url.pathname.split(".").pop();
+		const ext = path.split(".").pop();
 		if (!ext || !extensions.includes(`.${ext}`)) {
 			return;
 		}
 
 		if (ignorePatterns) {
 			for (const pattern of ignorePatterns) {
-				if (RegExp(pattern).exec(url.pathname)) {
+				if (RegExp(pattern).exec(path)) {
 					return;
 				}
 			}

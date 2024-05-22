@@ -1,4 +1,4 @@
-import { type Class, deepMerge, ensure, uuid } from "@vermi/utils";
+import { type Class, deepMerge, ensure, pathIs, uuid } from "@vermi/utils";
 import {
 	type BuildResolver,
 	InjectionMode,
@@ -153,18 +153,15 @@ export class Vermi {
 
 						const result = await hooks.invoke(
 							AppEvents.OnRequest,
-							[stored.expose()],
+							[stored.expose(), server],
 							{
 								breakOn: "resultOrError",
 							},
 						);
 
-						const url = new URL(request.url).pathname;
-
-						const defaultResponse =
-							url === "/"
-								? new Response("OK", { status: 200 })
-								: new Response("Not Found", { status: 404 });
+						const defaultResponse = pathIs(request.url, "/")
+							? new Response("OK", { status: 200 })
+							: new Response("Not Found", { status: 404 });
 
 						const response = result || defaultResponse;
 

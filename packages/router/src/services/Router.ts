@@ -4,7 +4,7 @@ import type {
 	RequestContext,
 	_RequestContext,
 } from "@vermi/core";
-import { ensure } from "@vermi/utils";
+import { ensure, pathname } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
 import { RouterEvent, type RouterEventMap } from "../event";
 import { BadRequest, NotFound } from "../exceptions";
@@ -43,14 +43,11 @@ export class Router {
 	}
 
 	#ensureMatch() {
-		const request = this.context.resolve("request") as Request;
-		const serverUrl = this.context.resolve("serverUrl") as string;
-
-		const url = new URL(request.url, serverUrl);
+		const request = this.context.resolve<Request>("request");
 
 		const match = this.#matcher.find(
 			request.method.toLowerCase(),
-			url.pathname,
+			pathname(request.url),
 		);
 
 		ensure(match, new NotFound(`${request.method} ${request.url} not found`));

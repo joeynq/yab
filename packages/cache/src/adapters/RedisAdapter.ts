@@ -1,3 +1,4 @@
+import { ensure, stringify } from "@vermi/utils";
 import { Redis, type RedisOptions } from "ioredis";
 import type { CacheAdapter } from "../interfaces";
 
@@ -13,10 +14,13 @@ export class RedisAdapter implements CacheAdapter {
 	}
 
 	async set(key: string, value: any, ttl?: number) {
+		const val = value ? stringify(value) : undefined;
+		ensure(val, new Error("Value must be defined"));
+
 		if (ttl) {
-			await this.#client.set(key, JSON.stringify(value), "EX", ttl);
+			await this.#client.set(key, val, "EX", ttl);
 		}
-		await this.#client.set(key, JSON.stringify(value));
+		await this.#client.set(key, val);
 	}
 
 	async delete(key: string) {

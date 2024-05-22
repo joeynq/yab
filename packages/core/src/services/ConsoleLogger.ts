@@ -1,4 +1,4 @@
-import { format, omitUndefined } from "@vermi/utils";
+import { format, omitUndefined, stringify } from "@vermi/utils";
 import { Chalk, type ChalkInstance } from "chalk";
 import { logLevelOrder } from "../enum";
 import type { LogLevel, LogOptions } from "../interfaces";
@@ -115,7 +115,7 @@ export class ConsoleLogger extends BaseLogger<Console> {
 			if (typeof args[0] === "string") {
 				message = args[0];
 			} else {
-				message = JSON.stringify(args[0]);
+				message = stringify(args[0]) ?? "";
 			}
 		} else {
 			message = args[1];
