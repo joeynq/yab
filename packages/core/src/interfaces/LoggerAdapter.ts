@@ -10,10 +10,7 @@ export type LogLevel =
 	| "fatal"
 	| "silent";
 
-export type LoggerContext = Pick<
-	_RequestContext,
-	"requestId" | "serverUrl" | "userIp" | "userAgent"
->;
+export type LoggerContext = Pick<_RequestContext, "traceId">;
 
 export interface LogOptions<Logger extends Dictionary | object> {
 	context?: LoggerContext;

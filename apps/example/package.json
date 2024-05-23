@@ -17,6 +17,7 @@
 		"@vermi/router": "link:@vermi/router",
 		"@vermi/security": "link:@vermi/security",
 		"@vermi/static": "link:@vermi/static",
+		"@vermi/ws": "link:@vermi/ws",
 		"@vermi/yoga": "link:@vermi/yoga",
 		"awilix": "^10.0.2",
 		"reflect-metadata": "^0.2.2"

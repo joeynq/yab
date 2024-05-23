@@ -2,6 +2,9 @@ import { decode, encode } from "@msgpack/msgpack";
 import { type ExtractParams } from "@vermi/utils";
 import { type EventType, WsEvent } from "./WsEvent";
 
+// const encode = (data: any) => Buffer.from(JSON.stringify(data));
+// const decode = (data: Uint8Array) => JSON.parse(data.toString());
+
 export interface EventOptions {
 	auth?: string;
 	invoker?: string;
@@ -49,11 +52,13 @@ export class WsMessage<
 		});
 	}
 
-	static unpack(sid: string, packed: Uint8Array) {
-		const data = decode(packed) as Pack<any, any>;
-		return new WsMessage(sid, data.channel, data.data, {
-			auth: data.auth,
-			invoker: data.invoker,
+	static unpack(sid: string, packed: Buffer | string) {
+		const { channel, data, event, auth, invoker } = decode(
+			Buffer.from(packed),
+		) as Pack<any, any>;
+		return new WsMessage(sid, channel, event, data, {
+			auth: auth,
+			invoker: invoker,
 		});
 	}
 }

@@ -1,6 +1,5 @@
 import { type Class, deepMerge, ensure, pathIs, uuid } from "@vermi/utils";
 import {
-	type BuildResolver,
 	InjectionMode,
 	Lifetime,
 	asClass,
@@ -26,7 +25,6 @@ import {
 	ContextService,
 	Hooks,
 } from "./services";
-import { hookStore } from "./store";
 import { enhance } from "./utils";
 
 export class Vermi {
@@ -64,6 +62,7 @@ export class Vermi {
 
 	#registerServices() {
 		this.#container.register({
+			contextService: asValue(this.#context),
 			appConfig: asValue(this.#options),
 			_logger: asValue(this.#logger),
 			env: asValue(this.#options?.env || {}),
@@ -72,12 +71,9 @@ export class Vermi {
 				resolve: (c) => {
 					const _logger = c.resolve<LoggerAdapter>("_logger");
 
-					if (c.hasRegistration("requestId")) {
+					if (c.hasRegistration("traceId")) {
 						return _logger.useContext({
-							requestId: c.resolve("requestId"),
-							serverUrl: c.resolve("serverUrl"),
-							userIp: c.resolve("userIp"),
-							userAgent: c.resolve("userAgent"),
+							traceId: c.resolve("traceId"),
 						});
 					}
 					return _logger;
@@ -90,30 +86,11 @@ export class Vermi {
 	}
 
 	#initModules() {
-		const registering: Record<string, BuildResolver<any>> = {};
-		const modules: any[] = [];
-		for (const [name, { module }] of this.#options.modules) {
-			const resolver = asClass(module);
-			modules.push(this.#container.build(resolver));
+		const modules = Array.from(this.#options.modules.values()).map(
+			({ module }) => module,
+		);
 
-			registering[name] = resolver;
-		}
-
-		this.#container.register(registering);
-
-		for (const module of modules) {
-			const moduleHooks = hookStore.apply(module.constructor).get();
-			for (const [event, handlers] of moduleHooks.entries()) {
-				for (const { target, handler, scope } of handlers) {
-					this.#hooks.register(event as any, {
-						target:
-							target?.name === module.constructor.name ? undefined : target,
-						handler: handler.bind(module),
-						scope,
-					});
-				}
-			}
-		}
+		this.#container.registerServices(...modules);
 	}
 
 	#runInRequestContext(
@@ -127,7 +104,7 @@ export class Vermi {
 				async (stored: EnhancedContainer<_RequestContext>) => {
 					try {
 						stored.register({
-							requestId: asValue(request.headers.get("x-request-id") ?? uuid()),
+							traceId: asValue(request.headers.get("x-request-id") ?? uuid()),
 							request: asValue(request),
 							serverUrl: asValue(server.url.toJSON()),
 							userIp: asValue(server.requestIP(request) || undefined),
@@ -146,7 +123,7 @@ export class Vermi {
 						for (const [key, value] of Object.entries(
 							this.#customContext?.(stored.cradle) || {},
 						)) {
-							stored.registerValue(key, value);
+							stored.register(key, asValue(value));
 						}
 
 						await hooks.invoke(AppEvents.OnEnterContext, [stored.expose()]);
@@ -171,6 +148,7 @@ export class Vermi {
 						]);
 						resolve(response);
 					} catch (error) {
+						stored.cradle.logger.error(error as Error);
 						if (error instanceof HttpException) {
 							return resolve(error.toResponse());
 						}

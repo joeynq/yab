@@ -1,8 +1,8 @@
-import type { AnyClass, Dictionary, MaybePromiseFunction } from "@vermi/utils";
+import type { Class, Dictionary, MaybePromiseFunction } from "@vermi/utils";
 import type { AwilixContainer } from "awilix";
 import type { SocketAddress } from "bun";
 import type { Vermi } from "../Vermi";
-import type { Configuration, Hooks } from "../services";
+import type { Configuration, ContextService, Hooks } from "../services";
 import type { LoggerAdapter } from "./LoggerAdapter";
 
 export type InjectionToken<T> = string | (new (...args: any[]) => T);
@@ -15,16 +15,9 @@ export enum InjectionScope {
 
 export interface EnhancedContainer<Context extends object>
 	extends AwilixContainer<Context> {
-	registerValue<T>(token: InjectionToken<T>, value: AnyClass<T>): void;
-	registerValue<T>(
-		token: InjectionToken<T>,
-		value: T,
-		scope?: InjectionScope,
-	): void;
+	registerServices<T>(...serviceClasses: Class<T>[]): Record<string, T>;
 
 	resolveValue<T>(token: InjectionToken<T>): T;
-
-	isRegistered<T>(token: InjectionToken<T>): boolean;
 
 	expose(): ExposedContext<Context>;
 
@@ -37,12 +30,13 @@ export interface _AppContext {
 	logger: LoggerAdapter;
 	hooks: Hooks<Dictionary<string>, Dictionary<MaybePromiseFunction>>;
 	configuration: Configuration;
+	contextService: ContextService;
 	[key: string]: unknown;
 }
 
 export interface _RequestContext extends _AppContext {
 	request: Request;
-	requestId: string;
+	traceId: string;
 	serverUrl: string;
 	userIp?: SocketAddress;
 	userAgent?: string;
@@ -52,6 +46,7 @@ export type ExposedContext<Context extends object = _RequestContext> = {
 	store: Context;
 	resolve: EnhancedContainer<Context>["resolveValue"];
 	register: AwilixContainer<Context>["register"];
+	registerServices: EnhancedContainer<Context>["registerServices"];
 	build: AwilixContainer<Context>["build"];
 };
 

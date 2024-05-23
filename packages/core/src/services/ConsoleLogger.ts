@@ -160,11 +160,11 @@ export class ConsoleLogger extends BaseLogger<Console> {
 				? this.chalk.red(message)
 				: message;
 
-		if (this.context?.requestId) {
-			const requestId = this.chalk.whiteBright(`${this.context.requestId}`);
+		if (this.context?.traceId) {
+			const traceId = this.chalk.whiteBright(`${this.context.traceId}`);
 
 			return this.chalk.cyan(
-				`[${date}] ${coloredLevel} ${requestId} ${coloredMessage}`,
+				`[${date}] ${coloredLevel} ${traceId} ${coloredMessage}`,
 			);
 		}
 		return this.chalk.cyan(`[${date}] ${coloredLevel} ${coloredMessage}`);
