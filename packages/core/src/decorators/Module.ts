@@ -1,6 +1,12 @@
+import type { Class } from "@vermi/utils";
 import { useDecorators } from "../utils";
+import { Deps } from "./Deps";
 import { Injectable } from "./Injectable";
 
-export const Module = () => {
-	return useDecorators(Injectable("SINGLETON"));
+export interface ModuleOptions {
+	deps?: Class<any>[];
+}
+
+export const Module = ({ deps = [] }: ModuleOptions = {}) => {
+	return useDecorators(Injectable("SINGLETON"), Deps(...deps));
 };

@@ -1,4 +1,5 @@
 import { render } from "@react-email/render";
+import { Config, Injectable } from "@vermi/core";
 import type { FC } from "react";
 import type { AdapterConfigMap, SendWithTemplateOptions } from "../interfaces";
 
@@ -7,10 +8,14 @@ interface NotificationServiceOptions {
 	templates: Record<string, FC>;
 }
 
+@Injectable("SINGLETON")
 export class NotificationService {
 	#worker: Worker;
 
-	constructor(public options: NotificationServiceOptions) {
+	@Config("NotificationModule")
+	config!: NotificationServiceOptions;
+
+	constructor() {
 		this.#worker = this.#createWorker();
 	}
 
@@ -20,7 +25,7 @@ export class NotificationService {
 	}
 
 	#compileTemplate(template: string, data: any) {
-		const Template = this.options.templates[template];
+		const Template = this.config.templates[template];
 		return render(<Template {...data} />);
 	}
 
@@ -44,7 +49,7 @@ export class NotificationService {
 		const content = this.#compileTemplate(options.template, options.data);
 
 		this.#worker.postMessage({
-			config: this.options.channels[options.channel],
+			config: this.config.channels[options.channel],
 			// @ts-ignore
 			sendOptions: { ...options, content },
 		});

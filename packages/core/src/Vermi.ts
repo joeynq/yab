@@ -1,13 +1,7 @@
-import { type Class, deepMerge, ensure, uuid } from "@vermi/utils";
-import {
-	type BuildResolver,
-	InjectionMode,
-	Lifetime,
-	asClass,
-	asValue,
-	createContainer,
-} from "awilix";
+import { type Class, deepMerge, ensure, pathIs, uuid } from "@vermi/utils";
+import { InjectionMode, Lifetime, asValue, createContainer } from "awilix";
 import type { Server } from "bun";
+import { Module } from "./decorators";
 import { type AppEventMap, AppEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
@@ -26,29 +20,29 @@ import {
 	ContextService,
 	Hooks,
 } from "./services";
-import { hookStore } from "./store";
-import { enhance } from "./utils";
+import { enhance, registerProviders } from "./utils";
+
+@Module({ deps: [Configuration, Hooks] })
+class AppModule {}
 
 export class Vermi {
 	#logger: LoggerAdapter;
-	#context = new ContextService();
 	#container = enhance(
 		createContainer<_AppContext>({
 			injectionMode: InjectionMode.CLASSIC,
 			strict: true,
 		}),
 	);
-	#hooks = new Hooks<typeof AppEvents, AppEventMap>();
 
 	#customContext?: (ctx: _RequestContext) => Record<string, unknown>;
 
 	#options: AppOptions;
 
+	#context = new ContextService();
+
 	get hooks() {
 		const hooks =
-			this.#context.context?.resolve<Hooks<typeof AppEvents, AppEventMap>>(
-				"hooks",
-			);
+			this.#container.resolve<Hooks<typeof AppEvents, AppEventMap>>("hooks");
 		ensure(hooks);
 		return hooks;
 	}
@@ -72,48 +66,25 @@ export class Vermi {
 				resolve: (c) => {
 					const _logger = c.resolve<LoggerAdapter>("_logger");
 
-					if (c.hasRegistration("requestId")) {
+					if (c.hasRegistration("traceId")) {
 						return _logger.useContext({
-							requestId: c.resolve("requestId"),
-							serverUrl: c.resolve("serverUrl"),
-							userIp: c.resolve("userIp"),
-							userAgent: c.resolve("userAgent"),
+							traceId: c.resolve("traceId"),
 						});
 					}
 					return _logger;
 				},
 				lifetime: Lifetime.SCOPED,
 			},
-			configuration: asClass(Configuration),
-			hooks: asValue(this.#hooks),
+			contextService: asValue(this.#context),
 		});
 	}
 
 	#initModules() {
-		const registering: Record<string, BuildResolver<any>> = {};
-		const modules: any[] = [];
-		for (const [name, { module }] of this.#options.modules) {
-			const resolver = asClass(module);
-			modules.push(this.#container.build(resolver));
+		const modules = Array.from(this.#options.modules.values()).map(
+			({ module }) => module,
+		);
 
-			registering[name] = resolver;
-		}
-
-		this.#container.register(registering);
-
-		for (const module of modules) {
-			const moduleHooks = hookStore.apply(module.constructor).get();
-			for (const [event, handlers] of moduleHooks.entries()) {
-				for (const { target, handler, scope } of handlers) {
-					this.#hooks.register(event as any, {
-						target:
-							target?.name === module.constructor.name ? undefined : target,
-						handler: handler.bind(module),
-						scope,
-					});
-				}
-			}
-		}
+		registerProviders(AppModule, ...modules);
 	}
 
 	#runInRequestContext(
@@ -127,7 +98,7 @@ export class Vermi {
 				async (stored: EnhancedContainer<_RequestContext>) => {
 					try {
 						stored.register({
-							requestId: asValue(request.headers.get("x-request-id") ?? uuid()),
+							traceId: asValue(request.headers.get("x-request-id") ?? uuid()),
 							request: asValue(request),
 							serverUrl: asValue(server.url.toJSON()),
 							userIp: asValue(server.requestIP(request) || undefined),
@@ -141,30 +112,25 @@ export class Vermi {
 							AppEventMap
 						>;
 
-						hooks.useContext(stored.expose());
-
 						for (const [key, value] of Object.entries(
 							this.#customContext?.(stored.cradle) || {},
 						)) {
-							stored.registerValue(key, value);
+							stored.register(key, asValue(value));
 						}
 
 						await hooks.invoke(AppEvents.OnEnterContext, [stored.expose()]);
 
 						const result = await hooks.invoke(
 							AppEvents.OnRequest,
-							[stored.expose()],
+							[stored.expose(), server],
 							{
 								breakOn: "resultOrError",
 							},
 						);
 
-						const url = new URL(request.url).pathname;
-
-						const defaultResponse =
-							url === "/"
-								? new Response("OK", { status: 200 })
-								: new Response("Not Found", { status: 404 });
+						const defaultResponse = pathIs(request.url, "/")
+							? new Response("OK", { status: 200 })
+							: new Response("Not Found", { status: 404 });
 
 						const response = result || defaultResponse;
 
@@ -174,6 +140,7 @@ export class Vermi {
 						]);
 						resolve(response);
 					} catch (error) {
+						stored.cradle.logger.error(error as Error);
 						if (error instanceof HttpException) {
 							return resolve(error.toResponse());
 						}
@@ -226,11 +193,11 @@ export class Vermi {
 			this.#registerServices();
 			this.#initModules();
 
-			const { configuration, logger, hooks } = container.cradle;
-
-			hooks.useContext(container.expose());
+			const { hooks } = container.cradle;
 
 			await hooks.invoke(AppEvents.OnInit, [container.expose()]);
+
+			const { configuration, logger } = container.cradle;
 
 			// console.table(this.#hooks.debug);
 

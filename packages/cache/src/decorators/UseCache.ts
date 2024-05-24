@@ -1,4 +1,5 @@
 import { containerRef } from "@vermi/core";
+import { stringify } from "@vermi/utils";
 import type { CacheAdapter } from "../interfaces";
 
 export interface UseCacheOptions {
@@ -15,8 +16,8 @@ export function UseCache(options?: UseCacheOptions): MethodDecorator {
 		descriptor.value = async function (...args: any[]) {
 			const cacheKey = `${
 				target.constructor.name
-			}:${key.toString()}:${JSON.stringify(args)}`;
-			const cache = containerRef().resolveValue<CacheAdapter>("cache");
+			}:${key.toString()}:${stringify(args)}`;
+			const cache = containerRef().resolve<CacheAdapter>("cache");
 			const cached = await cache.get(cacheKey);
 
 			if (cached) {

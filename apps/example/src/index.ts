@@ -6,7 +6,9 @@ import { PinoLogger } from "@vermi/logger/pino";
 import { openapi } from "@vermi/openapi";
 import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
+import { WsModule } from "@vermi/ws";
 import { UserController } from "./controllers";
+import { TestSocket } from "./sockets/TestSocket";
 
 /*
 
@@ -55,6 +57,13 @@ new Vermi({ log: { level: "info" } })
 			},
 		}),
 	)
+	.use({
+		module: WsModule,
+		args: {
+			path: "/ws",
+			eventStores: [TestSocket],
+		},
+	})
 	.start((context, { port }) => {
 		context.resolve<LoggerAdapter>("logger")?.info(`Server started at ${port}`);
 	});

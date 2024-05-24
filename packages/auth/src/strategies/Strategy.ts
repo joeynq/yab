@@ -1,4 +1,5 @@
 import { type RequestContext, asValue } from "@vermi/core";
+import { getParam } from "@vermi/utils";
 import type { SecurityScheme } from "../interfaces";
 
 export abstract class Strategy<S> {
@@ -41,9 +42,7 @@ export abstract class Strategy<S> {
 			}
 		}
 		if (tokenFrom === "query") {
-			const url = new URL(request.url);
-			const token = url.searchParams.get(tokenName);
-			return token ?? undefined;
+			return getParam(request.url, "token") ?? undefined;
 		}
 		if (tokenFrom === "body") {
 			if (request.headers.get("content-type")?.includes("application/json")) {

@@ -2,6 +2,7 @@ import {
 	type AppContext,
 	AppHook,
 	type Configuration,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -26,10 +27,10 @@ export class YogaModule<
 > extends VermiModule<YogaModuleConfig<UserContext>> {
 	#yoga: YogaServerInstance<_AppContext, UserContext>;
 
-	constructor(
-		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-	) {
+	@Logger()
+	private logger!: LoggerAdapter;
+
+	constructor(protected configuration: Configuration) {
 		super();
 
 		this.#yoga = createYoga({

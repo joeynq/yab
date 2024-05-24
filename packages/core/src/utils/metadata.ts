@@ -1,6 +1,7 @@
 import {
-	type AnyClass,
+	type Class,
 	type DeepPartial,
+	camelCase,
 	deepMerge,
 	isClass,
 	isInstance,
@@ -37,12 +38,12 @@ export const mergeMetadata = <T extends object = object>(
 	);
 };
 
-export const getTokenName = (token: string | AnyClass): string => {
+export const getTokenName = (token: string | Class<any>): string => {
 	if (isClass(token)) {
-		return token.name;
+		return camelCase(token.name);
 	}
 	if (isInstance(token)) {
-		return token.constructor.name;
+		return camelCase(token.constructor.name);
 	}
-	return token;
+	return camelCase(token);
 };

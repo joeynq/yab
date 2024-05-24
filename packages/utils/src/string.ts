@@ -24,4 +24,13 @@ export function slugify(text: string, separator = "-") {
 		.replace(/--+/g, separator); // Replace multiple - with single -
 }
 
+// e.g. "/sad/:cardId/ses/:userId/sss" --> { cardId: string, userId: string }
+export type ExtractParams<T extends string> =
+	T extends `${string}:${infer P}/${infer R}`
+		? { [K in P]: string } & ExtractParams<R>
+		: T extends `${string}:${infer P}`
+			? { [K in P]: string }
+			: // biome-ignore lint/complexity/noBannedTypes: <explanation>
+				{};
+
 export * from "change-case";

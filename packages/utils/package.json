@@ -16,6 +16,8 @@
 	"dependencies": {
 		"change-case": "^5.4.4",
 		"deepmerge-ts": "^5.1.0",
+		"faster-qs": "^0.2.4",
+		"safe-stable-stringify": "^2.4.3",
 		"type-fest": "^4.18.2"
 	}
 }

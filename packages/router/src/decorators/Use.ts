@@ -7,7 +7,7 @@ export const Use = <Middleware extends Class<any>>(
 ): MethodDecorator => {
 	return useDecorators(
 		(target: any) => {
-			dependentStore.apply(target.constructor).addDependent(middleware);
+			dependentStore.apply(target.constructor).addDependents(middleware);
 		},
 		(target: any, propertyKey: string | symbol) => {
 			const middlewareHook = hookStore.apply(middleware).get();

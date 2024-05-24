@@ -103,8 +103,10 @@ export const flatten = <T extends Dictionary>(obj: unknown): T => {
 	return flattened;
 };
 
-export const toPlainObject = <T extends object>(obj: Class<T>): T => {
-	return JSON.parse(JSON.stringify(obj));
+export const toPlainObject = <T extends object>(
+	obj: InstanceType<Class<T>>,
+): T => {
+	return Object.assign({}, obj);
 };
 
 export function getVal<T extends object, P extends Path<T>>(
@@ -161,7 +163,6 @@ export const changeObjectCase = <T extends object>(
 	const result = {} as any;
 
 	for (const key in input) {
-		// @ts-expect-error
 		const value = input[key as keyof T];
 		if (Array.isArray(value)) {
 			result[fn(key)] = value.map((item) =>
@@ -176,5 +177,22 @@ export const changeObjectCase = <T extends object>(
 
 	return result;
 };
+
+export const mapToRecords = <
+	K extends string | number | symbol,
+	T extends object,
+>(
+	map: Map<K, T>,
+): Record<K, T> => {
+	const record = {} as Record<K, T>;
+
+	for (const [key, value] of map) {
+		record[key] = value;
+	}
+
+	return record;
+};
+
+export { stringify, configure as stringifyConfig } from "safe-stable-stringify";
 
 export * from "./internal/object";

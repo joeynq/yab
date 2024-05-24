@@ -5,7 +5,7 @@ import {
 	Type,
 } from "@sinclair/typebox";
 import { useDecorators } from "@vermi/core";
-import { limitSettings } from "../settings/values";
+import { limitSettings } from "../settings";
 import { type PropsStoreDto, propsStore } from "../stores";
 import { Model, type ModelOptions } from "./Model";
 import { Prop } from "./props";

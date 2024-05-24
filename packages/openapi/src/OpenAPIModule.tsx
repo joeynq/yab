@@ -1,6 +1,7 @@
 import {
 	AppHook,
 	type Configuration,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -12,7 +13,7 @@ import {
 	type RouterModuleConfig,
 	type SlashedPath,
 } from "@vermi/router";
-import { deepMerge } from "@vermi/utils";
+import { deepMerge, pathIs, pathStartsWith } from "@vermi/utils";
 import {
 	type OpenAPIObject,
 	type SecuritySchemeObject,
@@ -57,10 +58,10 @@ const defaultSpecs: OpenAPIObject = {
 export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 	#service: OpenAPIService;
 
-	constructor(
-		protected configuration: Configuration,
-		protected logger: LoggerAdapter,
-	) {
+	@Logger()
+	private logger!: LoggerAdapter;
+
+	constructor(protected configuration: Configuration) {
 		super();
 
 		let specs: OpenAPIObject;
@@ -108,7 +109,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 
 		const fileUrl = `${path}${prefix}/${fileName}`;
 
-		const url = new URL(context.store.request.url);
+		const url = context.store.request.url;
 
 		const routerConfig =
 			this.configuration.getModuleConfig<RouterModuleConfig>("RouterModule")
@@ -116,7 +117,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 
 		const casing = routerConfig?.options?.casing?.interfaces;
 
-		if (url.pathname === fileUrl) {
+		if (pathIs(url, fileUrl)) {
 			try {
 				const specs = await this.#service.buildSpecs({
 					serverUrl: context.store.serverUrl,
@@ -133,7 +134,7 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 			}
 		}
 
-		if (url.pathname.startsWith(`${path}${prefix}`)) {
+		if (pathStartsWith(url, `${path}${prefix}`)) {
 			try {
 				const page = renderToString(<ScalarPage url={fileUrl} title={title} />);
 				return Res.html(`<!doctype html>${page}`);

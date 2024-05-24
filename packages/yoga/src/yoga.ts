@@ -1,5 +1,5 @@
 import type { UseModule } from "@vermi/core";
-import type { Class } from "../../utils/dist";
+import type { Class } from "@vermi/utils";
 import { YogaModule, type YogaModuleConfig } from "./YogaModule";
 
 export const yoga = <Ctx extends Record<string, any>>(

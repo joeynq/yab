@@ -1,4 +1,4 @@
-import { format, omitUndefined } from "@vermi/utils";
+import { format, omitUndefined, stringify } from "@vermi/utils";
 import { Chalk, type ChalkInstance } from "chalk";
 import { logLevelOrder } from "../enum";
 import type { LogLevel, LogOptions } from "../interfaces";
@@ -115,7 +115,7 @@ export class ConsoleLogger extends BaseLogger<Console> {
 			if (typeof args[0] === "string") {
 				message = args[0];
 			} else {
-				message = JSON.stringify(args[0]);
+				message = stringify(args[0]) ?? "";
 			}
 		} else {
 			message = args[1];
@@ -160,11 +160,11 @@ export class ConsoleLogger extends BaseLogger<Console> {
 				? this.chalk.red(message)
 				: message;
 
-		if (this.context?.requestId) {
-			const requestId = this.chalk.whiteBright(`${this.context.requestId}`);
+		if (this.context?.traceId) {
+			const traceId = this.chalk.whiteBright(`${this.context.traceId}`);
 
 			return this.chalk.cyan(
-				`[${date}] ${coloredLevel} ${requestId} ${coloredMessage}`,
+				`[${date}] ${coloredLevel} ${traceId} ${coloredMessage}`,
 			);
 		}
 		return this.chalk.cyan(`[${date}] ${coloredLevel} ${coloredMessage}`);

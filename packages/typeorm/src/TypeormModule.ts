@@ -2,6 +2,7 @@ import {
 	type AppContext,
 	AppHook,
 	type Configuration,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	VermiModule,
@@ -21,10 +22,10 @@ export type TypeormModuleConfig = {
 
 @Module()
 export class TypeormModule extends VermiModule<TypeormModuleConfig> {
-	constructor(
-		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-	) {
+	@Logger()
+	private logger!: LoggerAdapter;
+
+	constructor(protected configuration: Configuration) {
 		super();
 	}
 

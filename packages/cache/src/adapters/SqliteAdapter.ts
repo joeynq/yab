@@ -1,4 +1,5 @@
 import { Database, type Statement } from "bun:sqlite";
+import { stringify } from "@vermi/utils";
 import type { CacheAdapter } from "../interfaces";
 
 type CacheRow = {
@@ -58,7 +59,7 @@ export class SqliteAdapter implements CacheAdapter {
 	async set(key: string, value: any, ttl?: number) {
 		this.#prepared.set.run(
 			key,
-			JSON.stringify(value),
+			stringify(value) || "",
 			ttl ? Date.now() + ttl : null,
 		);
 	}

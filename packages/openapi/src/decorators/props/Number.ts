@@ -1,5 +1,5 @@
 import { type NumberOptions, Type } from "@sinclair/typebox";
-import { limitSettings } from "../../settings/values";
+import { limitSettings } from "../../settings";
 import { Prop } from "./Prop";
 
 export function Number(options?: NumberOptions & { nullable?: boolean }) {

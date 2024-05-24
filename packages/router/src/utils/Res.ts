@@ -4,6 +4,7 @@ import {
 	HttpRedirectCodes,
 	HttpSuccessCodes,
 } from "@vermi/core";
+import { stringify } from "@vermi/utils";
 import type { BunFile } from "bun";
 import { InternalServerError } from "../exceptions";
 
@@ -28,7 +29,7 @@ const response = (
 			? data
 			: data === null
 				? null
-				: JSON.stringify(data);
+				: stringify(data) ?? null;
 
 	return new Response(returnData, {
 		status,

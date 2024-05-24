@@ -1,5 +1,10 @@
-import { InjectOn, Injectable, useDecorators } from "@vermi/core";
+import { Deps, Injectable, useDecorators } from "@vermi/core";
+import type { Class } from "@vermi/utils";
 
-export const Middleware = () => {
-	return useDecorators(InjectOn("router:init"), Injectable("SCOPED"));
+export interface MiddlewareOptions {
+	deps?: Class<any>[];
+}
+
+export const Middleware = ({ deps = [] }: MiddlewareOptions = {}) => {
+	return useDecorators(Injectable("SCOPED"), Deps(...deps));
 };

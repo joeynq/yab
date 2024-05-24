@@ -1,3 +1,4 @@
+import { stringify } from "@vermi/utils";
 import type { HttpErrorCodes } from "../enum";
 
 export class HttpException extends Error {
@@ -10,7 +11,7 @@ export class HttpException extends Error {
 	}
 
 	toResponse() {
-		return new Response(JSON.stringify({ error: this.toJSON() }), {
+		return new Response(stringify({ error: this.toJSON() }), {
 			status: this.status,
 			headers: {
 				"Content-Type": "application/json",

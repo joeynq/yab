@@ -12,7 +12,6 @@ export const validate: ValidationFn = async (schema, value): Promise<void> => {
 	const C = TypeCompiler.Compile(schema);
 
 	const errors = [...C.Errors(value)];
-	console.log("errors", errors);
 
 	if (errors.length) {
 		throw new ValidationException("Validation failed", errors);

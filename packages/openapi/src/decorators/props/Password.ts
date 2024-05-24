@@ -1,5 +1,5 @@
 import { type StringOptions, Type } from "@sinclair/typebox";
-import { limitSettings } from "../../settings/values";
+import { limitSettings } from "../../settings";
 import { AllOf } from "./AllOf";
 
 export function Password(

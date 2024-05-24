@@ -1,3 +1,4 @@
+import { stringify } from "@vermi/utils";
 import type { OpenAPIObject } from "openapi3-ts/oas31";
 
 export const removeUnused = (source: OpenAPIObject) => {
@@ -7,7 +8,7 @@ export const removeUnused = (source: OpenAPIObject) => {
 		return source;
 	}
 
-	const json = JSON.stringify(source);
+	const json = stringify(source);
 
 	const keys = Object.keys(schemas);
 
@@ -23,9 +24,7 @@ export const removeUnused = (source: OpenAPIObject) => {
 	// Remove all $id
 	const idPattern = /"\$id":\s*"\#\/components\/schemas\/[^"]*",/g;
 
-	const newSource = JSON.parse(
-		JSON.stringify(source).replaceAll(idPattern, ""),
-	);
+	const newSource = JSON.parse(stringify(source)?.replaceAll(idPattern, ""));
 
 	return newSource;
 };

@@ -4,28 +4,30 @@ import {
 	type Configuration,
 	Hook,
 	type Hooks,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
 	VermiModule,
-	asClass,
 	asValue,
-	dependentStore,
 	hookStore,
+	registerProviders,
 	saveStoreData,
 } from "@vermi/core";
-import { type Class, ensure } from "@vermi/utils";
-import { parse } from "qs";
+import {
+	type Class,
+	ensure,
+	getCookies,
+	parseQuery,
+	pathname,
+	searchString,
+	stringify,
+} from "@vermi/utils";
 import type { HttpMethod } from "./enums";
 import { RouterEvent, type RouterEventMap } from "./event";
-import type {
-	RouteMatch,
-	Routes,
-	SlashedPath,
-	ValidationFn,
-} from "./interfaces";
+import type { RouteMatch, SlashedPath, ValidationFn } from "./interfaces";
 import { type CasingType, Router, casingFactory } from "./services";
-import { routeStore } from "./stores";
+import { getRoutes, routeStore } from "./stores";
 import { defaultErrorHandler, defaultResponseHandler } from "./utils";
 
 declare module "@vermi/core" {
@@ -63,25 +65,29 @@ export type RouterModuleConfig = {
 	};
 };
 
-@Module()
+@Module({ deps: [Router] })
 export class RouterModule extends VermiModule<RouterModuleConfig> {
-	#router = new Router();
+	@Logger()
+	private logger!: LoggerAdapter;
 
 	constructor(
 		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-		private hooks: Hooks<typeof RouterEvent, RouterEventMap>,
+		protected router: Router,
 	) {
 		super();
 	}
 
-	#addRoutes(instance: any, routes: Routes["paths"]) {
+	#addRoutes(context: AppContext) {
+		const routes = getRoutes();
 		for (const [path, operation] of routes) {
 			const method = path.split("/")[0];
 			const route = path.slice(method.length);
 
-			this.#router.addRoute(method as HttpMethod, route, {
-				handler: instance[operation.handler.action].bind(instance),
+			const instance = context.resolve<any>(operation.handler.target.name);
+			const action = operation.handler.action;
+
+			this.router.addRoute(method as HttpMethod, route, {
+				handler: instance[action].bind(instance),
 				path: route,
 				args: operation.args,
 			});
@@ -89,7 +95,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 	}
 
 	#getConfig(): RouterModuleConfig;
-	#getConfig(request: Request): RouterOptions;
+	#getConfig(request: Request): RouterOptions & { mount: SlashedPath };
 	#getConfig(request?: Request) {
 		const config = this.getConfig();
 
@@ -97,33 +103,27 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			return config;
 		}
 
-		const path = new URL(request.url).pathname.split("/")[1];
+		const path = pathname(request.url).split("/")[1];
 		const mount = `/${path}` as SlashedPath;
 
-		return config[mount];
+		if (!config[mount]) {
+			return;
+		}
+
+		return { ...config[mount], mount };
 	}
 
 	async #payloadCasing(casing: CasingType, context: RequestContext) {
 		const service = casingFactory(casing);
 		const { request } = context.store;
 
-		const query = new URL(request.url).search
-			? parse(new URL(request.url).search, {
-					ignoreQueryPrefix: true,
-					plainObjects: true,
-				})
-			: undefined;
+		const query = parseQuery(searchString(request.url)) || undefined;
 
 		const body = await request.text();
 
 		const headers = Object.fromEntries(request.headers);
 
-		const cookies = Object.fromEntries(
-			request.headers
-				.get("cookie")
-				?.split(";")
-				.map((cookie) => cookie.split("=")) || [],
-		);
+		const cookies = getCookies(request.headers.get("cookie") || "");
 
 		context.register(
 			"payload",
@@ -145,7 +145,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 		const body = await response.json();
 
-		return new Response(JSON.stringify(service.convert(body as object)), {
+		return new Response(stringify(service.convert(body as object)), {
 			status: response.status,
 			headers: response.headers,
 		});
@@ -157,63 +157,35 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 		ensure(mounted, "No configuration provided");
 
-		const registering: Record<string, ReturnType<typeof asClass>> = {};
-
-		let hookEvents: ReturnType<typeof hookStore.combineStore> = new Map();
-		let dependents: Class<any>[] = [];
 		for (const [prefix, { controllers, options }] of Object.entries(mounted)) {
 			ensure(controllers.length > 0, "No controllers provided");
-
 			for (const controller of controllers) {
-				const routes = routeStore
+				routeStore
 					.apply(controller)
 					.updatePathPrefix({ mount: prefix as SlashedPath });
-				const resolver = asClass(controller);
-				const instance = context.build(resolver);
-
-				registering[controller.name] = resolver;
-
-				routes && this.#addRoutes(instance, routes);
 				hookStore.apply(controller).updateScope({ mount: prefix });
 			}
 
-			hookEvents = hookStore.combineStore(...controllers);
-			dependents = dependentStore.combineStore(...controllers) || [];
+			const { interfaces, internal = "camel" } = options?.casing || {};
 
-			saveStoreData(routeStore.token, routeStore.combineStore(...controllers));
-
-			if (options?.casing?.internal) {
+			if (interfaces && internal && interfaces !== internal) {
 				context.store.hooks.register(RouterEvent.BeforeRoute, {
-					handler: this.#payloadCasing.bind(this, options.casing.internal),
+					handler: this.#payloadCasing.bind(this, internal),
+					scope: prefix,
 				});
-			}
-			if (options?.casing?.interfaces) {
 				context.store.hooks.register(RouterEvent.AfterRoute, {
-					handler: this.#responseCasing.bind(this, options.casing.interfaces),
+					handler: this.#responseCasing.bind(this, interfaces),
+					scope: prefix,
 				});
 			}
 		}
 
-		for (const dependent of dependents) {
-			registering[dependent.name] = asClass(dependent);
-		}
+		const all = Object.values(mounted).flatMap((m) => m.controllers);
+		registerProviders(...all);
 
-		context.register(registering);
+		saveStoreData(routeStore.token, routeStore.combineStore(...all));
 
-		console.table(this.#router.debug);
-		this.logger.info(`${this.#router.debug.length} routes registered`);
-
-		if (hookEvents) {
-			for (const [event, handlers] of hookEvents.entries()) {
-				for (const { target, handler, scope } of handlers) {
-					this.hooks.register(event as any, {
-						target: target,
-						handler: handler,
-						scope,
-					});
-				}
-			}
-		}
+		this.#addRoutes(context);
 	}
 
 	@Hook("app:request")
@@ -226,25 +198,24 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		}
 
 		const {
+			mount,
 			customValidation,
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
 		} = config;
 
-		this.#router.useContext(context);
-		customValidation && this.#router.useValidator(customValidation);
+		customValidation && this.router.useValidator(customValidation);
 
 		const hooks = context.store.hooks as Hooks<
 			typeof RouterEvent,
-			RouterEventMap,
-			RequestContext
+			RouterEventMap
 		>;
 
 		await hooks.invoke(RouterEvent.Init, [context]);
 
-		await hooks.invoke(RouterEvent.BeforeRoute, [context]);
+		await hooks.invoke(RouterEvent.BeforeRoute, [context], { scope: mount });
 
-		const response = await this.#router.handleRequest(
+		const response = await this.router.handleRequest(
 			responseHandler,
 			errorHandler,
 		);
@@ -252,7 +223,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		const newResponse = await hooks.invoke(
 			RouterEvent.AfterRoute,
 			[context, response],
-			{ breakOn: (result) => result instanceof Response },
+			{ breakOn: (result) => result instanceof Response, scope: mount },
 		);
 
 		return newResponse;
