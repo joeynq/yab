@@ -1,5 +1,5 @@
 import { type ArrayOptions, type TSchema, Type } from "@sinclair/typebox";
-import { limitSettings } from "../../settings/values";
+import { limitSettings } from "../../settings";
 import { propsStore } from "../../stores";
 
 export const Array = <T extends TSchema>(

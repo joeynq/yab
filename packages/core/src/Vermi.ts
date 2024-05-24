@@ -1,12 +1,7 @@
 import { type Class, deepMerge, ensure, pathIs, uuid } from "@vermi/utils";
-import {
-	InjectionMode,
-	Lifetime,
-	asClass,
-	asValue,
-	createContainer,
-} from "awilix";
+import { InjectionMode, Lifetime, asValue, createContainer } from "awilix";
 import type { Server } from "bun";
+import { Module } from "./decorators";
 import { type AppEventMap, AppEvents } from "./events";
 import { HttpException } from "./exceptions";
 import type {
@@ -25,28 +20,31 @@ import {
 	ContextService,
 	Hooks,
 } from "./services";
-import { enhance } from "./utils";
+import { enhance, registerProviders } from "./utils";
+
+@Module({ deps: [ContextService, Configuration, Hooks] })
+class AppModule {}
 
 export class Vermi {
 	#logger: LoggerAdapter;
-	#context = new ContextService();
 	#container = enhance(
 		createContainer<_AppContext>({
 			injectionMode: InjectionMode.CLASSIC,
 			strict: true,
 		}),
 	);
-	#hooks = new Hooks<typeof AppEvents, AppEventMap>();
 
 	#customContext?: (ctx: _RequestContext) => Record<string, unknown>;
 
 	#options: AppOptions;
 
+	get context() {
+		return this.#container.resolve<ContextService>("contextService");
+	}
+
 	get hooks() {
 		const hooks =
-			this.#context.context?.resolve<Hooks<typeof AppEvents, AppEventMap>>(
-				"hooks",
-			);
+			this.#container.resolve<Hooks<typeof AppEvents, AppEventMap>>("hooks");
 		ensure(hooks);
 		return hooks;
 	}
@@ -62,7 +60,6 @@ export class Vermi {
 
 	#registerServices() {
 		this.#container.register({
-			contextService: asValue(this.#context),
 			appConfig: asValue(this.#options),
 			_logger: asValue(this.#logger),
 			env: asValue(this.#options?.env || {}),
@@ -80,8 +77,6 @@ export class Vermi {
 				},
 				lifetime: Lifetime.SCOPED,
 			},
-			configuration: asClass(Configuration),
-			hooks: asValue(this.#hooks),
 		});
 	}
 
@@ -90,7 +85,7 @@ export class Vermi {
 			({ module }) => module,
 		);
 
-		this.#container.registerServices(...modules);
+		registerProviders(AppModule, ...modules);
 	}
 
 	#runInRequestContext(
@@ -99,7 +94,7 @@ export class Vermi {
 		server: Server,
 	) {
 		return new Promise<Response>((resolve) => {
-			this.#context.runInContext<_RequestContext, void>(
+			this.context.runInContext<_RequestContext, void>(
 				container.createEnhancedScope(),
 				async (stored: EnhancedContainer<_RequestContext>) => {
 					try {
@@ -197,7 +192,7 @@ export class Vermi {
 	}
 
 	async start(onStarted: (context: AppContext, server: Server) => void) {
-		this.#context.runInContext(this.#container, async (container) => {
+		this.context.runInContext(this.#container, async (container) => {
 			this.#registerServices();
 			this.#initModules();
 

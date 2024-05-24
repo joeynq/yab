@@ -178,6 +178,21 @@ export const changeObjectCase = <T extends object>(
 	return result;
 };
 
+export const mapToRecords = <
+	K extends string | number | symbol,
+	T extends object,
+>(
+	map: Map<K, T>,
+): Record<K, T> => {
+	const record = {} as Record<K, T>;
+
+	for (const [key, value] of map) {
+		record[key] = value;
+	}
+
+	return record;
+};
+
 export { stringify, configure as stringifyConfig } from "safe-stable-stringify";
 
 export * from "./internal/object";

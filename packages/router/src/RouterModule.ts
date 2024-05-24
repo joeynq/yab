@@ -10,6 +10,7 @@ import {
 	VermiModule,
 	asValue,
 	hookStore,
+	registerProviders,
 	saveStoreData,
 } from "@vermi/core";
 import {
@@ -18,6 +19,7 @@ import {
 	getCookies,
 	parseQuery,
 	pathname,
+	searchString,
 	stringify,
 } from "@vermi/utils";
 import type { HttpMethod } from "./enums";
@@ -62,14 +64,12 @@ export type RouterModuleConfig = {
 	};
 };
 
-@Module()
+@Module({ deps: [Router] })
 export class RouterModule extends VermiModule<RouterModuleConfig> {
-	#router = new Router();
-
 	constructor(
 		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-		private hooks: Hooks<typeof RouterEvent, RouterEventMap>,
+		protected logger: LoggerAdapter,
+		protected router: Router,
 	) {
 		super();
 	}
@@ -83,7 +83,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			const instance = instanceMap[operation.handler.target.name];
 			const action = operation.handler.action;
 
-			this.#router.addRoute(method as HttpMethod, route, {
+			this.router.addRoute(method as HttpMethod, route, {
 				handler: instance[action].bind(instance),
 				path: route,
 				args: operation.args,
@@ -114,7 +114,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		const service = casingFactory(casing);
 		const { request } = context.store;
 
-		const query = parseQuery(request.url) || undefined;
+		const query = parseQuery(searchString(request.url)) || undefined;
 
 		const body = await request.text();
 
@@ -178,7 +178,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		}
 
 		const all = Object.values(mounted).flatMap((m) => m.controllers);
-		const instanceMap = context.registerServices(...all);
+		const instanceMap = registerProviders(...all);
 		saveStoreData(routeStore.token, routeStore.combineStore(...all));
 
 		this.#addRoutes(instanceMap);
@@ -200,8 +200,8 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			responseHandler = defaultResponseHandler,
 		} = config;
 
-		this.#router.useContext(context);
-		customValidation && this.#router.useValidator(customValidation);
+		this.router.useContext(context);
+		customValidation && this.router.useValidator(customValidation);
 
 		const hooks = context.store.hooks as Hooks<
 			typeof RouterEvent,
@@ -213,7 +213,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 
 		await hooks.invoke(RouterEvent.BeforeRoute, [context], { scope: mount });
 
-		const response = await this.#router.handleRequest(
+		const response = await this.router.handleRequest(
 			responseHandler,
 			errorHandler,
 		);

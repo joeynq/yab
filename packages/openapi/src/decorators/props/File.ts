@@ -1,5 +1,5 @@
 import type { StringOptions } from "@sinclair/typebox";
-import { limitSettings } from "../../settings/values";
+import { limitSettings } from "../../settings";
 import { String } from "./String";
 
 export function File(options?: StringOptions & { nullable?: boolean }) {

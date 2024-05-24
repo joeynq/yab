@@ -4,15 +4,15 @@ import { createStore } from "../utils";
 export const DependentMetadataKey: unique symbol = Symbol("Dependent");
 
 export type DependentStoreAPI = {
-	addDependent(name: Class<any>): void;
+	addDependents(...deps: Class<any>[]): void;
 };
 
 export const dependentStore = createStore<Class<any>[], DependentStoreAPI>(
 	DependentMetadataKey,
 	(_, get, set) => ({
-		addDependent(name: Class<any>) {
+		addDependents(...deps: Class<any>[]) {
 			const store = get() || [];
-			store.push(name);
+			store.push(...deps);
 			set(store);
 		},
 	}),

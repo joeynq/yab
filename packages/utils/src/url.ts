@@ -3,15 +3,21 @@ export const parseQuery = <T>(search: string, depth = 3) => {
 	return parse(search, depth) as T;
 };
 
+export const searchString = (url: string) => {
+	return new URL(url).search;
+};
+
 export const pathname = (url: string) => {
 	return new URL(url).pathname;
 };
 
 export const pathStartsWith = (url: string, start: string) => {
+	console.log("url", pathname(url));
 	return pathname(url).startsWith(start);
 };
 
 export const pathIs = (url: string, path: string) => {
+	console.log("url", pathname(url));
 	return pathname(url) === path;
 };
 

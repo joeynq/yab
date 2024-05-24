@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { Injectable } from "../decorators";
 import type { EnhancedContainer, _AppContext } from "../interfaces";
 
 const store = new AsyncLocalStorage<EnhancedContainer<_AppContext>>();
@@ -9,6 +10,7 @@ export const containerRef = <
 	return store.getStore() as EnhancedContainer<T>;
 };
 
+@Injectable("SINGLETON")
 export class ContextService {
 	get context() {
 		return store.getStore();

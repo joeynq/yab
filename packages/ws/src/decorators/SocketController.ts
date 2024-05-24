@@ -1,7 +1,15 @@
-import { InjectOn, Injectable, useDecorators } from "@vermi/core";
-import { wsHandlerStore } from "../stores/wsHandlerStore";
+import { Deps, Injectable, useDecorators } from "@vermi/core";
+import type { Class } from "@vermi/utils";
+import { wsHandlerStore } from "../stores";
 
-export const SocketController = (channel: `/${string}` = "/") => {
+export interface SocketControllerOptions {
+	deps?: Class<any>[];
+}
+
+export const SocketController = (
+	channel: `/${string}`,
+	{ deps = [] }: SocketControllerOptions = {},
+) => {
 	return useDecorators(
 		(target: any) => {
 			const events = wsHandlerStore.apply(target).get();
@@ -10,6 +18,6 @@ export const SocketController = (channel: `/${string}` = "/") => {
 			}
 		},
 		Injectable("SCOPED"),
-		InjectOn("ws-hook:init"),
+		Deps(...deps),
 	);
 };

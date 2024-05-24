@@ -1,4 +1,4 @@
-import type { Class, Dictionary, MaybePromiseFunction } from "@vermi/utils";
+import type { Dictionary, MaybePromiseFunction } from "@vermi/utils";
 import type { AwilixContainer } from "awilix";
 import type { SocketAddress } from "bun";
 import type { Vermi } from "../Vermi";
@@ -15,12 +15,7 @@ export enum InjectionScope {
 
 export interface EnhancedContainer<Context extends object>
 	extends AwilixContainer<Context> {
-	registerServices<T>(...serviceClasses: Class<T>[]): Record<string, T>;
-
-	resolveValue<T>(token: InjectionToken<T>): T;
-
 	expose(): ExposedContext<Context>;
-
 	createEnhancedScope<T>(): EnhancedContainer<Context & T>;
 }
 
@@ -44,10 +39,9 @@ export interface _RequestContext extends _AppContext {
 
 export type ExposedContext<Context extends object = _RequestContext> = {
 	store: Context;
-	resolve: EnhancedContainer<Context>["resolveValue"];
-	register: AwilixContainer<Context>["register"];
-	registerServices: EnhancedContainer<Context>["registerServices"];
-	build: AwilixContainer<Context>["build"];
+	resolve: <T>(token: InjectionToken<T>) => T;
+	register: EnhancedContainer<Context>["register"];
+	build: EnhancedContainer<Context>["build"];
 };
 
 export type AppContext = ExposedContext<_AppContext>;

@@ -1,4 +1,4 @@
-import { wsHandlerStore } from "../stores/wsHandlerStore";
+import { wsHandlerStore } from "../stores";
 
 export const OnMessage = (event: string) => {
 	return (target: any, key: string) => {

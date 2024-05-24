@@ -1,5 +1,5 @@
 import type { AnyFunction, Dictionary } from "@vermi/utils";
-import type { _RequestContext } from "./Container";
+import type { _RequestContext } from "./Context";
 
 export type LogLevel =
 	| "info"
