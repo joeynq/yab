@@ -1,19 +1,21 @@
+import { AuthModule } from "@vermi/auth";
 import {
 	AppHook,
-	type Configuration,
+	Config,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 } from "@vermi/core";
 import {
 	InternalServerError,
 	Res,
+	RouterModule,
 	type RouterModuleConfig,
 	type SlashedPath,
 } from "@vermi/router";
-import { deepMerge, pathIs, pathStartsWith } from "@vermi/utils";
+import { pathIs, pathStartsWith } from "@vermi/utils";
 import {
 	type OpenAPIObject,
 	type SecuritySchemeObject,
@@ -24,14 +26,11 @@ import {
 	type OpenAPIFeatures,
 	OpenAPIService,
 } from "./services/OpenAPIService";
-import { setDefaultLimit } from "./settings/setDefaultLimit";
 import type { LimitSettings } from "./settings/values";
 
 type AuthConfig = Record<
 	string,
-	{
-		scheme: Record<string, SecuritySchemeObject>;
-	}
+	{ scheme: Record<string, SecuritySchemeObject> }
 >;
 
 export interface OpenAPIConfig {
@@ -44,50 +43,26 @@ export interface OpenAPIConfig {
 	features?: OpenAPIFeatures;
 	limits?: Partial<LimitSettings>;
 }
-const defaultSpecs: OpenAPIObject = {
-	openapi: "3.1.0",
-	info: {
-		title: "Vermi API",
-		version: "1.0.0",
-	},
-	components: {},
-	paths: {},
-};
 
-@Module()
-export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
-	#service: OpenAPIService;
+@Module({ deps: [OpenAPIService, RouterModule, AuthModule] })
+export class OpenAPIModule implements VermiModule<OpenAPIConfig> {
+	@Logger() private logger!: LoggerAdapter;
+	@Config() public config!: OpenAPIConfig;
+	@Config("AuthModule") public authConfig?: AuthConfig;
+	@Config("RouterModule") public routerConfig?: RouterModuleConfig;
 
-	@Logger()
-	private logger!: LoggerAdapter;
-
-	constructor(protected configuration: Configuration) {
-		super();
-
-		let specs: OpenAPIObject;
-		if (this.config.override) {
-			specs = (this.config.specs as OpenAPIObject) || defaultSpecs;
-		} else {
-			specs = deepMerge(defaultSpecs, this.config.specs || {}) as OpenAPIObject;
-		}
-
-		this.config.limits && setDefaultLimit(this.config.limits);
-
-		this.#service = new OpenAPIService(specs, this.config.features);
-	}
+	constructor(protected openApiService: OpenAPIService) {}
 
 	@AppHook("app:init")
 	async init() {
-		const authConfig = this.configuration.getModuleConfig("AuthModule")
-			?.config as AuthConfig | undefined;
-
+		const authConfig = this.authConfig;
 		if (authConfig) {
 			const schemes = Object.values(authConfig).reduce(
 				// biome-ignore lint/performance/noAccumulatingSpread: <explanation>
 				(acc, { scheme }) => ({ ...acc, ...scheme }),
 				{} as Record<string, SecuritySchemeObject>,
 			);
-			this.#service.addSecuritySchemes(schemes);
+			this.openApiService.addSecuritySchemes(schemes);
 		}
 
 		this.logger.info("OpenAPI Module initialized on {path}", {
@@ -111,15 +86,13 @@ export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 
 		const url = context.store.request.url;
 
-		const routerConfig =
-			this.configuration.getModuleConfig<RouterModuleConfig>("RouterModule")
-				?.config[prefix];
+		const routerConfig = this.routerConfig?.[prefix];
 
 		const casing = routerConfig?.options?.casing?.interfaces;
 
 		if (pathIs(url, fileUrl)) {
 			try {
-				const specs = await this.#service.buildSpecs({
+				const specs = await this.openApiService.buildSpecs({
 					serverUrl: context.store.serverUrl,
 					title: this.config.title || "Vermi API",
 					casing,

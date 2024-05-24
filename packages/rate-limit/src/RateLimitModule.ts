@@ -1,11 +1,11 @@
 import {
 	type AppContext,
 	AppHook,
-	type Configuration,
+	Config,
 	HttpException,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 	asValue,
 } from "@vermi/core";
 import { TooManyRequests } from "@vermi/router";
@@ -56,12 +56,13 @@ export class RateLimitModule<
 	M extends typeof adapterMap,
 	N extends keyof M,
 	RateLimiter extends RateLimiterAbstract,
-> extends VermiModule<RateLimitConfig<M, N>> {
+> implements VermiModule<RateLimitConfig<M, N>>
+{
 	#rateLimiter: RateLimiter;
 
-	constructor(protected configuration: Configuration) {
-		super();
+	@Config() public config!: RateLimitConfig<M, N>;
 
+	constructor() {
 		const { adapter, options } = this.config;
 		this.#rateLimiter = new (adapterMap as any)[adapter](options);
 	}

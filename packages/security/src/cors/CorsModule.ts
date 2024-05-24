@@ -1,9 +1,9 @@
 import {
 	AppHook,
-	type Configuration,
+	Config,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 } from "@vermi/core";
 
 export type CorsConfig = {
@@ -18,10 +18,8 @@ export type CorsConfig = {
 };
 
 @Module()
-export class CorsModule extends VermiModule<CorsConfig> {
-	constructor(protected configuration: Configuration) {
-		super();
-	}
+export class CorsModule implements VermiModule<CorsConfig> {
+	@Config() public config!: CorsConfig;
 
 	@AppHook("app:response")
 	async corsHook(_: RequestContext, response: Response) {
@@ -34,7 +32,7 @@ export class CorsModule extends VermiModule<CorsConfig> {
 			maxAge,
 			preflightContinue,
 			optionsSuccessStatus,
-		} = this.getConfig();
+		} = this.config;
 
 		if (origin) {
 			response.headers.set("Access-Control-Allow-Origin", origin.join(", "));

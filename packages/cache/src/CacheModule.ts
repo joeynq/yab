@@ -5,32 +5,38 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
+	type VermiModule,
 	asValue,
 } from "@vermi/core";
+import type { Class } from "@vermi/utils";
 import type { CacheAdapter } from "./interfaces";
 
-export type CacheModuleOptions<Adapter extends CacheAdapter> = {
+export type CacheModuleOptions<Adapter extends Class<CacheAdapter<any>>> = {
 	adapter: Adapter;
+	adapterArg: ConstructorParameters<Adapter>[0];
 	clearOnStart?: boolean;
 };
 
 @Module()
-export class CacheModule<Adapter extends CacheAdapter> {
-	@Logger()
-	protected logger!: LoggerAdapter;
-
-	@Config()
-	public config!: CacheModuleOptions<Adapter>;
+export class CacheModule<Adapter extends Class<CacheAdapter<any>>>
+	implements VermiModule<Record<string, CacheModuleOptions<Adapter>>>
+{
+	@Logger() protected logger!: LoggerAdapter;
+	@Config() public config!: Record<string, CacheModuleOptions<Adapter>>;
 
 	@AppHook("app:init")
 	async init(context: AppContext) {
-		if (this.config.clearOnStart) {
-			this.logger.info("Clearing cache on start.");
-			await this.config.adapter.clear();
+		for (const [name, options] of Object.entries(this.config)) {
+			const instance = new options.adapter(options.adapterArg);
+
+			if (options.clearOnStart) {
+				this.logger.info(`Clearing cache on start for ${name}.`);
+				await instance.clear();
+			}
+			context.register(`cache:${name}`, asValue(instance));
+			this.logger.info(
+				`Cache module initialized with ${options.adapter.constructor.name}.`,
+			);
 		}
-		context.register("cache", asValue(this.config.adapter));
-		this.logger.info(
-			`Cache module initialized with ${this.config.adapter.constructor.name}.`,
-		);
 	}
 }

@@ -1,14 +1,14 @@
 import {
 	type AppContext,
 	AppEvents,
-	type Configuration,
+	Config,
 	Hook,
 	type Hooks,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 	asValue,
 	hookStore,
 	registerProviders,
@@ -66,16 +66,11 @@ export type RouterModuleConfig = {
 };
 
 @Module({ deps: [Router] })
-export class RouterModule extends VermiModule<RouterModuleConfig> {
-	@Logger()
-	private logger!: LoggerAdapter;
+export class RouterModule implements VermiModule<RouterModuleConfig> {
+	@Logger() private logger!: LoggerAdapter;
+	@Config() public config!: RouterModuleConfig;
 
-	constructor(
-		protected configuration: Configuration,
-		protected router: Router,
-	) {
-		super();
-	}
+	constructor(protected router: Router) {}
 
 	#addRoutes(context: AppContext) {
 		const routes = getRoutes();
@@ -97,7 +92,7 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 	#getConfig(): RouterModuleConfig;
 	#getConfig(request: Request): RouterOptions & { mount: SlashedPath };
 	#getConfig(request?: Request) {
-		const config = this.getConfig();
+		const config = this.config;
 
 		if (!request) {
 			return config;

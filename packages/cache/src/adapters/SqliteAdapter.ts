@@ -15,15 +15,19 @@ type PreparedStatements = {
 	clear: Statement<null, []>;
 };
 
-export class SqliteAdapter implements CacheAdapter {
+export interface SqliteAdapterConfig {
+	file?: string;
+}
+
+export class SqliteAdapter implements CacheAdapter<SqliteAdapterConfig> {
 	#db: Database;
 
 	#table = "cache";
 
 	#prepared!: PreparedStatements;
 
-	constructor(file = ":memory:") {
-		this.#db = new Database(file);
+	constructor(public options: SqliteAdapterConfig) {
+		this.#db = new Database(options.file || ":memory:");
 		this.#createTable();
 		this.#prepareStatements();
 	}

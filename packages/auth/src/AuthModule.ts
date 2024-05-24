@@ -1,12 +1,12 @@
 import {
 	type AppContext,
 	AppHook,
-	type Configuration,
+	Config,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 	asValue,
 } from "@vermi/core";
 import { Guard, type RouteMatch } from "@vermi/router";
@@ -34,15 +34,11 @@ export type AuthModuleConfig<S extends Strategy<any>> = Record<
 type InitStatus = "success" | "error";
 
 @Module()
-export class AuthModule<S extends Strategy<any>> extends VermiModule<
-	AuthModuleConfig<S>
-> {
-	@Logger()
-	private logger!: LoggerAdapter;
-
-	constructor(protected configuration: Configuration) {
-		super();
-	}
+export class AuthModule<S extends Strategy<any>>
+	implements VermiModule<AuthModuleConfig<S>>
+{
+	@Logger() private logger!: LoggerAdapter;
+	@Config() public config!: AuthModuleConfig<S>;
 
 	@AppHook("app:init")
 	async onInit(context: AppContext) {

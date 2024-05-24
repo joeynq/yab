@@ -1,11 +1,11 @@
 import {
 	type AppContext,
 	AppHook,
-	type Configuration,
+	Config,
 	Logger,
 	type LoggerAdapter,
 	Module,
-	VermiModule,
+	type VermiModule,
 	asValue,
 } from "@vermi/core";
 import { DataSource, type DataSourceOptions } from "typeorm";
@@ -21,17 +21,13 @@ export type TypeormModuleConfig = {
 };
 
 @Module()
-export class TypeormModule extends VermiModule<TypeormModuleConfig> {
-	@Logger()
-	private logger!: LoggerAdapter;
-
-	constructor(protected configuration: Configuration) {
-		super();
-	}
+export class TypeormModule implements VermiModule<TypeormModuleConfig> {
+	@Logger() private logger!: LoggerAdapter;
+	@Config() public config!: TypeormModuleConfig;
 
 	@AppHook("app:init")
 	async init(context: AppContext) {
-		const config = this.getConfig();
+		const config = this.config;
 
 		const dataSources = Object.keys(config).reduce(
 			(acc, key) => {
