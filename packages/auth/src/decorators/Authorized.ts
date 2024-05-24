@@ -5,11 +5,9 @@ import {
 	asValue,
 	useDecorators,
 } from "@vermi/core";
-import { Returns } from "@vermi/openapi";
 import {
 	Before,
 	Middleware,
-	RouterException,
 	Unauthorized,
 	Use,
 	routeStore,
@@ -17,8 +15,7 @@ import {
 
 @Middleware()
 class AuthorizedMiddleware {
-	@Logger()
-	logger!: LoggerAdapter;
+	@Logger() logger!: LoggerAdapter;
 
 	@Before()
 	public async authorize<T>(ctx: RequestContext) {
@@ -34,23 +31,19 @@ class AuthorizedMiddleware {
 }
 
 export const Authorized = (scheme: string, scopes: string[] = []) => {
-	return useDecorators(
-		Use(AuthorizedMiddleware),
-		Returns(401, RouterException.schema),
-		(target, propertyKey) => {
-			const store = routeStore.apply((target as any).constructor);
-			const path = store.findPath((target as any).constructor, propertyKey);
+	return useDecorators(Use(AuthorizedMiddleware), (target, propertyKey) => {
+		const store = routeStore.apply((target as any).constructor);
+		const path = store.findPath((target as any).constructor, propertyKey);
 
-			if (!path) return;
+		if (!path) return;
 
-			store.updateRoute(path, (current) => {
-				if (!current.security) {
-					current.security = new Map();
-				}
-				current.security.set(scheme, scopes);
+		store.updateRoute(path, (current) => {
+			if (!current.security) {
+				current.security = new Map();
+			}
+			current.security.set(scheme, scopes);
 
-				return current;
-			});
-		},
-	);
+			return current;
+		});
+	});
 };

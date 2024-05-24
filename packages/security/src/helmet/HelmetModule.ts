@@ -1,9 +1,9 @@
 import {
 	AppHook,
-	type Configuration,
+	Config,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 } from "@vermi/core";
 
 export type HelmetOptions = {
@@ -21,10 +21,8 @@ export type HelmetOptions = {
 };
 
 @Module()
-export class HelmetModule extends VermiModule<HelmetOptions> {
-	constructor(protected configuration: Configuration) {
-		super();
-	}
+export class HelmetModule implements VermiModule<HelmetOptions> {
+	@Config() public config!: HelmetOptions;
 
 	@AppHook("app:response")
 	async helmetHook(_: RequestContext, response: Response) {
@@ -40,7 +38,7 @@ export class HelmetModule extends VermiModule<HelmetOptions> {
 			permittedCrossDomainPolicies,
 			referrerPolicy,
 			xssFilter,
-		} = this.getConfig();
+		} = this.config;
 
 		if (contentSecurityPolicy) {
 			response.headers.set("Content-Security-Policy", "default-src 'self';");

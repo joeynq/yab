@@ -4,6 +4,7 @@ import type { CacheAdapter } from "../interfaces";
 
 export interface UseCacheOptions {
 	ttl: number;
+	name?: string;
 }
 
 type Func = (...args: any[]) => any;
@@ -17,7 +18,8 @@ export function UseCache(options?: UseCacheOptions): MethodDecorator {
 			const cacheKey = `${
 				target.constructor.name
 			}:${key.toString()}:${stringify(args)}`;
-			const cache = containerRef().resolve<CacheAdapter>("cache");
+			const name = options?.name || "default";
+			const cache = containerRef().resolve<CacheAdapter<any>>(`cache:${name}`);
 			const cached = await cache.get(cacheKey);
 
 			if (cached) {

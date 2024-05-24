@@ -1,6 +1,6 @@
 import { type TSchema, Type, TypeGuard } from "@sinclair/typebox";
 import { UseCache } from "@vermi/cache";
-import { getStoreData } from "@vermi/core";
+import { Config, Injectable, getStoreData } from "@vermi/core";
 import {
 	type Operation,
 	type Parameter,
@@ -8,7 +8,13 @@ import {
 	RouterException,
 	getRoutes,
 } from "@vermi/router";
-import { camelCase, kebabCase, pascalCase, snakeCase } from "@vermi/utils";
+import {
+	camelCase,
+	deepMerge,
+	kebabCase,
+	pascalCase,
+	snakeCase,
+} from "@vermi/utils";
 import {
 	type OpenAPIObject,
 	OpenApiBuilder,
@@ -16,6 +22,8 @@ import {
 	type PathItemObject,
 	type SecuritySchemeObject,
 } from "openapi3-ts/oas31";
+import type { OpenAPIConfig } from "../OpenAPIModule";
+import { setDefaultLimit } from "../settings";
 import { ModelStoreKey } from "../stores";
 import * as utils from "../utils";
 import { corsSchema, rateLimitSchemas } from "./builtin";
@@ -23,7 +31,6 @@ import { corsSchema, rateLimitSchemas } from "./builtin";
 export interface OpenAPIFeatures {
 	cors?: boolean;
 	rateLimit?: boolean;
-	default500?: boolean;
 }
 
 interface BuildSpecsOptions {
@@ -32,24 +39,44 @@ interface BuildSpecsOptions {
 	casing?: "camel" | "snake" | "pascal" | "kebab";
 }
 
+const defaultSpecs: OpenAPIObject = {
+	openapi: "3.1.0",
+	info: {
+		title: "Vermi API",
+		version: "1.0.0",
+	},
+	components: {},
+	paths: {},
+};
+
+@Injectable("SINGLETON")
 export class OpenAPIService {
 	#builder: OpenApiBuilder;
 
-	#features: OpenAPIFeatures = {
-		cors: false,
-		rateLimit: false,
-	};
+	get features(): OpenAPIFeatures {
+		return (
+			this.config.features || {
+				cors: false,
+				rateLimit: false,
+			}
+		);
+	}
 
 	#casingFn?: (str: string) => string;
 
-	constructor(rootDoc: OpenAPIObject, features?: OpenAPIFeatures) {
-		this.#builder = new OpenApiBuilder();
-		this.#builder.rootDoc = rootDoc;
-		this;
+	@Config("OpenAPIModule") config!: OpenAPIConfig;
 
-		if (features) {
-			this.#features = features;
+	constructor() {
+		const { specs, limits, override } = this.config;
+		let mergedSpecs: OpenAPIObject;
+		if (override) {
+			mergedSpecs = (specs as OpenAPIObject) || defaultSpecs;
+		} else {
+			mergedSpecs = deepMerge(defaultSpecs, specs || {}) as OpenAPIObject;
 		}
+
+		limits && setDefaultLimit(limits);
+		this.#builder = new OpenApiBuilder(mergedSpecs);
 	}
 
 	#chooseCasing(casing?: "camel" | "snake" | "pascal" | "kebab") {
@@ -105,7 +132,7 @@ export class OpenAPIService {
 
 		const options: utils.ResponseOptions = {};
 
-		if (this.#features.rateLimit) {
+		if (this.features.rateLimit) {
 			options.headers = {
 				...options.headers,
 				...utils.referTo("headers", [
@@ -116,7 +143,7 @@ export class OpenAPIService {
 				]),
 			};
 		}
-		if (this.#features.cors) {
+		if (this.features.cors) {
 			options.headers = {
 				...options.headers,
 				...utils.referTo("headers", ["Access-Control-Allow-Origin"]),
@@ -193,13 +220,13 @@ export class OpenAPIService {
 	}
 
 	#enableCors() {
-		if (this.#features.cors) {
+		if (this.features.cors) {
 			this.#builder.addHeader("Access-Control-Allow-Origin", corsSchema);
 		}
 	}
 
 	#enableRateLimit() {
-		if (this.#features.rateLimit) {
+		if (this.features.rateLimit) {
 			this.#builder.addHeader("X-RateLimit-Limit", rateLimitSchemas.limit);
 			this.#builder.addHeader(
 				"X-RateLimit-Remaining",
@@ -245,7 +272,7 @@ export class OpenAPIService {
 
 		const options: utils.ResponseOptions = {};
 
-		if (this.#features.rateLimit) {
+		if (this.features.rateLimit) {
 			options.headers = {
 				...options.headers,
 				...utils.referTo("headers", [
@@ -256,7 +283,7 @@ export class OpenAPIService {
 				]),
 			};
 		}
-		if (this.#features.cors) {
+		if (this.features.cors) {
 			options.headers = {
 				...options.headers,
 				...utils.referTo("headers", ["Access-Control-Allow-Origin"]),

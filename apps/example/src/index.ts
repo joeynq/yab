@@ -29,7 +29,7 @@ new Vermi({ log: { level: "info" } })
 	.logger(PinoLogger)
 	// SqliteAdapter recommended for development.
 	// RedisAdapter is recommended for production.
-	.use(cache({}, SqliteAdapter))
+	.use(cache(SqliteAdapter, {}))
 	.use(
 		auth(BearerAuth, {
 			config: {

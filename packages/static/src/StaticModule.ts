@@ -1,12 +1,12 @@
 import {
 	AppHook,
-	type Configuration,
+	Config,
 	HttpException,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 } from "@vermi/core";
 import { pathname } from "@vermi/utils";
 import { generateETag, isCached } from "./utils";
@@ -44,15 +44,11 @@ const defaultStaticExtensions = [
 ];
 
 @Module()
-export class StaticModule extends VermiModule<
-	Record<SlashedPath, StaticModuleOptions>
-> {
-	@Logger()
-	private logger!: LoggerAdapter;
-
-	constructor(protected configuration: Configuration) {
-		super();
-	}
+export class StaticModule
+	implements VermiModule<Record<SlashedPath, StaticModuleOptions>>
+{
+	@Logger() private logger!: LoggerAdapter;
+	@Config() public config!: Record<SlashedPath, StaticModuleOptions>;
 
 	#getPrefix(request: Request) {
 		const path = pathname(request.url).split("/")[1];
@@ -113,7 +109,7 @@ export class StaticModule extends VermiModule<
 	public async onInit() {
 		this.logger.info(
 			"StaticModule initialized. Public path: {prefix}",
-			this.getConfig(),
+			this.config,
 		);
 	}
 

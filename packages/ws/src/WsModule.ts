@@ -1,13 +1,14 @@
 import {
 	type AppContext,
 	AppHook,
+	Config,
 	Configuration,
 	ContextService,
 	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	VermiModule,
+	type VermiModule,
 	registerProviders,
 } from "@vermi/core";
 import { type Class, pathStartsWith, uuid } from "@vermi/utils";
@@ -40,17 +41,15 @@ export interface WsModuleOptions {
 }
 
 @Module({ deps: [SocketHandler] })
-export class WsModule extends VermiModule<WsModuleOptions> {
-	@Logger()
-	private logger!: LoggerAdapter;
+export class WsModule implements VermiModule<WsModuleOptions> {
+	@Logger() private logger!: LoggerAdapter;
+	@Config() public config!: WsModuleOptions;
 
 	constructor(
 		protected configuration: Configuration,
 		protected contextService: ContextService,
 		protected socketHandler: SocketHandler,
-	) {
-		super();
-	}
+	) {}
 
 	@AppHook("app:init")
 	async onInit(_: AppContext, server: Server) {
