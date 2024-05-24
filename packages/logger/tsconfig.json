@@ -23,6 +23,7 @@
 		"skipLibCheck": true,
 		"noFallthroughCasesInSwitch": true,
 		"preserveWatchOutput": true,
+		"useDefineForClassFields": false,
 
 		// Some stricter flags (disabled by default)
 		"noUnusedLocals": false,

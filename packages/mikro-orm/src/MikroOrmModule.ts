@@ -4,6 +4,7 @@ import {
 	AppHook,
 	type Configuration,
 	InjectionScope,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	VermiModule,
@@ -23,10 +24,10 @@ export type MikroOrmModuleConfig = Options;
 export class MikroOrmModule extends VermiModule<MikroOrmModuleConfig> {
 	#orm!: MikroORM;
 
-	constructor(
-		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-	) {
+	@Logger()
+	private logger!: LoggerAdapter;
+
+	constructor(protected configuration: Configuration) {
 		super();
 	}
 

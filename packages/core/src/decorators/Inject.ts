@@ -5,7 +5,7 @@ import { getTokenName } from "../utils";
 export const Inject = <T>(token?: InjectionToken<T>) => {
 	return (target: any, propertyKey: string | symbol) => {
 		Object.defineProperty(target, propertyKey, {
-			get: () => {
+			get() {
 				const name = token ? getTokenName(token) : propertyKey.toString();
 				const has = containerRef().hasRegistration(name);
 				if (!has) {
@@ -15,7 +15,5 @@ export const Inject = <T>(token?: InjectionToken<T>) => {
 			},
 			configurable: true,
 		});
-
-		// injectStore.apply(target.constructor).addEventHandler(methodName);
 	};
 };

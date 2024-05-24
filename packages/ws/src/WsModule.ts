@@ -3,6 +3,7 @@ import {
 	AppHook,
 	Configuration,
 	ContextService,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -40,9 +41,11 @@ export interface WsModuleOptions {
 
 @Module({ deps: [SocketHandler] })
 export class WsModule extends VermiModule<WsModuleOptions> {
+	@Logger()
+	private logger!: LoggerAdapter;
+
 	constructor(
 		protected configuration: Configuration,
-		protected logger: LoggerAdapter,
 		protected contextService: ContextService,
 		protected socketHandler: SocketHandler,
 	) {
@@ -50,10 +53,9 @@ export class WsModule extends VermiModule<WsModuleOptions> {
 	}
 
 	@AppHook("app:init")
-	async onInit(context: AppContext, server: Server) {
+	async onInit(_: AppContext, server: Server) {
 		const { eventStores } = this.config;
 
-		console.log("eventStores", eventStores);
 		registerProviders(...eventStores);
 
 		this.socketHandler.initRouter(eventStores);

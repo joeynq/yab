@@ -7,6 +7,7 @@ import {
 } from "@vermi/utils";
 import { Injectable } from "../decorators";
 import type { AppContext, EventPayload, EventResult } from "../interfaces";
+import type { ContextService } from "./Context";
 
 type EventHandler<
 	EventType extends { [key: string]: string },
@@ -43,14 +44,11 @@ export class Hooks<
 		string,
 		MaybePromiseFunction
 	>,
-	Context extends AppContext = AppContext,
 > {
 	#hooks: Map<
 		string,
 		EventObject<EventType, EnumValues<EventType>, EventMap>[]
 	> = new Map();
-
-	#context?: Context;
 
 	get debug() {
 		type WithEvent = {
@@ -70,6 +68,12 @@ export class Hooks<
 		return debug;
 	}
 
+	#context?: AppContext;
+
+	constructor(protected contextService: ContextService) {
+		this.#context = this.contextService.context?.expose();
+	}
+
 	#shouldBreak(result: any, breakOn: InvokeOptions["breakOn"]) {
 		if (breakOn === "null" && result === null) {
 			return true;
@@ -87,10 +91,6 @@ export class Hooks<
 		}
 
 		return false;
-	}
-
-	useContext(context: Context) {
-		this.#context = context;
 	}
 
 	register<Event extends EnumValues<EventType>>(

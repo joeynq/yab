@@ -1,8 +1,9 @@
-import type {
-	AppContext,
-	Hooks,
-	RequestContext,
-	_RequestContext,
+import {
+	type ContextService,
+	type Hooks,
+	Injectable,
+	type RequestContext,
+	type _RequestContext,
 } from "@vermi/core";
 import { ensure, pathname } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
@@ -17,16 +18,20 @@ type ConsoleTable = {
 	handler: string;
 };
 
+@Injectable("SINGLETON")
 export class Router {
 	#matcher = new Memoirist<RouteMatch>();
-
-	#context?: AppContext;
 
 	#route?: FindResult<RouteMatch>;
 
 	#debug: ConsoleTable[] = [];
 
 	#validator: ValidationFn = validate;
+
+	get context() {
+		ensure(this.contextService.context);
+		return this.contextService.context.expose();
+	}
 
 	get route() {
 		ensure(this.#route, new Error("Route not set"));
@@ -37,10 +42,7 @@ export class Router {
 		return this.#debug;
 	}
 
-	private get context() {
-		ensure(this.#context, new Error("Context not set"));
-		return this.#context;
-	}
+	constructor(private contextService: ContextService) {}
 
 	#ensureMatch() {
 		const request = this.context.resolve<Request>("request");
@@ -114,10 +116,6 @@ export class Router {
 		return this.#matcher.add(method, path, store);
 	}
 
-	useContext(context: AppContext) {
-		this.#context = context;
-	}
-
 	useValidator(validator: ValidationFn) {
 		this.#validator = validator;
 	}
@@ -147,8 +145,7 @@ export class Router {
 
 			const hooks = context.store.hooks as Hooks<
 				typeof RouterEvent,
-				RouterEventMap,
-				RequestContext
+				RouterEventMap
 			>;
 
 			await hooks.invoke(RouterEvent.RouteGuard, [context, this.route], {

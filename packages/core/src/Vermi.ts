@@ -22,7 +22,7 @@ import {
 } from "./services";
 import { enhance, registerProviders } from "./utils";
 
-@Module({ deps: [ContextService, Configuration, Hooks] })
+@Module({ deps: [Configuration, Hooks] })
 class AppModule {}
 
 export class Vermi {
@@ -38,9 +38,7 @@ export class Vermi {
 
 	#options: AppOptions;
 
-	get context() {
-		return this.#container.resolve<ContextService>("contextService");
-	}
+	#context = new ContextService();
 
 	get hooks() {
 		const hooks =
@@ -77,6 +75,7 @@ export class Vermi {
 				},
 				lifetime: Lifetime.SCOPED,
 			},
+			contextService: asValue(this.#context),
 		});
 	}
 
@@ -94,7 +93,7 @@ export class Vermi {
 		server: Server,
 	) {
 		return new Promise<Response>((resolve) => {
-			this.context.runInContext<_RequestContext, void>(
+			this.#context.runInContext<_RequestContext, void>(
 				container.createEnhancedScope(),
 				async (stored: EnhancedContainer<_RequestContext>) => {
 					try {
@@ -112,8 +111,6 @@ export class Vermi {
 							typeof AppEvents,
 							AppEventMap
 						>;
-
-						hooks.useContext(stored.expose());
 
 						for (const [key, value] of Object.entries(
 							this.#customContext?.(stored.cradle) || {},
@@ -192,13 +189,11 @@ export class Vermi {
 	}
 
 	async start(onStarted: (context: AppContext, server: Server) => void) {
-		this.context.runInContext(this.#container, async (container) => {
+		this.#context.runInContext(this.#container, async (container) => {
 			this.#registerServices();
 			this.#initModules();
 
 			const { hooks } = container.cradle;
-
-			hooks.useContext(container.expose());
 
 			await hooks.invoke(AppEvents.OnInit, [container.expose()]);
 

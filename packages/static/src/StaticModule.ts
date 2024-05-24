@@ -2,6 +2,7 @@ import {
 	AppHook,
 	type Configuration,
 	HttpException,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -46,10 +47,10 @@ const defaultStaticExtensions = [
 export class StaticModule extends VermiModule<
 	Record<SlashedPath, StaticModuleOptions>
 > {
-	constructor(
-		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-	) {
+	@Logger()
+	private logger!: LoggerAdapter;
+
+	constructor(protected configuration: Configuration) {
 		super();
 	}
 

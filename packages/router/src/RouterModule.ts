@@ -4,6 +4,7 @@ import {
 	type Configuration,
 	Hook,
 	type Hooks,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -66,21 +67,23 @@ export type RouterModuleConfig = {
 
 @Module({ deps: [Router] })
 export class RouterModule extends VermiModule<RouterModuleConfig> {
+	@Logger()
+	private logger!: LoggerAdapter;
+
 	constructor(
 		protected configuration: Configuration,
-		protected logger: LoggerAdapter,
 		protected router: Router,
 	) {
 		super();
 	}
 
-	#addRoutes(instanceMap: Record<string, any>) {
+	#addRoutes(context: AppContext) {
 		const routes = getRoutes();
 		for (const [path, operation] of routes) {
 			const method = path.split("/")[0];
 			const route = path.slice(method.length);
 
-			const instance = instanceMap[operation.handler.target.name];
+			const instance = context.resolve<any>(operation.handler.target.name);
 			const action = operation.handler.action;
 
 			this.router.addRoute(method as HttpMethod, route, {
@@ -178,10 +181,11 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 		}
 
 		const all = Object.values(mounted).flatMap((m) => m.controllers);
-		const instanceMap = registerProviders(...all);
+		registerProviders(...all);
+
 		saveStoreData(routeStore.token, routeStore.combineStore(...all));
 
-		this.#addRoutes(instanceMap);
+		this.#addRoutes(context);
 	}
 
 	@Hook("app:request")
@@ -200,13 +204,11 @@ export class RouterModule extends VermiModule<RouterModuleConfig> {
 			responseHandler = defaultResponseHandler,
 		} = config;
 
-		this.router.useContext(context);
 		customValidation && this.router.useValidator(customValidation);
 
 		const hooks = context.store.hooks as Hooks<
 			typeof RouterEvent,
-			RouterEventMap,
-			RequestContext
+			RouterEventMap
 		>;
 
 		await hooks.invoke(RouterEvent.Init, [context]);

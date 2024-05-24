@@ -12,12 +12,10 @@ export const pathname = (url: string) => {
 };
 
 export const pathStartsWith = (url: string, start: string) => {
-	console.log("url", pathname(url));
 	return pathname(url).startsWith(start);
 };
 
 export const pathIs = (url: string, path: string) => {
-	console.log("url", pathname(url));
 	return pathname(url) === path;
 };
 

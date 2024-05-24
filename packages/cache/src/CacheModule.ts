@@ -1,10 +1,10 @@
 import {
 	type AppContext,
 	AppHook,
-	type Configuration,
+	Config,
+	Logger,
 	type LoggerAdapter,
 	Module,
-	VermiModule,
 	asValue,
 } from "@vermi/core";
 import type { CacheAdapter } from "./interfaces";
@@ -15,15 +15,12 @@ export type CacheModuleOptions<Adapter extends CacheAdapter> = {
 };
 
 @Module()
-export class CacheModule<Adapter extends CacheAdapter> extends VermiModule<
-	CacheModuleOptions<Adapter>
-> {
-	constructor(
-		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-	) {
-		super();
-	}
+export class CacheModule<Adapter extends CacheAdapter> {
+	@Logger()
+	protected logger!: LoggerAdapter;
+
+	@Config()
+	public config!: CacheModuleOptions<Adapter>;
 
 	@AppHook("app:init")
 	async init(context: AppContext) {

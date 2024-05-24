@@ -1,6 +1,7 @@
 import {
 	AppHook,
 	type Configuration,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -57,10 +58,10 @@ const defaultSpecs: OpenAPIObject = {
 export class OpenAPIModule extends VermiModule<OpenAPIConfig> {
 	#service: OpenAPIService;
 
-	constructor(
-		protected configuration: Configuration,
-		protected logger: LoggerAdapter,
-	) {
+	@Logger()
+	private logger!: LoggerAdapter;
+
+	constructor(protected configuration: Configuration) {
 		super();
 
 		let specs: OpenAPIObject;

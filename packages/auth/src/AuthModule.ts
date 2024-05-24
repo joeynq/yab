@@ -2,6 +2,7 @@ import {
 	type AppContext,
 	AppHook,
 	type Configuration,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
@@ -36,10 +37,10 @@ type InitStatus = "success" | "error";
 export class AuthModule<S extends Strategy<any>> extends VermiModule<
 	AuthModuleConfig<S>
 > {
-	constructor(
-		protected configuration: Configuration,
-		private logger: LoggerAdapter,
-	) {
+	@Logger()
+	private logger!: LoggerAdapter;
+
+	constructor(protected configuration: Configuration) {
 		super();
 	}
 

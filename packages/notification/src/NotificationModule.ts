@@ -1,6 +1,7 @@
 import {
 	AppHook,
 	type Configuration,
+	Logger,
 	type LoggerAdapter,
 	Module,
 	VermiModule,
@@ -17,9 +18,11 @@ export type NotificationModuleConfig<T extends Templates> = {
 export class NotificationModule<T extends Templates> extends VermiModule<
 	NotificationModuleConfig<T>
 > {
+	@Logger()
+	private logger!: LoggerAdapter;
+
 	constructor(
 		protected configuration: Configuration,
-		protected logger: LoggerAdapter,
 		protected notificationService: NotificationService,
 	) {
 		super();
