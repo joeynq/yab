@@ -1,127 +1,152 @@
 import {
+	Config,
+	Configuration,
 	type ContextService,
+	type EnhancedContainer,
+	Hooks,
 	Injectable,
+	Logger,
+	type LoggerAdapter,
 	asClass,
 	asValue,
-	containerRef,
 } from "@vermi/core";
-import type { Class } from "@vermi/utils";
-import type { Server, ServerWebSocket, WebSocketHandler } from "bun";
+import { type Class, ensure } from "@vermi/utils";
+import type { Server, ServerWebSocket } from "bun";
 import Memoirist from "memoirist";
 import type { WsModuleOptions } from "../WsModule";
-import { WsMessage } from "../events";
+import { type EventType, WsEvent, WsMessage } from "../events";
+import { WsCloseCode } from "../exceptions";
+import type { WsEventMap, WsEvents } from "../hooks";
 import type { WsData, _WsContext } from "../interfaces";
 import { type WsHandler, wsHandlerStore } from "../stores";
-import { enhanceWs } from "../utils";
+import { type EnhancedWebSocket, enhanceWs } from "../utils";
 
-@Injectable("SINGLETON")
+@Injectable()
 export class SocketHandler {
 	#router = new Memoirist<WsHandler>();
+	#sockets = new Map<string, EnhancedWebSocket<WsData>>();
+	#server!: Server;
 
-	constructor(protected contextService: ContextService) {}
+	@Logger() private logger!: LoggerAdapter;
+	@Config("WsModule") private config!: WsModuleOptions;
 
-	async #onOpen(ws: ServerWebSocket<WsData>) {
-		this.contextService.runInContext(
-			containerRef().createEnhancedScope(),
-			async (container) => {
-				container.register({
-					ws: asValue(enhanceWs(ws)),
-					data: asValue(ws.data),
-				});
-				await await container.cradle.hooks.invoke("ws-hook:connect", [
-					container.expose(),
-				]);
-
-				ws.inform("opened");
-			},
-		);
+	get context() {
+		ensure(this.contextService.context, "Context not found");
+		return this.contextService.context as EnhancedContainer<_WsContext>;
 	}
 
-	async #onMessage(
-		server: Server,
-		ws: ServerWebSocket<WsData>,
-		message: string | Buffer,
-	) {
-		return this.contextService.runInContext<_WsContext, any>(
-			containerRef().createEnhancedScope<_WsContext>(),
-			async (container) => {
-				try {
-					container.register({
-						traceId: asValue(ws.data.sid),
-						ws: asValue(enhanceWs(ws)),
-						data: asValue(ws.data),
-						send: asValue((message) => ws.send(message)),
-						sendToChannel: {
-							lifetime: "SCOPED",
-							resolve(context) {
-								return (message: Uint8Array) => {
-									const event = (context.cradle as _WsContext).event;
-									if (!event?.channel) {
-										return ws.sendError(
-											new Error("You must provide a channel"),
-										);
-									}
-									server.publish(event?.channel, message);
-								};
-							},
-						},
-					});
+	constructor(
+		protected configuration: Configuration,
+		protected contextService: ContextService,
+		protected hooks: Hooks,
+	) {}
 
-					const hooks = container.cradle.hooks;
+	#createEvent(ws: EnhancedWebSocket<WsData>, message: Buffer) {
+		const { sid, type, data, topic, event } =
+			ws.data.parser.decode<any>(message);
 
-					await hooks.invoke("ws-hook:init", [container.expose()]);
+		if (topic) {
+			return new WsMessage(sid, event, topic, data);
+		}
 
-					await hooks.invoke("ws-hook:guard", [container.expose()]);
+		return new WsEvent(sid, type, data);
+	}
 
-					const { event, channel } = WsMessage.unpack(ws.data.sid, message);
+	#prepareContext(ws: EnhancedWebSocket<WsData>) {
+		const sendTopic = (topic: `/${string}`, type: EventType, data: any) => {
+			this.#server.publish(
+				topic,
+				ws.data.parser.encode(new WsEvent(ws.data.sid, type, data)),
+			);
+		};
 
-					const handler = this.#router.find(event, channel);
+		const broadcast = (type: EventType, data: any) => {
+			sendTopic("/", type, data);
+		};
 
-					if (!handler) {
-						throw new Error("Handler not found");
-					}
+		this.context.register({
+			traceId: asValue(ws.data.sid),
+			ws: asValue(ws),
+			broadcast: asValue(broadcast),
+			sendTopic: asValue(sendTopic),
+		});
+		return this.context.expose();
+	}
 
-					ws.subscribe(channel);
+	async #onOpen(_ws: ServerWebSocket<WsData>) {
+		if (!_ws.data.sid) {
+			this.logger.error("No sid provided");
+			return _ws.close(WsCloseCode.InvalidData, "No sid provided");
+		}
+		const ws = enhanceWs(_ws);
+		const context = this.#prepareContext(ws);
 
-					const {
-						params,
-						store: { eventStore, method },
-					} = handler;
+		ws.subscribe("/");
 
-					container.register({
-						ws: asValue(enhanceWs(ws)),
-						params: asValue(params),
-					});
+		this.#sockets.set(ws.data.sid, ws);
 
-					const instance = container.build(asClass(eventStore));
-					const methodHandler = instance[method];
+		this.hooks.invoke("ws-hook:connect", [context]);
 
-					await methodHandler.call(instance, container.expose());
+		ws.sendEvent("connect");
+		this.logger.info("Client connected with sid: {sid}", { sid: ws.data.sid });
+	}
 
-					// ws.send(new WsMessage(ws.data.sid, channel, event, {}).pack());
-				} catch (error) {
-					return ws.sendError(error as Error);
-				}
-			},
-		);
+	async #onMessage(_ws: ServerWebSocket<WsData>, message: Buffer) {
+		const ws = enhanceWs(_ws);
+		// TODO: Run this in a separate thread
+		const context = this.#prepareContext(ws);
+		try {
+			const hooks = context.store.hooks as Hooks<typeof WsEvents, WsEventMap>;
+			const event = this.#createEvent(ws, message);
+
+			if (event.type === "subscribe") {
+				this.logger.info("Subscribing to {topic}", { topic: event.data });
+				await hooks.invoke("ws-hook:subscribe", [context, event.data]);
+				ws.subscribe(event.data);
+				return;
+			}
+
+			if (event.type === "unsubscribe") {
+				this.logger.info("Unsubscribing from {topic}", { topic: event.data });
+				await hooks.invoke("ws-hook:unsubscribe", [context, event.data]);
+				ws.unsubscribe(event.data);
+				return;
+			}
+
+			if (!(event instanceof WsMessage)) {
+				throw new Error("Invalid message type");
+			}
+
+			const handler = this.#router.find(event.event, event.topic);
+
+			if (!handler) {
+				throw new Error("Handler not found");
+			}
+
+			await hooks.invoke("ws-hook:guard", [context]);
+
+			const {
+				params,
+				store: { eventStore, method },
+			} = handler;
+
+			context.register("params", asValue(params));
+
+			const instance = context.build(asClass(eventStore));
+			const methodHandler = instance[method];
+
+			await methodHandler.call(instance, context);
+		} catch (error) {
+			this.logger.error(error, "Error handling message");
+			return ws.sendEvent("error", error as Error);
+		}
 	}
 
 	async #onClose(ws: ServerWebSocket<WsData>, code: number, reason: string) {
-		this.contextService.runInContext(
-			containerRef().createEnhancedScope(),
-			async (container) => {
-				container.register({
-					ws: asValue(enhanceWs(ws)),
-					data: asValue(ws.data),
-				});
-				await container.cradle.hooks.invoke("ws-hook:disconnect", [
-					container.expose(),
-					code,
-					reason,
-				]);
-				ws.inform("closed");
-			},
-		);
+		const context = this.#prepareContext(enhanceWs(ws));
+		ws.unsubscribe("/");
+		this.#sockets.delete(ws.data.sid);
+		this.hooks.invoke("ws-hook:disconnect", [context, code, reason]);
 	}
 
 	initRouter(eventStores: Class<any>[]) {
@@ -129,20 +154,18 @@ export class SocketHandler {
 			const store = wsHandlerStore.apply(eventStore).get();
 
 			for (const [event, handlerData] of store.entries()) {
-				this.#router.add(event, handlerData.channel, handlerData);
+				this.#router.add(event, handlerData.topic, handlerData);
 			}
 		}
 	}
 
-	buildHandler(
-		server: Server,
-		options?: Omit<WsModuleOptions, "path">,
-	): WebSocketHandler<WsData> {
-		return {
+	buildHandler(server: Server): void {
+		this.#server = server;
+		this.configuration.options.websocket = {
 			open: this.#onOpen.bind(this),
-			message: this.#onMessage.bind(this, server),
+			message: this.#onMessage.bind(this),
 			close: this.#onClose.bind(this),
-			...options,
+			...this.config.server,
 		};
 	}
 }

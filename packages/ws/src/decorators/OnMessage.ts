@@ -5,7 +5,7 @@ export const OnMessage = (event: string) => {
 		wsHandlerStore.apply(target.constructor).addHandler(event, {
 			eventStore: target.constructor,
 			method: key,
-			channel: "/",
+			topic: "/",
 		});
 	};
 };

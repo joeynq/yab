@@ -6,12 +6,12 @@ export const WsHandlerStoreKey = Symbol("WsHandlerStoreKey");
 export interface WsHandler {
 	eventStore: Class<any>;
 	method: string;
-	channel: string;
+	topic: string;
 }
 
 type WsHandlerStoreAPI = {
 	addHandler(event: string, handler: WsHandler): void;
-	updateChannel(event: string, channel: string): void;
+	updateChannel(event: string, topic: string): void;
 };
 
 export const wsHandlerStore = createStore<
@@ -27,11 +27,11 @@ export const wsHandlerStore = createStore<
 				set(current);
 			}
 		},
-		updateChannel(event: string, channel: string) {
+		updateChannel(event: string, topic: string) {
 			const current = get() || new Map<string, WsHandler>();
 			const handler = current.get(event);
 			if (handler) {
-				handler.channel = channel;
+				handler.topic = topic;
 				current.set(event, handler);
 				set(current);
 			}
