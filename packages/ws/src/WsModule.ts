@@ -4,45 +4,47 @@ import {
 	Config,
 	Configuration,
 	ContextService,
-	Logger,
-	type LoggerAdapter,
+	Hooks,
 	Module,
 	type RequestContext,
 	type VermiModule,
+	asClass,
 	registerProviders,
 } from "@vermi/core";
 import { type Class, pathStartsWith, uuid } from "@vermi/utils";
-import { type Server, type ServerWebSocket, type WebSocketHandler } from "bun";
+import { type Server, type WebSocketHandler } from "bun";
+import type { WsEventMap, WsEvents } from "./hooks";
 import type { WsData } from "./interfaces";
+import { JsonParser } from "./parser/JsonParser";
+import type { Parser } from "./parser/Parser";
 import { SocketHandler } from "./services";
 
 declare module "@vermi/core" {
 	interface AppOptions {
 		websocket?: WebSocketHandler<any>;
 	}
-	interface _AppContext {
-		ws: ServerWebSocket<any>;
-	}
 
-	interface _RequestContext {
-		userId?: string;
+	interface _AppContext {
+		parser: Parser;
 	}
 }
 
 export interface WsModuleOptions {
 	path: string;
-	maxPayloadLength?: number;
-	backpressureLimit?: number;
-	closeOnBackpressureLimit?: boolean;
-	idleTimeout?: number;
-	publishToSelf?: boolean;
-	sendPings?: boolean;
 	eventStores: Class<any>[];
+	parser: Class<Parser>;
+	server: {
+		maxPayloadLength?: number;
+		backpressureLimit?: number;
+		closeOnBackpressureLimit?: boolean;
+		idleTimeout?: number;
+		publishToSelf?: boolean;
+		sendPings?: boolean;
+	};
 }
 
 @Module({ deps: [SocketHandler] })
 export class WsModule implements VermiModule<WsModuleOptions> {
-	@Logger() private logger!: LoggerAdapter;
 	@Config() public config!: WsModuleOptions;
 
 	constructor(
@@ -52,16 +54,14 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 	) {}
 
 	@AppHook("app:init")
-	async onInit(_: AppContext, server: Server) {
-		const { eventStores } = this.config;
+	async onInit(context: AppContext, server: Server) {
+		const { eventStores, parser = JsonParser } = this.config;
 
 		registerProviders(...eventStores);
+		context.register("parser", asClass(parser).singleton());
 
 		this.socketHandler.initRouter(eventStores);
-		this.configuration.options.websocket = this.socketHandler.buildHandler(
-			server,
-			this.config,
-		);
+		this.socketHandler.buildHandler(server);
 	}
 
 	@AppHook("app:request")
@@ -69,13 +69,14 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 		const { request } = context.store;
 
 		if (pathStartsWith(request.url, this.config.path)) {
-			await context.store.hooks.invoke("ws-hook:guard", [context]);
+			const hooks = context.store.hooks as Hooks<typeof WsEvents, WsEventMap>;
+			const data = await hooks.invoke("ws-hook:handshake", [context]);
 			server.upgrade<WsData>(request, {
 				data: {
-					get userId() {
-						return context.resolve<string>("userId");
-					},
+					...data,
 					sid: uuid(),
+					isAlive: true,
+					parser: context.store.parser,
 				},
 			});
 			return {};

@@ -1,17 +1,19 @@
-import type { ExposedContext, _AppContext } from "@vermi/core";
-import type { WsMessage } from "../events";
-import type { WsData } from "./WsData";
+import type { ExposedContext, _RequestContext } from "@vermi/core";
+import type { ServerWebSocket } from "bun";
+import type { EventType } from "../events";
 
-export interface _WsContext<
-	Params extends Record<string, string> = Record<string, string>,
-> extends _AppContext {
-	data: WsData;
-	params: Params;
-	event?: WsMessage<any>;
-	send: (message: Uint8Array) => void;
-	broadcast: (message: Uint8Array) => void;
+export interface _WsContext extends _RequestContext {
+	ws: ServerWebSocket<any>;
+
+	broadcast(type: "error", data: Error): void;
+	broadcast<Data>(type: Exclude<EventType, "error">, data: Data): void;
+
+	sendTopic(topic: string, type: "error", data: Error): void;
+	sendTopic<Data>(
+		topic: string,
+		type: Exclude<EventType, "error">,
+		data: Data,
+	): void;
 }
 
-export type WsContext<
-	Params extends Record<string, string> = Record<string, string>,
-> = ExposedContext<_WsContext<Params>>;
+export type WsContext = ExposedContext<_WsContext>;

@@ -2,7 +2,13 @@ type StringValues<T> = {
 	[K in keyof T]: T[K] extends string ? T[K] : never;
 }[keyof T];
 
-export type EnumValues<T> = `${StringValues<T>}`;
+type NumberValues<T> = {
+	[K in keyof T]: T[K] extends number ? T[K] : never;
+}[keyof T];
+
+export type EnumValues<T, V extends string | number = string> = V extends string
+	? `${StringValues<T>}`
+	: NumberValues<T>;
 
 export function getKeyByValue<
 	TEnumKey extends string,

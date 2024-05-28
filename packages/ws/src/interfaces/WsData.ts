@@ -1,4 +1,8 @@
+import type { Parser } from "../parser/Parser";
+
 export interface WsData {
-	userId?: string;
 	sid: string;
+	parser: Parser;
+	isAlive: boolean;
+	[key: string]: any;
 }
