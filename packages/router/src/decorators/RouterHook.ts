@@ -1,4 +1,6 @@
 import { Hook } from "@vermi/core";
 import type { RouterEvent } from "../event";
 
-export const RouterHook = Hook<typeof RouterEvent>;
+export function RouterHook(event: RouterEvent) {
+	return Hook(event, { scoped: true });
+}

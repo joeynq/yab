@@ -6,7 +6,7 @@ import { PinoLogger } from "@vermi/logger/pino";
 import { openapi } from "@vermi/openapi";
 import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
-import { WsModule } from "@vermi/ws";
+import { JsonParser, ws } from "@vermi/ws";
 import { UserController } from "./controllers";
 import { TestSocket } from "./sockets/TestSocket";
 
@@ -42,6 +42,7 @@ new Vermi({ log: { level: "info" } })
 	.use(statics("/public", { assetsDir: "./public" }))
 	.use(statics("/favicon.ico", { assetsDir: "./public", direct: true }))
 	// .use(rateLimit("redis", {}))
+	.use(ws({ path: "/ws", eventStores: [TestSocket], parser: JsonParser }))
 	.use(
 		router("/api", [UserController], {
 			casing: { internal: "camel", interfaces: "snake" },
@@ -57,13 +58,6 @@ new Vermi({ log: { level: "info" } })
 			},
 		}),
 	)
-	.use({
-		module: WsModule,
-		args: {
-			path: "/ws",
-			eventStores: [TestSocket],
-		},
-	})
 	.start((context, { port }) => {
 		context.resolve<LoggerAdapter>("logger")?.info(`Server started at ${port}`);
 	});

@@ -1,4 +1,6 @@
 import { RouterEvent } from "../event";
-import { OnRoute } from "./OnRoute";
+import { RouterHook } from "./RouterHook";
 
-export const Guard = OnRoute.bind(null, RouterEvent.RouteGuard);
+export function Guard() {
+	return RouterHook(RouterEvent.RouteGuard);
+}

@@ -1,3 +1,4 @@
+import { tryRun } from "@vermi/utils";
 import type { BunFile } from "bun";
 
 export async function isCached(
@@ -24,11 +25,10 @@ export async function isCached(
 
 	const ifModifiedSince = headers.get("if-modified-since");
 	let lastModified: Date | undefined;
-	try {
+
+	await tryRun(async () => {
 		lastModified = new Date(file.lastModified);
-	} catch {
-		/* empty */
-	}
+	});
 
 	return (
 		!ifModifiedSince ||

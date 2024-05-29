@@ -5,6 +5,6 @@ export interface MiddlewareOptions {
 	deps?: Class<any>[];
 }
 
-export const Middleware = ({ deps = [] }: MiddlewareOptions = {}) => {
+export function Middleware({ deps = [] }: MiddlewareOptions = {}) {
 	return useDecorators(Injectable("SCOPED"), Deps(...deps));
-};
+}

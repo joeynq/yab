@@ -5,7 +5,7 @@ import { Prop } from "./Prop";
 export function String(options?: StringOptions & { nullable?: boolean }) {
 	return Prop(() => Type.String(), {
 		maxLength: limitSettings.stringMaxLength,
-		minLength: 1,
+		minLength: options?.nullable ? 0 : 1,
 		...options,
 	});
 }

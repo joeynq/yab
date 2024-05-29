@@ -35,7 +35,7 @@ export class CacheModule<Adapter extends Class<CacheAdapter<any>>>
 			}
 			context.register(`cache:${name}`, asValue(instance));
 			this.logger.info(
-				`Cache module initialized with ${options.adapter.constructor.name}.`,
+				`Cache module initialized with ${options.adapter.name}.`,
 			);
 		}
 	}

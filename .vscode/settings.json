@@ -68,5 +68,9 @@
 	},
 	"[javascript]": {
 		"editor.defaultFormatter": "biomejs.biome"
-	}
+	},
+	"npm-intellisense.importQuotes": "\"",
+	"npm-intellisense.scanDevDependencies": true,
+	"npm-intellisense.showBuildInLibs": true,
+	"npm-intellisense.packageSubfoldersIntellisense": true
 }

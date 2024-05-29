@@ -1,6 +1,7 @@
 import type { ServerWebSocket } from "bun";
 import { type EventType, WsError, WsEvent } from "../events";
 import type { WsData } from "../interfaces";
+import type { Parser } from "../parser/Parser";
 
 export interface EnhancedWebSocket<T> extends ServerWebSocket<T> {
 	sendEvent(type: "error", data: Error): void;
@@ -9,11 +10,12 @@ export interface EnhancedWebSocket<T> extends ServerWebSocket<T> {
 
 export const enhanceWs = (
 	_ws: ServerWebSocket<WsData>,
+	parser: Parser,
 ): EnhancedWebSocket<WsData> => {
 	const ws = _ws as EnhancedWebSocket<WsData>;
 
 	function sendEvent<Data>(type: EventType, data?: Data) {
-		const { sid, parser } = ws.data;
+		const { sid } = ws.data;
 
 		const event =
 			type === "error"

@@ -10,6 +10,7 @@ import {
 	asValue,
 } from "@vermi/core";
 import { Guard, type RouteMatch } from "@vermi/router";
+import { tryRun } from "@vermi/utils";
 import type { JWTVerifyResult } from "jose";
 import type { SecurityScheme } from "./interfaces";
 import type { Strategy } from "./strategies";
@@ -51,15 +52,14 @@ export class AuthModule<S extends Strategy<any>>
 		for (const [name, { strategy, scheme }] of Object.entries(config)) {
 			let status: "success" | "error" = "success";
 
-			try {
+			const [error] = await tryRun(async () => {
 				await strategy.init?.();
 				toBeRegistered[Object.keys(scheme)[0]] = strategy;
-			} catch (error) {
+			});
+
+			if (error) {
 				status = "error";
-				this.logger.error(
-					error as any,
-					`Error initializing auth strategy ${name}`,
-				);
+				this.logger.error(error, `Error initializing auth strategy ${name}`);
 			}
 
 			logs.push({ strategy: name, schemeName: Object.keys(scheme)[0], status });

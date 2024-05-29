@@ -29,3 +29,13 @@ export const pipe =
 		}
 		return result;
 	};
+
+export async function tryRun<Err extends Error, T>(
+	fn: (...args: any[]) => Promise<T>,
+): Promise<[Err] | [null, T]> {
+	try {
+		return [null, await fn()];
+	} catch (error) {
+		return [error as Err];
+	}
+}

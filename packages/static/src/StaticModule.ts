@@ -8,7 +8,7 @@ import {
 	type RequestContext,
 	type VermiModule,
 } from "@vermi/core";
-import { pathname } from "@vermi/utils";
+import { pathname, tryRun } from "@vermi/utils";
 import { generateETag, isCached } from "./utils";
 
 export type SlashedPath = `/${string}`;
@@ -57,32 +57,40 @@ export class StaticModule
 		return Object.hasOwn(this.config, mount) ? mount : undefined;
 	}
 
-	#getFile(config: StaticModuleOptions, request: Request, prefix: SlashedPath) {
+	async #getFile(
+		config: StaticModuleOptions,
+		request: Request,
+		prefix: SlashedPath,
+	) {
 		const { assetsDir, direct } = config;
 		const isAbsolute = assetsDir.startsWith("/");
 
 		const url = pathname(request.url);
 
-		try {
+		const [error, file] = await tryRun(async () => {
 			if (!direct) {
 				const filePath = isAbsolute
-					? `${assetsDir}${url.slice(prefix.length)}`
-					: Bun.resolveSync(
-							`${assetsDir}${url.slice(prefix.length)}`,
-							process.cwd(),
-						);
-
+					? `${assetsDir}${prefix}`
+					: Bun.resolveSync(`${assetsDir}${prefix}`, process.cwd());
 				return Bun.file(filePath);
 			}
 
 			const filePath = isAbsolute
-				? `${assetsDir}${prefix}`
-				: Bun.resolveSync(`${assetsDir}${prefix}`, process.cwd());
+				? `${assetsDir}${url.slice(prefix.length)}`
+				: Bun.resolveSync(
+						`${assetsDir}${url.slice(prefix.length)}`,
+						process.cwd(),
+					);
+
 			return Bun.file(filePath);
-		} catch (error) {
-			this.logger.error(error as Error, "File not found: {path}", url);
-			throw new HttpException(404, "Not Found", error as Error);
+		});
+
+		if (error) {
+			this.logger.error(error, "File not found: {path}", url);
+			throw new HttpException(404, "Not Found", error);
 		}
+
+		return file;
 	}
 
 	#getHeaders(config: StaticModuleOptions, etag?: string) {
@@ -156,7 +164,7 @@ export class StaticModule
 			}
 		}
 
-		const file = this.#getFile(config, request, prefix);
+		const file = await this.#getFile(config, request, prefix);
 
 		const etag = eTag ? await generateETag(file) : undefined;
 

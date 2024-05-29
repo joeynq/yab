@@ -11,7 +11,12 @@ import {
 	asClass,
 	registerProviders,
 } from "@vermi/core";
-import { type Class, pathStartsWith, uuid } from "@vermi/utils";
+import {
+	type Class,
+	type Dictionary,
+	pathStartsWith,
+	uuid,
+} from "@vermi/utils";
 import { type Server, type WebSocketHandler } from "bun";
 import type { WsEventMap, WsEvents } from "./hooks";
 import type { WsData } from "./interfaces";
@@ -32,8 +37,8 @@ declare module "@vermi/core" {
 export interface WsModuleOptions {
 	path: string;
 	eventStores: Class<any>[];
-	parser: Class<Parser>;
-	server: {
+	parser?: Class<Parser>;
+	server?: {
 		maxPayloadLength?: number;
 		backpressureLimit?: number;
 		closeOnBackpressureLimit?: boolean;
@@ -54,14 +59,19 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 	) {}
 
 	@AppHook("app:init")
-	async onInit(context: AppContext, server: Server) {
+	async onInit(context: AppContext) {
 		const { eventStores, parser = JsonParser } = this.config;
 
 		registerProviders(...eventStores);
 		context.register("parser", asClass(parser).singleton());
 
 		this.socketHandler.initRouter(eventStores);
-		this.socketHandler.buildHandler(server);
+		this.socketHandler.buildHandler();
+	}
+
+	@AppHook("app:started")
+	async onStarted(_: AppContext, server: Server) {
+		this.socketHandler.setServer(server);
 	}
 
 	@AppHook("app:request")
@@ -70,13 +80,15 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 
 		if (pathStartsWith(request.url, this.config.path)) {
 			const hooks = context.store.hooks as Hooks<typeof WsEvents, WsEventMap>;
-			const data = await hooks.invoke("ws-hook:handshake", [context]);
+
+			const customData: Dictionary<any> = {};
+
+			await hooks.invoke("ws-hook:handshake", [context, customData]);
+
 			server.upgrade<WsData>(request, {
 				data: {
-					...data,
+					...customData,
 					sid: uuid(),
-					isAlive: true,
-					parser: context.store.parser,
 				},
 			});
 			return {};

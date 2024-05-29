@@ -14,25 +14,20 @@ import {
 	registerProviders,
 	saveStoreData,
 } from "@vermi/core";
-import {
-	type Class,
-	ensure,
-	getCookies,
-	parseQuery,
-	pathname,
-	searchString,
-	stringify,
-} from "@vermi/utils";
+import { type Class, ensure } from "@vermi/utils";
 import type { HttpMethod } from "./enums";
 import { RouterEvent, type RouterEventMap } from "./event";
 import type { RouteMatch, SlashedPath, ValidationFn } from "./interfaces";
-import { type CasingType, Router, casingFactory } from "./services";
+import { type CasingType, Router } from "./services";
 import { getRoutes, routeStore } from "./stores";
-import { defaultErrorHandler, defaultResponseHandler } from "./utils";
+import { defaultErrorHandler, defaultResponseHandler, validate } from "./utils";
+import { getConfigFromRequest } from "./utils/getConfigFromRequest";
 
 declare module "@vermi/core" {
 	interface _RequestContext {
+		route: RouteMatch;
 		payload: {
+			params?: any;
 			query?: any;
 			body?: any;
 			headers?: any;
@@ -98,52 +93,7 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 			return config;
 		}
 
-		const path = pathname(request.url).split("/")[1];
-		const mount = `/${path}` as SlashedPath;
-
-		if (!config[mount]) {
-			return;
-		}
-
-		return { ...config[mount], mount };
-	}
-
-	async #payloadCasing(casing: CasingType, context: RequestContext) {
-		const service = casingFactory(casing);
-		const { request } = context.store;
-
-		const query = parseQuery(searchString(request.url)) || undefined;
-
-		const body = await request.text();
-
-		const headers = Object.fromEntries(request.headers);
-
-		const cookies = getCookies(request.headers.get("cookie") || "");
-
-		context.register(
-			"payload",
-			asValue({
-				query: query ? service.convert(query) : undefined,
-				body: body ? service.convert(JSON.parse(body)) : undefined,
-				headers: service.convert(headers),
-				cookies: service.convert(cookies),
-			}),
-		);
-	}
-
-	async #responseCasing(
-		casing: CasingType,
-		_: RequestContext,
-		response: Response,
-	) {
-		const service = casingFactory(casing);
-
-		const body = await response.json();
-
-		return new Response(stringify(service.convert(body as object)), {
-			status: response.status,
-			headers: response.headers,
-		});
+		return getConfigFromRequest(config, request);
 	}
 
 	@Hook(AppEvents.OnInit)
@@ -159,19 +109,6 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 					.apply(controller)
 					.updatePathPrefix({ mount: prefix as SlashedPath });
 				hookStore.apply(controller).updateScope({ mount: prefix });
-			}
-
-			const { interfaces, internal = "camel" } = options?.casing || {};
-
-			if (interfaces && internal && interfaces !== internal) {
-				context.store.hooks.register(RouterEvent.BeforeRoute, {
-					handler: this.#payloadCasing.bind(this, internal),
-					scope: prefix,
-				});
-				context.store.hooks.register(RouterEvent.AfterRoute, {
-					handler: this.#responseCasing.bind(this, interfaces),
-					scope: prefix,
-				});
 			}
 		}
 
@@ -194,21 +131,27 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 
 		const {
 			mount,
-			customValidation,
 			errorHandler = defaultErrorHandler,
 			responseHandler = defaultResponseHandler,
+			customValidation = validate,
 		} = config;
 
-		customValidation && this.router.useValidator(customValidation);
+		context.register("validator", asValue(customValidation));
 
 		const hooks = context.store.hooks as Hooks<
 			typeof RouterEvent,
 			RouterEventMap
 		>;
 
-		await hooks.invoke(RouterEvent.Init, [context]);
+		const when = (scope: string) => {
+			return scope.startsWith(
+				`${context.store.request.method.toLocaleLowerCase()}${mount}`,
+			);
+		};
 
-		await hooks.invoke(RouterEvent.BeforeRoute, [context], { scope: mount });
+		await hooks.invoke(RouterEvent.Init, [context], { when });
+
+		await hooks.invoke(RouterEvent.BeforeRoute, [context], { when });
 
 		const response = await this.router.handleRequest(
 			responseHandler,
@@ -218,9 +161,9 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 		const newResponse = await hooks.invoke(
 			RouterEvent.AfterRoute,
 			[context, response],
-			{ breakOn: (result) => result instanceof Response, scope: mount },
+			{ breakOn: (result) => result instanceof Response, when },
 		);
 
-		return newResponse;
+		return newResponse || response;
 	}
 }

@@ -5,6 +5,7 @@ export const ModelStoreKey = Symbol("ModelStore");
 
 export type ModelStoreAPI = {
 	addSchema: (schema: TSchema) => void;
+	getSchema: (name: string) => TSchema | undefined;
 };
 
 export const modelStore = createStore<TSchema[], ModelStoreAPI>(
@@ -15,6 +16,8 @@ export const modelStore = createStore<TSchema[], ModelStoreAPI>(
 			if (current.find((s) => s.$id === schema.$id)) return;
 			set([...current, schema]);
 		},
+		getSchema: (name) =>
+			get()?.find((s) => s.$id === `#/components/schemas/${name}`),
 	}),
 	() => [],
 );

@@ -1,4 +1,6 @@
 import { RouterEvent } from "../event";
-import { OnRoute } from "./OnRoute";
+import { RouterHook } from "./RouterHook";
 
-export const After = OnRoute.bind(null, RouterEvent.AfterHandle);
+export function After() {
+	return RouterHook(RouterEvent.AfterHandle);
+}

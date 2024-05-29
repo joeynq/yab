@@ -4,6 +4,7 @@ import {
 	type EnumValues,
 	type MaybePromiseFunction,
 	isNil,
+	tryRun,
 } from "@vermi/utils";
 import { Injectable } from "../decorators";
 import type { AppContext, EventPayload, EventResult } from "../interfaces";
@@ -22,19 +23,15 @@ export interface EventObject<
 	Event extends EnumValues<EventType>,
 	EventMap extends Record<EnumValues<EventType>, MaybePromiseFunction>,
 > {
+	scope?: string;
 	target?: Class<any>;
 	handler: EventHandler<EventType, Event, EventMap>;
-	scope?: string;
 }
 
 interface InvokeOptions {
-	breakOn?:
-		| "null"
-		| "result"
-		| "error"
-		| "resultOrError"
-		| (<T>(result: T) => boolean);
-	scope?: string;
+	continueOnError?: boolean;
+	breakOn?: "null" | "result" | (<T>(result: T) => boolean);
+	when?: (scope: string) => boolean;
 }
 
 @Injectable("SINGLETON")
@@ -50,22 +47,25 @@ export class Hooks<
 		EventObject<EventType, EnumValues<EventType>, EventMap>[]
 	> = new Map();
 
-	get debug() {
+	debug(event?: string) {
 		type WithEvent = {
 			event: string;
 		} & EventObject<EventType, EnumValues<EventType>, EventMap>;
 		const debug: WithEvent[] = [];
 
-		this.#hooks.forEach((handlers, event) => {
+		this.#hooks.forEach((handlers, e) => {
+			if (event && event !== e) {
+				return;
+			}
 			debug.push(
 				...handlers.map((handler) => ({
 					...handler,
-					event,
+					event: e,
 				})),
 			);
 		});
 
-		return debug;
+		console.table(debug);
 	}
 
 	#context?: AppContext;
@@ -74,15 +74,20 @@ export class Hooks<
 		this.#context = this.contextService.context?.expose();
 	}
 
-	#shouldBreak(result: any, breakOn: InvokeOptions["breakOn"]) {
+	#shouldBreak(
+		err: Error | null,
+		result: any,
+		{ breakOn = "null", continueOnError }: InvokeOptions,
+	) {
+		if (!continueOnError && err) {
+			throw err;
+		}
+
 		if (breakOn === "null" && result === null) {
 			return true;
 		}
 
-		if (
-			(breakOn === "result" || breakOn === "resultOrError") &&
-			!isNil(result)
-		) {
+		if (breakOn === "result" && !isNil(result)) {
 			return true;
 		}
 
@@ -109,33 +114,38 @@ export class Hooks<
 	async invoke<Event extends EnumValues<EventType>>(
 		event: Event,
 		args: EventPayload<EventType, Event, EventMap>,
-		{ breakOn = "error", scope }: InvokeOptions = {},
+		options: InvokeOptions = {},
 	): Promise<EventResult<EventType, Event, EventMap> | undefined> {
 		let handlers = this.#hooks.get(event);
 		if (!handlers?.length) {
 			return;
 		}
 
-		if (scope) {
-			handlers = handlers.filter((handler) => handler.scope === scope);
+		const { when, ...breakOpts } = options;
+
+		if (when) {
+			handlers = handlers.filter(
+				(handler) => handler.scope && when(handler.scope),
+			);
 		}
 
-		for (const event of handlers) {
-			try {
-				let handler = event.handler;
-				if (event.target) {
-					handler = handler.bind(this.#context?.resolve(event.target.name));
-				}
-				const result = await handler(...args);
+		let finalResult: any | undefined = undefined;
+		for (const eventObject of handlers) {
+			const [err, result] = await tryRun(async () => {
+				const handler = eventObject.handler;
 
-				if (this.#shouldBreak(result, breakOn)) {
-					return result as any;
+				if (eventObject.target && this.#context) {
+					const instance = this.#context.resolve(eventObject.target);
+					const methodName = handler.name.replace("bound ", "");
+					return instance[methodName]?.(...args);
 				}
-			} catch (error) {
-				if (breakOn === "error" || breakOn === "resultOrError") {
-					throw error;
-				}
+				return handler(...args);
+			});
+			if (this.#shouldBreak(err, result, breakOpts)) {
+				return result;
 			}
+			finalResult = result;
 		}
+		return finalResult;
 	}
 }
