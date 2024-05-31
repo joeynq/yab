@@ -11,7 +11,7 @@ export class ConsolaLogger extends BaseLogger<ConsolaInstance> {
 	config: LogOptions<Partial<ConsolaOptions> & Dictionary>;
 
 	get level() {
-		return this.config.level
+		return this.config.level ?? "info";
 	}
 
 	constructor(
@@ -27,17 +27,13 @@ export class ConsolaLogger extends BaseLogger<ConsolaInstance> {
 		};
 		this.log = createConsola({
 			...this.config.options,
-			level: LogLevels[this.config.level],
+			level: LogLevels[this.config.level ?? "info"],
 		});
 		this.log.wrapConsole();
 	}
 
-	setLogger(logger: ConsolaInstance) {
-		this.log = logger;
-	}
-
 	createChild(context: LoggerContext) {
-		const child = this.log.withTag(context.requestId);
+		const child = this.log.withTag(context.traceId);
 		child.wrapConsole();
 		return child;
 	}

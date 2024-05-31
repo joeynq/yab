@@ -8,7 +8,9 @@
 		"watch": "tsc -w"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/sprintf-js": "^1.1.4",
+		"@types/voca": "^1.4.5"
 	},
 	"peerDependencies": {
 		"typescript": "^5.4.5"
@@ -18,6 +20,7 @@
 		"deepmerge-ts": "^5.1.0",
 		"faster-qs": "^0.2.4",
 		"safe-stable-stringify": "^2.4.3",
+		"sprintf-js": "^1.1.3",
 		"type-fest": "^4.18.2"
 	}
 }

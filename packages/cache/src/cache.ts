@@ -9,19 +9,16 @@ export const cache = <Adapter extends Class<CacheAdapter<any>>>(
 	options?: Omit<CacheModuleOptions<Adapter>, "adapter" | "adapterArg"> & {
 		name?: string;
 	},
-): UseModule<
-	Class<CacheModule<Adapter>>,
-	Record<string, CacheModuleOptions<Adapter>>
-> => {
+): UseModule<CacheModule<Adapter>> => {
 	const { name = "default" } = options || {};
-	return {
-		module: CacheModule,
-		args: {
+	return [
+		CacheModule,
+		{
 			[name]: {
 				adapter,
 				adapterArg: args,
 				...options,
 			},
 		},
-	};
+	];
 };

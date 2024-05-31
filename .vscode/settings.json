@@ -37,12 +37,14 @@
 		"SAMEORIGIN",
 		"sindresorhus",
 		"sonarjs",
+		"sprintf",
 		"tseep",
 		"tseslint",
 		"tslog",
 		"typebox",
 		"typeorm",
 		"Vermi",
+		"voca",
 		"workdir"
 	],
 	"editor.codeActionsOnSave": {
