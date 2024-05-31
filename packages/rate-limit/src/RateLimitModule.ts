@@ -9,7 +9,7 @@ import {
 	asValue,
 } from "@vermi/core";
 import { TooManyRequests } from "@vermi/router";
-import type { Class } from "@vermi/utils";
+import { type Class, tryRun } from "@vermi/utils";
 import {
 	type RateLimiterAbstract,
 	RateLimiterDynamo,
@@ -34,11 +34,13 @@ const adapterMap = {
 	prisma: RateLimiterPrisma,
 } as const;
 
-export type AdapterMap = typeof adapterMap;
+export type AdapterMap = {
+	[key in keyof typeof adapterMap]: RateLimiterAbstract;
+};
 
-export type RateLimitConfig<M extends typeof adapterMap, N extends keyof M> = {
+export type RateLimitConfig<N extends keyof AdapterMap> = {
 	adapter: N;
-	options: ConstructorParameters<Class<M[N]>>[0];
+	options: ConstructorParameters<Class<AdapterMap[N]>>[0];
 };
 
 declare module "@vermi/core" {
@@ -52,23 +54,20 @@ declare module "@vermi/core" {
 }
 
 @Module()
-export class RateLimitModule<
-	M extends typeof adapterMap,
-	N extends keyof M,
-	RateLimiter extends RateLimiterAbstract,
-> implements VermiModule<RateLimitConfig<M, N>>
+export class RateLimitModule<N extends keyof AdapterMap>
+	implements VermiModule<RateLimitConfig<N>>
 {
-	#rateLimiter: RateLimiter;
+	#rateLimiter: RateLimiterAbstract;
 
-	@Config() public config!: RateLimitConfig<M, N>;
+	@Config() public config!: RateLimitConfig<N>;
 
 	constructor() {
 		const { adapter, options } = this.config;
-		this.#rateLimiter = new (adapterMap as any)[adapter](options);
+		this.#rateLimiter = new adapterMap[adapter](options);
 	}
 
 	async #handle(context: RequestContext) {
-		try {
+		const [error, result] = await tryRun(() => {
 			const ip = context.store.userIp;
 
 			if (!ip) {
@@ -76,12 +75,16 @@ export class RateLimitModule<
 			}
 
 			return this.#rateLimiter.consume(ip.address, 1);
-		} catch (error) {
+		});
+
+		if (error) {
 			if (error instanceof HttpException) {
 				throw error;
 			}
-			throw new TooManyRequests("Rate limit exceeded", error as Error);
+			throw new TooManyRequests("Rate limit exceeded", error);
 		}
+
+		return result;
 	}
 
 	@AppHook("app:init")

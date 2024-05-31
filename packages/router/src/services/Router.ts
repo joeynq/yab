@@ -3,14 +3,14 @@ import {
 	type Hooks,
 	Injectable,
 	type RequestContext,
-	type _RequestContext,
+	asValue,
 } from "@vermi/core";
-import { ensure, pathname } from "@vermi/utils";
+import { ensure, pathname, tryRun } from "@vermi/utils";
 import Memoirist, { type FindResult } from "memoirist";
 import { RouterEvent, type RouterEventMap } from "../event";
-import { BadRequest, NotFound } from "../exceptions";
-import type { RouteMatch, ValidationFn } from "../interfaces";
-import { getRequestScope, validate } from "../utils";
+import { NotFound } from "../exceptions";
+import type { RouteMatch } from "../interfaces";
+import { getRequestScope } from "../utils";
 
 type ConsoleTable = {
 	method: string;
@@ -25,8 +25,6 @@ export class Router {
 	#route?: FindResult<RouteMatch>;
 
 	#debug: ConsoleTable[] = [];
-
-	#validator: ValidationFn = validate;
 
 	get context() {
 		ensure(this.contextService.context);
@@ -57,56 +55,6 @@ export class Router {
 		this.#route = match;
 	}
 
-	async #getHandlerArguments() {
-		const payload = this.context.resolve<_RequestContext["payload"]>("payload");
-		const args = this.route.store.args;
-		if (!args) {
-			return [];
-		}
-
-		const values: any[] = [];
-
-		for (const arg of args) {
-			let value: any = undefined;
-			switch (arg.in) {
-				case "path":
-					value = this.route.params;
-					break;
-				case "query":
-					value = payload.query;
-					break;
-				case "body":
-					value = payload.body;
-					break;
-				case "header":
-					value = payload.headers;
-					break;
-				case "cookie":
-					value = payload.cookies;
-					break;
-			}
-
-			if (arg.required && value === undefined) {
-				throw new BadRequest(`Missing required parameter: ${arg.name}`);
-			}
-
-			if (arg.schema && value !== undefined) {
-				// value = Value.Clean(arg.schema, value);
-				await this.#validator(arg.schema, value, this.route);
-			}
-
-			if (arg.pipes) {
-				for (const pipe of arg.pipes) {
-					value = await this.context.build(pipe).map(value);
-				}
-			}
-
-			values.push(value);
-		}
-
-		return values;
-	}
-
 	addRoute(method: string, path: string, store: RouteMatch): RouteMatch {
 		this.#debug.push({
 			method,
@@ -114,10 +62,6 @@ export class Router {
 			handler: store.handler.name,
 		});
 		return this.#matcher.add(method, path, store);
-	}
-
-	useValidator(validator: ValidationFn) {
-		this.#validator = validator;
 	}
 
 	async handleRequest(
@@ -137,39 +81,54 @@ export class Router {
 		const request = context.resolve("request") as Request;
 		const { logger } = context.store;
 		const { path } = this.route.store;
-		try {
+
+		const [error, response] = await tryRun(async () => {
+			const payload = context.store.payload;
+
+			context.register({
+				route: asValue(this.route.store),
+				payload: asValue({
+					...payload,
+					params: this.route.params,
+				}),
+			});
+
 			logger.info(`Incoming request: ${request.method} ${request.url}`);
 
 			const relativePath = path.replace(/\/$/, "");
-			const scope = getRequestScope(request.method, relativePath);
+			const requestScope = getRequestScope(request.method, relativePath);
 
 			const hooks = context.store.hooks as Hooks<
 				typeof RouterEvent,
 				RouterEventMap
 			>;
 
-			await hooks.invoke(RouterEvent.RouteGuard, [context, this.route], {
-				scope,
+			const when = (scope: string) => {
+				return requestScope === scope;
+			};
+
+			await hooks.invoke(RouterEvent.RouteGuard, [context], {
+				when,
 			});
 
-			await hooks.invoke(RouterEvent.BeforeHandle, [context, this.route], {
-				scope,
+			await hooks.invoke(RouterEvent.BeforeHandle, [context], {
+				when,
 			});
 
-			const result = await this.route.store.handler(
-				...(await this.#getHandlerArguments()),
-			);
+			const result = await this.route.store.handler(context);
 
-			await hooks.invoke(
-				RouterEvent.AfterHandle,
-				[context, result, this.route],
-				{ scope },
-			);
+			await hooks.invoke(RouterEvent.AfterHandle, [context, result], {
+				when,
+			});
 
 			return responseHandler(result, this.route.store.responses);
-		} catch (error) {
-			logger.error(error as Error, `${request.method} ${request.url} failed`);
-			return errorHandler(error as Error, this.#route?.store.responses);
+		});
+
+		if (error) {
+			logger.error(error, `${request.method} ${request.url} failed`);
+			return errorHandler(error, this.#route?.store.responses);
 		}
+
+		return response;
 	}
 }

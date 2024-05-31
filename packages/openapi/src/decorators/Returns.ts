@@ -15,7 +15,7 @@ export const Returns = <T extends TSchema>(
 ) => {
 	return (target: any, propertyKey: string | symbol) => {
 		const store = routeStore.apply(target.constructor);
-		const path = store.findPath(target.constructor, propertyKey);
+		const path = store.findPath(propertyKey);
 
 		if (!path) {
 			return;

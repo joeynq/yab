@@ -1,5 +1,5 @@
 import { type RequestContext, asValue } from "@vermi/core";
-import { Middleware, OnRoute, RouterEvent } from "@vermi/router";
+import { AfterRoute, BeforeRoute, Middleware } from "@vermi/router";
 
 interface RateLimitOptions {
 	keyPrefix: string;
@@ -21,14 +21,14 @@ export class RateLimitMiddleware {
 		};
 	}
 
-	@OnRoute(RouterEvent.BeforeRoute)
+	@BeforeRoute()
 	public async rateLimit(ctx: RequestContext) {
 		const limit = await ctx.store.rateLimitHandler(ctx);
 
 		ctx.register({ rateLimit: asValue(limit) });
 	}
 
-	@OnRoute(RouterEvent.AfterRoute)
+	@AfterRoute()
 	public async rateLimitAfter(ctx: RequestContext, response: Response) {
 		const limit = ctx.store.rateLimit;
 

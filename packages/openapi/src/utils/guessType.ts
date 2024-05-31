@@ -5,7 +5,7 @@ import { SchemaKey } from "../decorators";
 export const guessType = (PropType: any): TSchema | undefined => {
 	switch (PropType) {
 		case String:
-			return Type.String() as any;
+			return Type.String();
 
 		case Number:
 			return Type.Number();

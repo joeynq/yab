@@ -1,4 +1,4 @@
-import { Deps, Injectable, useDecorators } from "@vermi/core";
+import { Deps, Injectable, hookStore, useDecorators } from "@vermi/core";
 import type { Class } from "@vermi/utils";
 import { wsHandlerStore } from "../stores";
 
@@ -16,6 +16,9 @@ export const SocketController = (
 			for (const [event] of events) {
 				wsHandlerStore.apply(target).updateChannel(event, topic);
 			}
+		},
+		(target: any) => {
+			hookStore.apply(target).updateScope({ topic });
 		},
 		Injectable("SCOPED"),
 		Deps(...deps),

@@ -20,7 +20,7 @@ export type AppEventMap = {
 
 	[AppEvents.OnExitContext]: (context: RequestContext) => Promise<void>;
 
-	[AppEvents.OnInit]: (context: AppContext, server: Server) => Promise<void>;
+	[AppEvents.OnInit]: (context: AppContext) => Promise<void>;
 
 	[AppEvents.OnRequest]: (
 		context: RequestContext,

@@ -1,13 +1,24 @@
 import { Logger, type LoggerAdapter } from "@vermi/core";
-import { OnMessage, SocketController, type WsContext } from "@vermi/ws";
+import { Model, Number, String } from "@vermi/openapi";
+import { OnData, SocketController, type WsContext } from "@vermi/ws";
+
+@Model()
+class TestModel {
+	@String()
+	foo!: string;
+
+	@Number()
+	bar!: number;
+}
 
 @SocketController("/test")
 export class TestSocket {
 	@Logger()
 	logger!: LoggerAdapter;
 
-	@OnMessage("some-message")
-	async onMessage(context: WsContext, message: Uint8Array) {
-		this.logger.info(context.store.data, "some-message");
+	@OnData("some-message", TestModel)
+	async onMessage(context: WsContext<{ "other-message": true }>, message: any) {
+		this.logger.info("some-message");
+		context.store.broadcast("other-message", message);
 	}
 }

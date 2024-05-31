@@ -12,14 +12,13 @@ export const Use = <Middleware extends Class<any>>(
 		(target: any, propertyKey: string | symbol) => {
 			const middlewareHook = hookStore.apply(middleware).get();
 
-			const full = routeStore
-				.apply(target.constructor)
-				.findPath(target.constructor, propertyKey);
+			const full = routeStore.apply(target.constructor).findPath(propertyKey);
 
 			if (!full) {
 				return;
 			}
 
+			// FIXME: router:beforeRoute and router:afterRoute doesn't run in this scope
 			for (const [event, handlers] of middlewareHook.entries()) {
 				for (const handler of handlers) {
 					hookStore.apply(target.constructor).addHandler(event, {

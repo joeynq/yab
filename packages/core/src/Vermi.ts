@@ -1,4 +1,11 @@
-import { type Class, deepMerge, ensure, pathIs, uuid } from "@vermi/utils";
+import {
+	type Class,
+	deepMerge,
+	ensure,
+	pathIs,
+	tryRun,
+	uuid,
+} from "@vermi/utils";
 import { InjectionMode, Lifetime, asValue, createContainer } from "awilix";
 import type { Server } from "bun";
 import { Module } from "./decorators";
@@ -96,7 +103,7 @@ export class Vermi {
 			this.#context.runInContext<_RequestContext, void>(
 				container.createEnhancedScope(),
 				async (stored: EnhancedContainer<_RequestContext>) => {
-					try {
+					const [error, response] = await tryRun(async () => {
 						stored.register({
 							traceId: asValue(request.headers.get("x-request-id") ?? uuid()),
 							request: asValue(request),
@@ -124,7 +131,7 @@ export class Vermi {
 							AppEvents.OnRequest,
 							[stored.expose(), server],
 							{
-								breakOn: "resultOrError",
+								breakOn: "result",
 							},
 						);
 
@@ -134,27 +141,25 @@ export class Vermi {
 
 						const response = result || defaultResponse;
 
-						await hooks.invoke(AppEvents.OnResponse, [
+						const newResponse = await hooks.invoke(AppEvents.OnResponse, [
 							stored.expose(),
 							response,
 						]);
-						resolve(response);
-					} catch (error) {
-						stored.cradle.logger.error(error as Error);
+						return newResponse || response;
+					});
+
+					await stored.cradle.hooks.invoke(AppEvents.OnExitContext, [
+						stored.expose(),
+					]);
+
+					if (error) {
+						stored.cradle.logger.error(error);
 						if (error instanceof HttpException) {
 							return resolve(error.toResponse());
 						}
-						resolve(
-							new HttpException(
-								500,
-								(error as Error).message,
-								error as Error,
-							).toResponse(),
-						);
-					} finally {
-						await stored.cradle.hooks.invoke(AppEvents.OnExitContext, [
-							stored.expose(),
-						]);
+						resolve(new HttpException(500, error.message, error).toResponse());
+					} else {
+						resolve(response);
 					}
 				},
 			);
@@ -198,8 +203,6 @@ export class Vermi {
 			await hooks.invoke(AppEvents.OnInit, [container.expose()]);
 
 			const { configuration, logger } = container.cradle;
-
-			// console.table(this.#hooks.debug);
 
 			const server = Bun.serve({
 				...configuration.bunOptions,

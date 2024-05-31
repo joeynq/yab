@@ -21,8 +21,8 @@ export class WsEvent<Data> {
 		return {
 			sid: this.sid,
 			type: this.type,
-			data: this.data,
 			timestamp: this.timestamp,
+			...(this.data ? { data: this.data } : {}),
 		};
 	}
 }

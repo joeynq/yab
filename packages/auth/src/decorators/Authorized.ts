@@ -31,19 +31,22 @@ class AuthorizedMiddleware {
 }
 
 export const Authorized = (scheme: string, scopes: string[] = []) => {
-	return useDecorators(Use(AuthorizedMiddleware), (target, propertyKey) => {
-		const store = routeStore.apply((target as any).constructor);
-		const path = store.findPath((target as any).constructor, propertyKey);
+	return useDecorators(
+		Use(AuthorizedMiddleware),
+		(target: any, propertyKey) => {
+			const store = routeStore.apply(target.constructor);
+			const path = store.findPath(propertyKey);
 
-		if (!path) return;
+			if (!path) return;
 
-		store.updateRoute(path, (current) => {
-			if (!current.security) {
-				current.security = new Map();
-			}
-			current.security.set(scheme, scopes);
+			store.updateRoute(path, (current) => {
+				if (!current.security) {
+					current.security = new Map();
+				}
+				current.security.set(scheme, scopes);
 
-			return current;
-		});
-	});
+				return current;
+			});
+		},
+	);
 };

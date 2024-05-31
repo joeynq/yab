@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { tryRun } from "@vermi/utils";
 import { Injectable } from "../decorators";
 import type { EnhancedContainer, _AppContext } from "../interfaces";
 
@@ -29,12 +30,18 @@ export class ContextService {
 		cb: (stored: EnhancedContainer<Context>) => T | Promise<T>,
 		exitCb = () => {},
 	): Promise<T> {
-		this.setContext(context);
-		const result = await cb(store.getStore() as EnhancedContainer<Context>);
-		this.clearContext(() => {
-			context.dispose();
-			exitCb();
+		const [error, result] = await tryRun(async () => {
+			this.setContext(context);
+			return cb(store.getStore() as EnhancedContainer<Context>);
 		});
+
+		this.clearContext(exitCb);
+
+		if (error) {
+			context.cradle.logger.error(error);
+			return Promise.reject(error);
+		}
+
 		return result;
 	}
 }

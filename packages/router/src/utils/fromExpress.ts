@@ -42,7 +42,7 @@ export const fromExpressMiddleware = (
 			return new Promise<void>((resolve, reject) => {
 				this.#expressMiddleware(context.store.request, undefined, (err) => {
 					if (err) {
-						reject(err as Error);
+						reject(err);
 					} else {
 						resolve();
 					}

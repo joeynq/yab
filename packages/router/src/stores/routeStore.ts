@@ -1,15 +1,12 @@
 import { createStore, getStoreData } from "@vermi/core";
-import { type Class, format } from "@vermi/utils";
+import { format } from "@vermi/utils";
 import type { HttpMethod } from "../enums";
 import type { FullPath, Operation, Routes, SlashedPath } from "../interfaces";
 
 export const RouterMetadataKey: unique symbol = Symbol("Router");
 
 export type RouterAPI = {
-	findPath(
-		controller: Class<any>,
-		actionName: string | symbol,
-	): FullPath | undefined;
+	findPath(actionName: string | symbol): FullPath | undefined;
 	addRoute(
 		method: HttpMethod,
 		path: SlashedPath,
@@ -25,10 +22,10 @@ export type RouterAPI = {
 export const routeStore = createStore<Routes["paths"], RouterAPI>(
 	RouterMetadataKey,
 	(target, get, set) => ({
-		findPath(controller: Class<any>, actionName: string | symbol) {
+		findPath(actionName: string | symbol) {
 			const current = get();
 			if (!current) return;
-			const key = `${controller.name}.${actionName.toString()}`;
+			const key = `${target.name}.${actionName.toString()}`;
 			for (const [path, { handler }] of current) {
 				const opId = `${handler.target.name}.${handler.action}`;
 				if (opId === key) return path;
