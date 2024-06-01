@@ -16,6 +16,7 @@ export class PinoLogger extends BaseLogger<Logger> {
 
 	constructor(options: Partial<LogOptions<LoggerOptions & Dictionary>> = {}) {
 		super();
+
 		this.options = {
 			level: "info",
 			stackTrace: true,
@@ -23,21 +24,7 @@ export class PinoLogger extends BaseLogger<Logger> {
 			options: {},
 			...options,
 		};
-		this.setLogger(
-			Pino({
-				base: {},
-				transport: {
-					target: "pino-pretty",
-					options: {
-						crlf: true,
-						colorize: !this.options.noColor,
-						translateTime: "SYS:HH:MM:ss.l",
-						messageFormat: "{{traceId}} {msg}",
-						ignore: "traceId,userIp,serverUrl,userAgent",
-					},
-				},
-			}),
-		);
+		this.setLogger(Pino({ base: {} }));
 	}
 
 	createChild(context: LoggerContext) {

@@ -1,6 +1,6 @@
 import type { UseModule } from "@vermi/core";
 import type { Class } from "@vermi/utils";
-import { AuthModule, type AuthModuleConfig } from "./AuthModule";
+import { AuthModule } from "./AuthModule";
 import type { Strategy } from "./strategies";
 
 export interface AuthOptions {
@@ -11,13 +11,13 @@ export interface AuthOptions {
 export const auth = <S extends Strategy<any>, SClass extends Class<S>>(
 	Strategy: SClass,
 	{ config, schemeName }: AuthOptions,
-): UseModule<Class<AuthModule<S>>, AuthModuleConfig<S>> => {
+): UseModule<AuthModule<S>> => {
 	const strategy = new Strategy(config);
 	const name = schemeName || Strategy.name;
 
-	return {
-		module: AuthModule,
-		args: {
+	return [
+		AuthModule,
+		{
 			[Strategy.name]: {
 				strategy,
 				scheme: {
@@ -25,5 +25,5 @@ export const auth = <S extends Strategy<any>, SClass extends Class<S>>(
 				},
 			},
 		},
-	};
+	];
 };

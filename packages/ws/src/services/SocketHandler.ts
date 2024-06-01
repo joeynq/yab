@@ -79,33 +79,28 @@ export class SocketHandler {
 		return context;
 	}
 
-	async #onOpen(ws: ServerWebSocket<WsData>) {
-		return this.contextService.runInContext(
-			this.#prepareContext(ws),
-			async (context: EnhancedContainer<_WsContext>) => {
-				const { ws } = context.cradle;
-				const [error] = await tryRun(async () => {
-					if (!ws.data.sid) {
-						this.logger.error("No sid provided");
-						return ws.close(WsCloseCode.InvalidData, "No sid provided");
-					}
+	async #onOpen(_ws: ServerWebSocket<WsData>) {
+		const ws = enhanceWs(_ws, this.context.cradle.parser);
+		const [error] = await tryRun(async () => {
+			if (!ws.data.sid) {
+				this.logger.error("No sid provided");
+				return ws.close(WsCloseCode.InvalidData, "No sid provided");
+			}
 
-					ws.subscribe("/");
+			ws.subscribe("/");
 
-					this.#sockets.set(ws.data.sid, ws);
+			this.#sockets.set(ws.data.sid, ws);
 
-					ws.sendEvent("connect");
-					this.logger.info("Client connected with sid: {sid}", {
-						sid: ws.data.sid,
-					});
-				});
+			ws.sendEvent("connect");
+			this.logger.info("Client connected with sid: %(sid)s", {
+				sid: ws.data.sid,
+			});
+		});
 
-				if (error) {
-					this.logger.error(error, "Error handling open");
-					return ws.sendEvent("error", error);
-				}
-			},
-		);
+		if (error) {
+			this.logger.error(error, "Error handling open");
+			return ws.sendEvent("error", error);
+		}
 	}
 
 	async #onMessage(ws: ServerWebSocket<WsData>, message: Buffer) {
@@ -122,13 +117,13 @@ export class SocketHandler {
 					});
 
 					if (event.type === "subscribe") {
-						this.logger.info("Subscribing to {topic}", { topic: event.data });
+						this.logger.info("Subscribing to %(topic)s", { topic: event.data });
 						ws.subscribe(event.data);
 						return;
 					}
 
 					if (event.type === "unsubscribe") {
-						this.logger.info("Unsubscribing from {topic}", {
+						this.logger.info("Unsubscribing from %(topic)s", {
 							topic: event.data,
 						});
 						ws.unsubscribe(event.data);
@@ -165,9 +160,9 @@ export class SocketHandler {
 					);
 
 					const instance = context.build(asClass(eventStore));
-					const methodHandler = instance[method];
+					const methodHandler = instance[method].bind(instance);
 
-					methodHandler.call(instance, context.expose());
+					await methodHandler(context.expose());
 				});
 
 				if (error) {
@@ -178,16 +173,10 @@ export class SocketHandler {
 		);
 	}
 
-	async #onClose(ws: ServerWebSocket<WsData>, code: number, reason: string) {
-		return this.contextService.runInContext(
-			this.#prepareContext(ws),
-			async (context: EnhancedContainer<_WsContext>) => {
-				const { ws, hooks } = context.cradle;
-				ws.unsubscribe("/");
-				this.#sockets.delete(ws.data.sid);
-				await hooks.invoke("ws-hook:disconnect", [context, code, reason]);
-			},
-		);
+	async #onClose(_ws: ServerWebSocket<WsData>, code: number, reason: string) {
+		const ws = enhanceWs(_ws, this.context.cradle.parser);
+		ws.unsubscribe("/");
+		this.#sockets.delete(ws.data.sid);
 	}
 
 	initRouter(eventStores: Class<any>[]) {

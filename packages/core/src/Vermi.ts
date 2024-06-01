@@ -17,22 +17,23 @@ import type {
 	AppOptions,
 	EnhancedContainer,
 	LoggerAdapter,
-	UseModule,
 	_AppContext,
 	_RequestContext,
 } from "./interfaces";
 import {
 	Configuration,
 	ConsoleLogger,
+	type ConsoleLoggerOptions,
 	ContextService,
 	Hooks,
+	type VermiModule,
 } from "./services";
 import { enhance, registerProviders } from "./utils";
 
 @Module({ deps: [Configuration, Hooks] })
 class AppModule {}
 
-export class Vermi {
+export class Vermi<Log extends object = ConsoleLoggerOptions> {
 	#logger: LoggerAdapter;
 	#container = enhance(
 		createContainer<_AppContext>({
@@ -43,7 +44,7 @@ export class Vermi {
 
 	#customContext?: (ctx: _RequestContext) => Record<string, unknown>;
 
-	#options: AppOptions;
+	#options: AppOptions<Log>;
 
 	#context = new ContextService();
 
@@ -54,7 +55,7 @@ export class Vermi {
 		return hooks;
 	}
 
-	constructor(options?: Partial<AppOptions>) {
+	constructor(options?: Partial<AppOptions<Log>>) {
 		this.#logger = new ConsoleLogger(options?.log);
 
 		this.#options = {
@@ -181,15 +182,26 @@ export class Vermi {
 		return this;
 	}
 
-	use<M extends Class<any>, Config>({
-		module,
-		args,
-	}: UseModule<M, Config>): this {
-		const current = this.#options.modules.get(module.name);
-		this.#options.modules.set(module.name, {
-			module,
-			config: deepMerge(current?.config, args),
+	use<
+		Module extends VermiModule<any>,
+		Config extends Module["config"] = Module["config"],
+	>(module: Class<Module>, options: Config): this;
+	use<
+		Module extends VermiModule<any>,
+		Config extends Module["config"] = Module["config"],
+	>([module, options]: [Class<Module>, Config]): this;
+	use<
+		Module extends VermiModule<any>,
+		Config extends Module["config"] = Module["config"],
+	>(module: Class<Module> | [Class<Module>, Config], options?: Config) {
+		const [mod, config] = Array.isArray(module) ? module : [module, options];
+		const current = this.#options.modules.get(mod.name);
+
+		this.#options.modules.set(mod.name, {
+			module: mod,
+			config: deepMerge(current?.config, config),
 		});
+
 		return this;
 	}
 

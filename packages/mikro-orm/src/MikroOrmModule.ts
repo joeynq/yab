@@ -40,7 +40,7 @@ export class MikroOrmModule implements VermiModule<MikroOrmModuleConfig> {
 			: "unsuccessfully";
 
 		this.logger.info(
-			"MikroORM connected to database {isConnected} to {url.protocol}//{url.host}{url.pathname}{url.search}",
+			"MikroORM connected to database %(isConnected)s to %(url.protocol)s//%(url.host)s%(url.pathname)s%(url.search)s",
 			{ url, isConnected },
 		);
 

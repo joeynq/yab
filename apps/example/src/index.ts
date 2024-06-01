@@ -1,8 +1,12 @@
 import { BearerAuth, auth } from "@vermi/auth";
 import { cache } from "@vermi/cache";
 import { SqliteAdapter } from "@vermi/cache/sqlite";
-import { type LoggerAdapter, Vermi } from "@vermi/core";
-import { PinoLogger } from "@vermi/logger/pino";
+import {
+	type LogLevel,
+	type LogOptions,
+	type LoggerAdapter,
+	Vermi,
+} from "@vermi/core";
 import { openapi } from "@vermi/openapi";
 import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
@@ -25,8 +29,19 @@ if (import.meta.env.NODE_ENV !== "production") {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-new Vermi({ log: { level: "info" } })
-	.logger(PinoLogger)
+const logOptions: LogOptions = {
+	level: import.meta.env.LOG_LEVEL as LogLevel,
+	options: {
+		formatDate: (date) => {
+			date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+			return date.toISOString().split("T")[1].split("Z")[0];
+		},
+	},
+};
+
+new Vermi({
+	log: logOptions,
+})
 	// SqliteAdapter recommended for development.
 	// RedisAdapter is recommended for production.
 	.use(cache(SqliteAdapter, {}))

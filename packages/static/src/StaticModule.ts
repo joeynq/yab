@@ -115,10 +115,13 @@ export class StaticModule
 
 	@AppHook("app:init")
 	public async onInit() {
-		this.logger.info(
-			"StaticModule initialized. Public path: {prefix}",
-			this.config,
-		);
+		for (const prefix in this.config) {
+			this.logger.info(
+				`StaticModule initialized. ${
+					this.config[prefix as any]?.direct ? "File" : "Public dir"
+				}: ${prefix}`,
+			);
+		}
 	}
 
 	@AppHook("app:request")

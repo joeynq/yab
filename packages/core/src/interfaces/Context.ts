@@ -21,7 +21,7 @@ export interface EnhancedContainer<Context extends object>
 
 export interface _AppContext {
 	env: Dictionary<unknown>;
-	app: Vermi;
+	app: Vermi<any>;
 	logger: LoggerAdapter;
 	hooks: Hooks<Dictionary<string>, Dictionary<MaybePromiseFunction>>;
 	configuration: Configuration;

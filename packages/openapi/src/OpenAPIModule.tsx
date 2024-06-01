@@ -1,5 +1,6 @@
 import { AuthModule } from "@vermi/auth";
 import {
+	type AppContext,
 	AppHook,
 	Config,
 	Logger,
@@ -16,6 +17,7 @@ import {
 	type SlashedPath,
 } from "@vermi/router";
 import { pathIs, pathStartsWith } from "@vermi/utils";
+import type { Server } from "bun";
 import {
 	type OpenAPIObject,
 	type SecuritySchemeObject,
@@ -51,7 +53,23 @@ export class OpenAPIModule implements VermiModule<OpenAPIConfig> {
 	@Config("AuthModule") public authConfig?: AuthConfig;
 	@Config("RouterModule") public routerConfig?: RouterModuleConfig;
 
+	baseUrl = "";
+
 	constructor(protected openApiService: OpenAPIService) {}
+
+	@AppHook("app:started")
+	async started(_: AppContext, server: Server) {
+		this.baseUrl = server.url.toString().replace(/\/$/, "");
+
+		const docsUrl =
+			this.baseUrl + (this.config.path || "/openapi") + this.config.prefix;
+
+		this.logger.info("OpenAPI Module initialized on %s", docsUrl);
+		this.logger.info(
+			"OpenAPI Specs: %s",
+			`${docsUrl}/${this.config.fileName || "openapi.json"}`,
+		);
+	}
 
 	@AppHook("app:init")
 	async init() {
@@ -64,13 +82,6 @@ export class OpenAPIModule implements VermiModule<OpenAPIConfig> {
 			);
 			this.openApiService.addSecuritySchemes(schemes);
 		}
-
-		this.logger.info("OpenAPI Module initialized on {path}", {
-			path: this.config.path || "/openapi",
-		});
-		this.logger.info("OpenAPI Specs: {fileName}", {
-			fileName: this.config.fileName || "openapi.json",
-		});
 	}
 
 	@AppHook("app:request")

@@ -1,5 +1,6 @@
 import type { Class, Dictionary } from "@vermi/utils";
 import type { TLSOptions } from "bun";
+import type { VermiModule } from "../services";
 import type { LogOptions } from "./LoggerAdapter";
 
 export interface ModuleConfig<Config> {
@@ -7,17 +8,17 @@ export interface ModuleConfig<Config> {
 	config: Config;
 }
 
-export interface AppOptions {
+export interface AppOptions<Log extends object = ConsoleOptions> {
 	port?: string | number;
 	hostname?: string;
 	modules: Map<string, ModuleConfig<any>>;
 	env?: Dictionary;
 	reusePort?: boolean;
 	tls?: TLSOptions;
-	log?: LogOptions<never>;
+	log?: LogOptions<Log>;
 }
 
-export interface UseModule<M extends Class<any>, Config> {
-	module: M;
-	args: Config;
-}
+export type UseModule<
+	Module extends VermiModule<any>,
+	Config extends Module["config"] = Module["config"],
+> = [Class<Module>, Config];

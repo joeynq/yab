@@ -41,7 +41,7 @@ Error.prepareStackTrace = (error, stack) => {
 	return `${chalk.red(error)}\n${stackTrace}`;
 };
 
-type ConsoleOptions = {
+export type ConsoleLoggerOptions = {
 	formatDate: (date: Date) => string;
 };
 
@@ -56,9 +56,9 @@ export class ConsoleLogger extends BaseLogger<Console> {
 		return chalk;
 	}
 
-	opts: LogOptions<ConsoleOptions>;
+	opts: LogOptions<ConsoleLoggerOptions>;
 
-	constructor(opts?: Partial<LogOptions<Partial<ConsoleOptions>>>) {
+	constructor(opts?: Partial<LogOptions<Partial<ConsoleLoggerOptions>>>) {
 		super();
 		this.opts = {
 			level: "info",
@@ -66,9 +66,9 @@ export class ConsoleLogger extends BaseLogger<Console> {
 			noColor: false,
 			...(opts ? omitUndefined(opts) : {}),
 			options: {
-				...opts?.options,
 				formatDate: (date: Date) =>
 					date.toISOString().slice(0, 23).replace("T", " "),
+				...(opts?.options ? omitUndefined(opts.options) : {}),
 			},
 		};
 
@@ -79,27 +79,27 @@ export class ConsoleLogger extends BaseLogger<Console> {
 		return console;
 	}
 
-	info(...args: any): void {
-		this.writeLog("info", ...args);
+	info(arg0: any, ...args: any): void {
+		this.writeLog("info", arg0, ...args);
 	}
 
-	error(...args: any): void {
-		this.writeLog("error", ...args);
+	error(arg0: any, ...args: any): void {
+		this.writeLog("error", arg0, ...args);
 	}
 
-	warn(...args: any): void {
-		this.writeLog("warn", ...args);
+	warn(arg0: any, ...args: any): void {
+		this.writeLog("warn", arg0, ...args);
 	}
 
-	debug(...args: any): void {
-		this.writeLog("debug", ...args);
+	debug(arg0: any, ...args: any): void {
+		this.writeLog("debug", arg0, ...args);
 	}
 
-	trace(...args: any): void {
-		this.writeLog("trace", ...args);
+	trace(arg0: any, ...args: any): void {
+		this.writeLog("trace", arg0, ...args);
 	}
 
-	protected writeLog(level: LogLevel, ...args: any[]) {
+	protected writeLog(level: LogLevel, arg0: any, ...args: any[]) {
 		if (!this.allowLevel(level)) return;
 
 		const log = Object.hasOwn(this.log, level)
@@ -107,37 +107,30 @@ export class ConsoleLogger extends BaseLogger<Console> {
 				this.log[level]
 			: this.log.log.bind(this.log);
 
-		let message = "";
+		const logObject = typeof arg0 === "object" ? arg0 : undefined;
+		const message = logObject ? args[0] : arg0;
+		const others = logObject ? args.slice(1) : args;
+
 		let stack: string | undefined = undefined;
-		let obj: any;
-
-		if (args.length === 1) {
-			if (typeof args[0] === "string") {
-				message = args[0];
-			} else {
-				message = stringify(args[0]) ?? "";
-			}
-		} else {
-			message = args[1];
-			obj = args[0];
-		}
-
 		let errorLevel: LogLevel | undefined = undefined;
 
-		if (obj instanceof Error && obj.stack) {
-			stack = obj.stack;
+		if (logObject instanceof Error && logObject.stack && this.opts.stackTrace) {
+			stack = logObject.stack;
 			errorLevel = "error";
-		} else if (obj) {
-			message = this.formatMessage(message, obj);
 		}
 
-		stack && this.opts.stackTrace
-			? log(this.logEntry(errorLevel ?? level, `${message}`), `\n${stack}`)
-			: log(this.logEntry(errorLevel ?? level, message));
-	}
+		const formatted =
+			typeof message === "string"
+				? format(message, ...others)
+				: stringify(message, null, 2);
 
-	protected formatMessage<O extends object>(message: string, object: O) {
-		return format(message, object);
+		const logEntry = this.logEntry(errorLevel ?? level, `${formatted}`);
+
+		if (stack && this.opts.stackTrace) {
+			log(logObject, logEntry, stack);
+		} else {
+			log(logEntry);
+		}
 	}
 
 	protected logEntry(level: LogLevel, message: string) {
@@ -164,10 +157,10 @@ export class ConsoleLogger extends BaseLogger<Console> {
 			const traceId = this.chalk.whiteBright(`${this.context.traceId}`);
 
 			return this.chalk.cyan(
-				`[${date}] ${coloredLevel} ${traceId} ${coloredMessage}`,
+				`${date} ${coloredLevel} ${traceId} ${coloredMessage}`,
 			);
 		}
-		return this.chalk.cyan(`[${date}] ${coloredLevel} ${coloredMessage}`);
+		return this.chalk.cyan(`${date} ${coloredLevel} ${coloredMessage}`);
 	}
 
 	protected allowLevel(level: LogLevel) {

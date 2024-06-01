@@ -1,18 +1,7 @@
 import { deburr } from "./internal/deburr";
-import { getVal } from "./object";
 
 export const uuid = () => {
 	return crypto.randomUUID();
-};
-
-export const format = <O extends object>(
-	str: string,
-	obj: O,
-	skipEmpty = false,
-) => {
-	return str.replace(/{([^}]+)}/g, (_, key) => {
-		return String(getVal(obj, key, skipEmpty ? `{${key}}` : ""));
-	});
 };
 
 export function slugify(text: string, separator = "-") {
@@ -32,5 +21,7 @@ export type ExtractParams<T extends string> =
 			? { [K in P]: string }
 			: // biome-ignore lint/complexity/noBannedTypes: <explanation>
 				{};
+
+export { sprintf as format } from "sprintf-js";
 
 export * from "change-case";

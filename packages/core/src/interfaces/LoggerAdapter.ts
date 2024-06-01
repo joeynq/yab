@@ -1,4 +1,5 @@
 import type { AnyFunction, Dictionary } from "@vermi/utils";
+import type { ConsoleLoggerOptions } from "../services";
 import type { _RequestContext } from "./Context";
 
 export type LogLevel =
@@ -12,7 +13,9 @@ export type LogLevel =
 
 export type LoggerContext = Pick<_RequestContext, "traceId">;
 
-export interface LogOptions<Logger extends Dictionary | object> {
+export interface LogOptions<
+	Logger extends Dictionary | object = ConsoleLoggerOptions,
+> {
 	context?: LoggerContext;
 	noColor?: boolean;
 	level?: LogLevel;
