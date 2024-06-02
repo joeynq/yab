@@ -154,7 +154,7 @@ export class Vermi<Log extends object = ConsoleLoggerOptions> {
 					]);
 
 					if (error) {
-						stored.cradle.logger.error(error);
+						stored.cradle.logger.error(error, `Error: ${error.message}`);
 						if (error instanceof HttpException) {
 							return resolve(error.toResponse());
 						}

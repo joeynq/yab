@@ -51,7 +51,9 @@ export const hookStore = createStore<
 					}
 					return {
 						...handler,
-						scope: format(handler.scope, prefix, true),
+						scope: format(handler.scope, prefix)
+							.replace(/\/$/g, "")
+							.replace(/\/{2,}/g, "/"),
 					};
 				});
 				updated.set(key, newHandler);

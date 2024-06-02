@@ -1,4 +1,4 @@
-import { Generic, Of } from "@vermi/openapi";
+import { Generic, Of } from "@vermi/schema";
 
 export interface ISingle<Resource> {
 	data: Resource;

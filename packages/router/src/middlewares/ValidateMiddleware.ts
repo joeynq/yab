@@ -1,5 +1,5 @@
 import { type RequestContext } from "@vermi/core";
-import type { FindResult } from "memoirist";
+import type { Matched } from "@vermi/find-my-way";
 import { Guard, Middleware, Use } from "../decorators";
 import { BadRequest } from "../exceptions";
 import type { RouteMatch, ValidationFn } from "../interfaces";
@@ -20,7 +20,7 @@ export class ValidateMiddleware {
 	 * @returns If the `args` array is empty or if the `validator` function is not available, the function
 	 * will return early without performing any validation.
 	 */
-	async validate(context: RequestContext, route: FindResult<RouteMatch>) {
+	async validate(context: RequestContext, route: Matched<RouteMatch>) {
 		const payload = context.store.payload;
 		const args = context.store.route.args;
 		const validator = context.resolve<ValidationFn>("validator");

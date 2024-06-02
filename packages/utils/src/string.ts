@@ -1,3 +1,4 @@
+import pupa, { type Options } from "pupa";
 import { deburr } from "./internal/deburr";
 
 export const uuid = () => {
@@ -22,6 +23,15 @@ export type ExtractParams<T extends string> =
 			: // biome-ignore lint/complexity/noBannedTypes: <explanation>
 				{};
 
-export { sprintf as format } from "sprintf-js";
+export const format = (
+	text: string,
+	data: unknown[] | Record<string, any>,
+	options?: Options,
+) => {
+	return pupa(text, data, {
+		ignoreMissing: true,
+		...options,
+	});
+};
 
 export * from "change-case";

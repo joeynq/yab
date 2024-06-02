@@ -1,14 +1,19 @@
 import { createStore, getStoreData } from "@vermi/core";
 import { format } from "@vermi/utils";
-import type { HttpMethod } from "../enums";
-import type { FullPath, Operation, Routes, SlashedPath } from "../interfaces";
+import type {
+	FullPath,
+	HTTPMethod,
+	Operation,
+	Routes,
+	SlashedPath,
+} from "../interfaces";
 
 export const RouterMetadataKey: unique symbol = Symbol("Router");
 
 export type RouterAPI = {
 	findPath(actionName: string | symbol): FullPath | undefined;
 	addRoute(
-		method: HttpMethod,
+		method: HTTPMethod,
 		path: SlashedPath,
 		propertyKey: string,
 		routeMetadata?: Pick<Operation, "args" | "responses" | "operationId">,
@@ -25,10 +30,14 @@ export const routeStore = createStore<Routes["paths"], RouterAPI>(
 		findPath(actionName: string | symbol) {
 			const current = get();
 			if (!current) return;
-			const key = `${target.name}.${actionName.toString()}`;
+
 			for (const [path, { handler }] of current) {
-				const opId = `${handler.target.name}.${handler.action}`;
-				if (opId === key) return path;
+				if (
+					handler.target.name === target.name &&
+					handler.action === actionName
+				) {
+					return path;
+				}
 			}
 		},
 		addRoute(method, path, propertyKey, { args, operationId } = {}) {
@@ -63,7 +72,15 @@ export const routeStore = createStore<Routes["paths"], RouterAPI>(
 			if (!current) return;
 			const updated = new Map<FullPath, Operation>();
 			for (const [key, operation] of current) {
-				const newKey = format(key, prefix, true);
+				const newKey = format(key, prefix)
+					.replace(/\/$/, "")
+					.replace(/\/{2,}/g, "/");
+				if (Object.hasOwn(prefix, "prefix")) {
+					operation.prefix = prefix.prefix;
+				}
+				if (Object.hasOwn(prefix, "mount")) {
+					operation.mount = prefix.mount;
+				}
 				updated.set(newKey as FullPath, operation);
 			}
 			set(updated);

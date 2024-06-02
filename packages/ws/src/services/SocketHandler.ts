@@ -10,9 +10,9 @@ import {
 	asClass,
 	asValue,
 } from "@vermi/core";
+import { FindMyWay } from "@vermi/find-my-way";
 import { type Class, ensure, tryRun } from "@vermi/utils";
 import type { Server, ServerWebSocket } from "bun";
-import Memoirist from "memoirist";
 import type { WsModuleOptions } from "../WsModule";
 import { type EventType, WsEvent, WsMessage } from "../events";
 import { WsCloseCode } from "../exceptions";
@@ -24,9 +24,10 @@ import { type EnhancedWebSocket, enhanceWs } from "../utils";
 
 @Injectable("SINGLETON")
 export class SocketHandler {
-	#router = new Memoirist<WsHandler>();
 	#sockets = new Map<string, EnhancedWebSocket<WsData>>();
 	#server!: Server;
+
+	protected router = new FindMyWay<WsHandler>();
 
 	@Logger() private logger!: LoggerAdapter;
 	@Config("WsModule") private config!: WsModuleOptions;
@@ -92,7 +93,7 @@ export class SocketHandler {
 			this.#sockets.set(ws.data.sid, ws);
 
 			ws.sendEvent("connect");
-			this.logger.info("Client connected with sid: %(sid)s", {
+			this.logger.info("Client connected with sid: {sid}", {
 				sid: ws.data.sid,
 			});
 		});
@@ -117,13 +118,13 @@ export class SocketHandler {
 					});
 
 					if (event.type === "subscribe") {
-						this.logger.info("Subscribing to %(topic)s", { topic: event.data });
+						this.logger.info("Subscribing to {topic}", { topic: event.data });
 						ws.subscribe(event.data);
 						return;
 					}
 
 					if (event.type === "unsubscribe") {
-						this.logger.info("Unsubscribing from %(topic)s", {
+						this.logger.info("Unsubscribing from {topic}", {
 							topic: event.data,
 						});
 						ws.unsubscribe(event.data);
@@ -134,18 +135,18 @@ export class SocketHandler {
 						throw new Error("Invalid message type");
 					}
 
-					const handler = this.#router.find(event.event, event.topic);
+					const result = this.router.find(
+						"NOTIFY",
+						`${event.event}${event.topic}`,
+					);
 
-					if (!handler) {
-						throw new Error("Handler not found");
+					if (!result) {
+						throw new Error("Event is not handled");
 					}
 
-					const {
-						params,
-						store: { eventStore, method },
-					} = handler;
+					const { eventStore, method } = result.store;
 
-					context.register("params", asValue(params));
+					context.register("params", asValue(result.params));
 
 					const when = (scope: string) => {
 						return scope === `${event.event}:${event.topic}`;
@@ -153,7 +154,7 @@ export class SocketHandler {
 
 					await this.hooks.invoke(
 						"ws-hook:guard",
-						[context.expose(), handler.store],
+						[context.expose(), result.store],
 						{
 							when,
 						},
@@ -172,7 +173,6 @@ export class SocketHandler {
 			},
 		);
 	}
-
 	async #onClose(_ws: ServerWebSocket<WsData>, code: number, reason: string) {
 		const ws = enhanceWs(_ws, this.context.cradle.parser);
 		ws.unsubscribe("/");
@@ -184,7 +184,7 @@ export class SocketHandler {
 			const store = wsHandlerStore.apply(eventStore).get();
 
 			for (const [event, handlerData] of store.entries()) {
-				this.#router.add(event, handlerData.topic, handlerData);
+				this.router.add("NOTIFY", `${event}${handlerData.topic}`, handlerData);
 			}
 		}
 	}

@@ -1,30 +1,38 @@
 import type { RequestContext } from "@vermi/core";
 
 export enum RouterEvent {
-	Init = "router:init",
-	RouteGuard = "router:routeGuard",
+	Match = "router:match",
 	BeforeRoute = "router:beforeRoute",
-	AfterRoute = "router:afterRoute",
+	Guard = "router:routeGuard",
 	BeforeHandle = "router:beforeHandle",
 	AfterHandle = "router:afterHandle",
+	AfterRoute = "router:afterRoute",
 }
 
 export type RouterEventMap = {
-	[RouterEvent.Init]: (context: RequestContext) => Promise<void>;
+	[RouterEvent.Match]: (
+		context: RequestContext,
+	) => Promise<Response | undefined>;
 
-	[RouterEvent.BeforeRoute]: (context: RequestContext) => Promise<void>;
+	[RouterEvent.BeforeRoute]: (
+		context: RequestContext,
+	) => Promise<Response | undefined>;
 
-	[RouterEvent.RouteGuard]: (context: RequestContext) => Promise<void>;
+	[RouterEvent.Guard]: (
+		context: RequestContext,
+	) => Promise<Response | undefined>;
 
-	[RouterEvent.BeforeHandle]: (context: RequestContext) => Promise<void>;
+	[RouterEvent.BeforeHandle]: (
+		context: RequestContext,
+	) => Promise<Response | undefined>;
 
 	[RouterEvent.AfterHandle]: <T>(
 		context: RequestContext,
-		result: T,
-	) => Promise<void>;
+		result: T | undefined,
+	) => Promise<Response | T | undefined>;
 
 	[RouterEvent.AfterRoute]: (
 		context: RequestContext,
 		response?: Response,
-	) => Promise<Response>;
+	) => Promise<Response | undefined>;
 };

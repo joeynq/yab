@@ -1,4 +1,4 @@
-import { Model } from "@vermi/openapi";
+import { Model } from "@vermi/schema";
 import pluralize from "pluralize";
 
 export const SingularName = Symbol("SingularName");

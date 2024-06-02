@@ -1,14 +1,10 @@
 import type { UseModule } from "@vermi/core";
-import {
-	type SlashedPath,
-	StaticModule,
-	type StaticModuleOptions,
-} from "./StaticModule";
+import { StaticModule, type StaticModuleOptions } from "./StaticModule";
 
 export const statics = (
-	path: SlashedPath,
+	assetsDir: string,
 	options: StaticModuleOptions,
-): UseModule<StaticModule, Record<SlashedPath, StaticModuleOptions>> => [
+): UseModule<StaticModule, Record<string, StaticModuleOptions>> => [
 	StaticModule,
-	{ [path]: options },
+	{ [assetsDir]: options },
 ];

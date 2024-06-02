@@ -48,7 +48,7 @@ export class YogaModule<UserContext extends Record<string, any>>
 
 	@AppHook("app:started")
 	async onStarted(_: AppContext, server: Server) {
-		this.logger.info("Yoga server is running on %(url)s", {
+		this.logger.info("Yoga server is running on {url}", {
 			url: new URL(
 				this.#yoga.graphqlEndpoint,
 				`http://${server.hostname}:${server.port}`,

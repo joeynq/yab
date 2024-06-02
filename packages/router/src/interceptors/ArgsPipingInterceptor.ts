@@ -10,7 +10,7 @@ export class ArgsPipingInterceptor implements InterceptorMethod {
 		const payload = context.store.payload;
 		const args = context.store.route.args;
 		if (!args?.length) {
-			return next([]);
+			return next(context);
 		}
 
 		const values: any[] = [];

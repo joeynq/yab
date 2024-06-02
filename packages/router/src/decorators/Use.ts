@@ -18,10 +18,11 @@ export const Use = <Middleware extends Class<any>>(
 				return;
 			}
 
-			// FIXME: router:beforeRoute and router:afterRoute doesn't run in this scope
+			const store = hookStore.apply(target.constructor);
+
 			for (const [event, handlers] of middlewareHook.entries()) {
 				for (const handler of handlers) {
-					hookStore.apply(target.constructor).addHandler(event, {
+					store.addHandler(event, {
 						...handler,
 						scope: full.replace(/\/$/g, ""),
 					});

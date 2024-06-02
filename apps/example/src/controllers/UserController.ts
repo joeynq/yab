@@ -1,6 +1,5 @@
 import { Authorized } from "@vermi/auth";
 import { Logger, type LoggerAdapter } from "@vermi/core";
-import { Query } from "@vermi/openapi";
 import {
 	Create,
 	Delete,
@@ -9,6 +8,7 @@ import {
 	Result,
 	Update,
 } from "@vermi/restapi";
+import { Query } from "@vermi/schema";
 import { UserDTO, UserSearch } from "../models";
 
 @RestController(UserDTO)

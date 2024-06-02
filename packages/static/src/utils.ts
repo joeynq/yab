@@ -1,10 +1,7 @@
-import { tryRun } from "@vermi/utils";
-import type { BunFile } from "bun";
-
 export async function isCached(
 	headers: Request["headers"],
 	etag: string,
-	file: BunFile,
+	mtime: number,
 ) {
 	if (
 		headers.get("cache-control") &&
@@ -24,21 +21,14 @@ export async function isCached(
 	if (ifNoneMatch === etag) return true;
 
 	const ifModifiedSince = headers.get("if-modified-since");
-	let lastModified: Date | undefined;
 
-	await tryRun(async () => {
-		lastModified = new Date(file.lastModified);
-	});
+	const lastModified = new Date(mtime);
 
 	return (
-		!ifModifiedSince ||
-		(lastModified && lastModified.getTime() <= Date.parse(ifModifiedSince))
+		!ifModifiedSince || lastModified.getTime() <= Date.parse(ifModifiedSince)
 	);
 }
 
-export async function generateETag(file: BunFile) {
-	const hash = new Bun.CryptoHasher("md5");
-	hash.update(await file.arrayBuffer());
-
-	return hash.digest("base64");
+export async function generateETag(mtime: number) {
+	return `W/"${mtime}"`;
 }

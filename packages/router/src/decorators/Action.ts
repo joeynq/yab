@@ -1,18 +1,18 @@
 import { useDecorators } from "@vermi/core";
-import type { HttpMethod } from "../enums";
 import { ArgsPipingInterceptor } from "../interceptors";
 import type {
+	HTTPMethod,
 	Operation,
 	Parameter,
 	RequestBody,
 	SlashedPath,
 } from "../interfaces";
-import { Casing, Payload, Validator } from "../middlewares";
+import { Casing, Validator } from "../middlewares";
 import { routeStore } from "../stores";
 import { Intercept } from "./Intercept";
 
 export const Action = (
-	method: HttpMethod,
+	method: HTTPMethod,
 	path: SlashedPath,
 	options?: Pick<Operation, "operationId">,
 ): MethodDecorator => {
@@ -28,7 +28,7 @@ export const Action = (
 				.apply(target.constructor)
 				.addRoute(
 					method,
-					`{mount}{prefix}${path.replace(/\/$/, "")}` as SlashedPath,
+					`{mount}{prefix}${path}`.replace(/\/$/, "") as SlashedPath,
 					propertyKey.toString(),
 					{
 						args: parameters || [],
@@ -37,7 +37,6 @@ export const Action = (
 				);
 		},
 		Intercept(ArgsPipingInterceptor),
-		Payload(),
 		Casing(),
 		Validator(),
 	);

@@ -1,15 +1,13 @@
 import {
 	type ContextService,
-	type Hooks,
 	Injectable,
 	type RequestContext,
 	asValue,
 } from "@vermi/core";
-import { ensure, pathname, tryRun } from "@vermi/utils";
-import Memoirist, { type FindResult } from "memoirist";
-import { RouterEvent, type RouterEventMap } from "../event";
-import { NotFound } from "../exceptions";
-import type { RouteMatch } from "../interfaces";
+import { FindMyWay } from "@vermi/find-my-way";
+import { ensure, getCookies } from "@vermi/utils";
+import { RouterEvent } from "../event";
+import type { HTTPMethod, RouteMatch } from "../interfaces";
 import { getRequestScope } from "../utils";
 
 type ConsoleTable = {
@@ -20,20 +18,13 @@ type ConsoleTable = {
 
 @Injectable("SINGLETON")
 export class Router {
-	#matcher = new Memoirist<RouteMatch>();
-
-	#route?: FindResult<RouteMatch>;
-
 	#debug: ConsoleTable[] = [];
+
+	protected router = new FindMyWay<RouteMatch>();
 
 	get context() {
 		ensure(this.contextService.context);
-		return this.contextService.context.expose();
-	}
-
-	get route() {
-		ensure(this.#route, new Error("Route not set"));
-		return this.#route;
+		return this.contextService.context.expose() as RequestContext;
 	}
 
 	get debug() {
@@ -42,93 +33,90 @@ export class Router {
 
 	constructor(private contextService: ContextService) {}
 
-	#ensureMatch() {
+	async match() {
 		const request = this.context.resolve<Request>("request");
+		const match = this.router.lookup(request);
 
-		const match = this.#matcher.find(
-			request.method.toLowerCase(),
-			pathname(request.url),
-		);
+		if (!match) {
+			return;
+		}
 
-		ensure(match, new NotFound(`${request.method} ${request.url} not found`));
+		const contentType = request.headers.get("content-type");
 
-		this.#route = match;
+		let body: any = undefined;
+		switch (contentType) {
+			case "application/json": {
+				const text = await request.text();
+				body = text ? JSON.parse(text) : undefined;
+				break;
+			}
+			case "application/x-www-form-urlencoded":
+				body = await request.formData();
+				break;
+			default:
+				body = await request.text();
+				break;
+		}
+
+		this.context.register({
+			route: asValue(match.store),
+			payload: asValue({
+				body,
+				query: match.searchParams,
+				params: match.params,
+				headers: Object.fromEntries(request.headers),
+				cookies: getCookies(request.headers.get("cookie") || ""),
+			}),
+		});
+
+		return match;
 	}
 
-	addRoute(method: string, path: string, store: RouteMatch): RouteMatch {
+	addRoute(method: HTTPMethod, path: string, store: RouteMatch) {
 		this.#debug.push({
 			method,
 			path: path,
 			handler: store.handler.name,
 		});
-		return this.#matcher.add(method, path, store);
+		this.router.add(method, path, store);
+		return store;
 	}
 
-	async handleRequest(
-		responseHandler: <T>(
-			result: T,
-			responses: RouteMatch["responses"],
-		) => Response,
-		errorHandler: <Err extends Error>(
-			error: Err,
-			responses?: RouteMatch["responses"],
-		) => Response,
-	) {
-		this.#ensureMatch();
+	async handleRequest() {
+		const context = this.context;
+		const { request, hooks, route } = context.store;
 
-		const context = this.context as RequestContext;
+		const relativePath = route.path.replace(/\/$/, "");
+		const requestScope = getRequestScope(
+			request.method.toUpperCase() as HTTPMethod,
+			relativePath,
+		);
 
-		const request = context.resolve("request") as Request;
-		const { logger } = context.store;
-		const { path } = this.route.store;
-
-		const [error, response] = await tryRun(async () => {
-			const payload = context.store.payload;
-
-			context.register({
-				route: asValue(this.route.store),
-				payload: asValue({
-					...payload,
-					params: this.route.params,
-				}),
+		const invoke = async (event: RouterEvent, ...data: any[]) => {
+			return hooks.invoke(event, data, {
+				when: (scope: string) => requestScope === scope,
+				breakOn: (result: any) => result instanceof Response,
 			});
+		};
 
-			logger.info(`Incoming request: ${request.method} ${request.url}`);
+		let response: any = undefined;
 
-			const relativePath = path.replace(/\/$/, "");
-			const requestScope = getRequestScope(request.method, relativePath);
-
-			const hooks = context.store.hooks as Hooks<
-				typeof RouterEvent,
-				RouterEventMap
-			>;
-
-			const when = (scope: string) => {
-				return requestScope === scope;
-			};
-
-			await hooks.invoke(RouterEvent.RouteGuard, [context], {
-				when,
-			});
-
-			await hooks.invoke(RouterEvent.BeforeHandle, [context], {
-				when,
-			});
-
-			const result = await this.route.store.handler(context);
-
-			await hooks.invoke(RouterEvent.AfterHandle, [context, result], {
-				when,
-			});
-
-			return responseHandler(result, this.route.store.responses);
-		});
-
-		if (error) {
-			logger.error(error, `${request.method} ${request.url} failed`);
-			return errorHandler(error, this.#route?.store.responses);
+		// on route guard
+		response = await invoke(RouterEvent.Guard, context);
+		if (response) {
+			return response;
 		}
 
-		return response;
+		// before route handle
+		response = await invoke(RouterEvent.BeforeHandle, context);
+		if (response) {
+			return response;
+		}
+
+		const result = context.store.route.handler(context);
+
+		response = await invoke(RouterEvent.AfterHandle, context, result);
+
+		return response || result;
 	}
 }

@@ -1,4 +1,11 @@
-import { type AwilixContainer, asClass, asFunction, asValue } from "awilix";
+import {
+	type AwilixContainer,
+	RESOLVER,
+	aliasTo,
+	asClass,
+	asFunction,
+	asValue,
+} from "awilix";
 import { getTokenName } from ".";
 import {
 	type EnhancedContainer,
@@ -6,7 +13,7 @@ import {
 	type InjectionToken,
 } from "../interfaces";
 
-export { asClass, asFunction, asValue };
+export { asClass, asFunction, asValue, aliasTo, RESOLVER };
 
 export const enhance = <T extends object>(container: AwilixContainer<T>) => {
 	Object.defineProperty(container, "expose", {

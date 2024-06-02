@@ -1,4 +1,4 @@
-import { Generic, Integer } from "@vermi/openapi";
+import { Generic, Integer } from "@vermi/schema";
 import { type IMany, Many } from "./Many";
 
 export interface IPagination<Resource> extends IMany<Resource> {

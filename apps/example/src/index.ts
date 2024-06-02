@@ -1,4 +1,4 @@
-import { BearerAuth, auth } from "@vermi/auth";
+import { docs } from "@vermi/apidocs";
 import { cache } from "@vermi/cache";
 import { SqliteAdapter } from "@vermi/cache/sqlite";
 import {
@@ -7,12 +7,10 @@ import {
 	type LoggerAdapter,
 	Vermi,
 } from "@vermi/core";
-import { openapi } from "@vermi/openapi";
+import { remix } from "@vermi/remix";
 import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
-import { JsonParser, ws } from "@vermi/ws";
 import { UserController } from "./controllers";
-import { TestSocket } from "./sockets/TestSocket";
 
 /*
 
@@ -39,40 +37,29 @@ const logOptions: LogOptions = {
 	},
 };
 
-new Vermi({
-	log: logOptions,
-})
-	// SqliteAdapter recommended for development.
-	// RedisAdapter is recommended for production.
+new Vermi({ log: logOptions })
 	.use(cache(SqliteAdapter, {}))
 	.use(
-		auth(BearerAuth, {
-			config: {
-				options: {
-					issuer: String(import.meta.env.ISSUER),
-				},
-			},
+		docs("/docs/openapi", {
+			specs: {},
+			type: "openapi",
+			routes: ["/api"],
+			casing: "snake",
 		}),
 	)
-	.use(statics("/public", { assetsDir: "./public" }))
-	.use(statics("/favicon.ico", { assetsDir: "./public", direct: true }))
-	// .use(rateLimit("redis", {}))
-	.use(ws({ path: "/ws", eventStores: [TestSocket], parser: JsonParser }))
+	.use(docs("/docs/asyncapi", { specs: {}, type: "asyncapi", casing: "snake" }))
 	.use(
 		router("/api", [UserController], {
 			casing: { internal: "camel", interfaces: "snake" },
 		}),
 	)
 	.use(
-		openapi("/docs", {
-			prefix: "/api",
-			specs: { security: [{ BearerAuth: [] }] },
-			features: {
-				rateLimit: true,
-				cors: true,
-			},
+		remix({
+			build: import.meta.resolve("@vermi/apidocs-ui/server"),
+			assets: import.meta.resolve("@vermi/apidocs-ui/client"),
 		}),
 	)
+	.use(statics("public", {}))
 	.start((context, { port }) => {
 		context.resolve<LoggerAdapter>("logger")?.info(`Server started at ${port}`);
 	});

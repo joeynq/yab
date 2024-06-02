@@ -1,5 +1,5 @@
 import { type Class, camelCase, mapToRecords } from "@vermi/utils";
-import { type BuildResolver, asClass, asValue } from "awilix";
+import { type BuildResolver, RESOLVER, asClass, asValue } from "awilix";
 import { type Hooks, containerRef } from "../services";
 import { dependentStore, hookStore } from "../store";
 
@@ -17,7 +17,9 @@ const getResolvers = (services: Class<any>[]) => {
 		}
 	}
 	for (const serviceClass of services) {
-		registering.set(camelCase(serviceClass.name), asClass(serviceClass));
+		// @ts-ignore
+		const registeringName = serviceClass[RESOLVER].name || serviceClass.name;
+		registering.set(camelCase(registeringName), asClass(serviceClass));
 	}
 
 	return registering;

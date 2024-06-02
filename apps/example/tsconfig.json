@@ -9,6 +9,7 @@
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"sourceMap": true,
+		"jsx": "react-jsx",
 
 		// Bundler mode
 		"moduleResolution": "bundler",

@@ -64,8 +64,6 @@ export class Hooks<
 				})),
 			);
 		});
-
-		console.table(debug);
 	}
 
 	#context?: AppContext;

@@ -36,6 +36,6 @@
 	},
 	"dependencies": {
 		"ioredis": "^5.4.1",
-		"lru-cache": "^10.2.1"
+		"lru-cache": "^10.2.2"
 	}
 }
