@@ -25,7 +25,9 @@ export const Intercept = <Interceptor extends Class<any>>(
 			) => {
 				const interceptorInstance = context.build(asClass(interceptor));
 
-				return interceptorInstance.intercept(context, originalMethod);
+				return interceptorInstance.intercept(context, (...args: any[]) =>
+					originalMethod.call(target, ...args),
+				);
 			};
 		},
 	);

@@ -3,12 +3,21 @@ import { stringify } from "@vermi/utils";
 import type { RouterModuleConfig } from "../RouterModule";
 import { AfterRoute, BeforeRoute, Middleware, Use } from "../decorators";
 import { type CasingType, casingFactory } from "../services";
-import { getConfigFromRequest } from "../utils/getConfigFromRequest";
 
 const getCasing = (context: RequestContext, config: RouterModuleConfig) => {
-	const cfg = getConfigFromRequest(config, context.store.request);
-	const internal = cfg?.options?.casing?.internal ?? "camel";
-	const interfaces = cfg?.options?.casing?.interfaces;
+	const mount = context.store.route?.mount;
+
+	if (!mount) {
+		return {
+			internal: "camel" as const,
+			interfaces: undefined,
+		};
+	}
+
+	const cnf = config[mount as keyof RouterModuleConfig].options;
+
+	const internal = cnf?.casing?.internal ?? "camel";
+	const interfaces = cnf?.casing?.interfaces;
 
 	return { internal, interfaces };
 };
@@ -51,7 +60,7 @@ class CasingMiddleware {
 		const { internal, interfaces } = getCasing(context, this.config);
 
 		if (!this.shouldProcess(internal, interfaces)) {
-			return response;
+			return;
 		}
 
 		const service = casingFactory(interfaces);

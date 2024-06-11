@@ -1,4 +1,4 @@
-import { Integer, Model } from "@vermi/openapi";
+import { Integer, Model } from "@vermi/schema";
 
 @Model()
 export class Paging {

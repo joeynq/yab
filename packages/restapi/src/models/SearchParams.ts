@@ -1,4 +1,4 @@
-import { Model, Prop } from "@vermi/openapi";
+import { Model, Prop } from "@vermi/schema";
 import { Paging } from "./Paging";
 import { Sort } from "./Sort";
 

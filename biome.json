@@ -5,7 +5,8 @@
 	},
 	"linter": {
 		"enabled": true,
-		"ignore": ["**/node_modules/**"],
+		"ignore": ["**/node_modules/**", "**/dist/**", "**/build/**"],
+		"include": ["**/*.ts", "**/*.tsx", "**/*.json"],
 		"rules": {
 			"recommended": true,
 			"suspicious": {
@@ -16,7 +17,8 @@
 				"noUnusedImports": "error"
 			},
 			"style": {
-				"useImportType": "off"
+				"useImportType": "off",
+				"noParameterAssign": "off"
 			}
 		}
 	},

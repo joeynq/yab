@@ -12,8 +12,9 @@
 		"@types/bun": "latest",
 		"@types/pluralize": "^0.0.33",
 		"@vermi/core": "link:@vermi/core",
-		"@vermi/openapi": "link:@vermi/openapi",
+		"@vermi/apidocs": "link:@vermi/apidocs",
 		"@vermi/router": "link:@vermi/router",
+		"@vermi/schema": "link:@vermi/schema",
 		"@vermi/utils": "link:@vermi/utils"
 	},
 	"peerDependencies": {

@@ -5,11 +5,12 @@ import { routeStore } from "../stores";
 
 export interface ControllerOptions {
 	deps?: Class<any>[];
+	name?: string;
 }
 
 export const Controller = (
 	prefix: SlashedPath,
-	{ deps = [] }: ControllerOptions = {},
+	{ deps = [], name }: ControllerOptions = {},
 ) => {
 	return useDecorators(
 		(target: any) => {
@@ -18,7 +19,7 @@ export const Controller = (
 		(target: any) => {
 			hookStore.apply(target).updateScope({ prefix });
 		},
-		Injectable("SINGLETON"),
+		Injectable({ lifetime: "SCOPED", name }),
 		Deps(...deps),
 	);
 };

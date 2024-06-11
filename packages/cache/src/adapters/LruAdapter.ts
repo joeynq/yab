@@ -1,8 +1,8 @@
 import { LRUCache } from "lru-cache";
 import type { CacheAdapter } from "../interfaces";
 
-export class LruAdapter
-	implements CacheAdapter<LRUCache.Options<string, any, unknown>>
+export class LruAdapter<Data = any>
+	implements CacheAdapter<Data, LRUCache.Options<string, any, unknown>>
 {
 	#cache: LRUCache<string, any>;
 

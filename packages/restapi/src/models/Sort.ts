@@ -1,4 +1,4 @@
-import { Model, Pattern, StringEnum } from "@vermi/openapi";
+import { Model, Pattern, StringEnum } from "@vermi/schema";
 
 export enum SortDirection {
 	Ascending = "asc",

@@ -1,6 +1,6 @@
 import { Logger, type LoggerAdapter } from "@vermi/core";
-import { Model, Number, String } from "@vermi/openapi";
-import { OnData, SocketController, type WsContext } from "@vermi/ws";
+import { Model, Number, OnData, String } from "@vermi/schema";
+import { SocketController, type WsContext } from "@vermi/ws";
 
 @Model()
 class TestModel {

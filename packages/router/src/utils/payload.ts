@@ -3,7 +3,7 @@ import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { Value } from "@sinclair/typebox/value";
 import type { _RequestContext } from "@vermi/core";
 import { ValidationException } from "typebox-validators";
-import type { ValidationFn } from "../interfaces";
+import type { HTTPMethod, ValidationFn } from "../interfaces";
 
 export const getValue = (
 	from: "path" | "query" | "header" | "cookie" | "body",
@@ -37,6 +37,6 @@ export const validate: ValidationFn = async (schema, value): Promise<void> => {
 	}
 };
 
-export const getRequestScope = (method: string, path: string) => {
-	return `${method}${path}`.replace(/\/$/, "").toLowerCase();
+export const getRequestScope = (method: HTTPMethod, path: string) => {
+	return `${method}${path}`.replace(/\/$/, "");
 };

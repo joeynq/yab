@@ -1,14 +1,14 @@
 import type { TSchema } from "@sinclair/typebox";
 import type { HttpCodes } from "@vermi/core";
 import type { Class } from "@vermi/utils";
-import type { HttpMethod } from "../enums";
+import type { HTTPMethod } from "find-my-way";
 import type { Mapper } from "../services";
 
 export type ContentType = `${string}/${string}`;
 
 export type SlashedPath = `/${string}`;
 
-export type FullPath = `${HttpMethod}${SlashedPath}`;
+export type FullPath = `${HTTPMethod}${SlashedPath}`;
 
 export interface Handler {
 	target: Class<any>;
@@ -45,6 +45,8 @@ export interface RequestBody extends CommonArg {
 }
 
 export interface Operation {
+	prefix?: string;
+	mount?: string;
 	operationId?: string;
 	responses?: Map<HttpCodes, Response>;
 	security?: Map<string, string[]>;

@@ -2,7 +2,9 @@ import { ensure, stringify } from "@vermi/utils";
 import { Redis, type RedisOptions } from "ioredis";
 import type { CacheAdapter } from "../interfaces";
 
-export class RedisAdapter implements CacheAdapter<RedisOptions> {
+export class RedisAdapter<Data = any>
+	implements CacheAdapter<Data, RedisOptions>
+{
 	#client: Redis;
 	constructor(public options: RedisOptions) {
 		this.#client = new Redis(options);

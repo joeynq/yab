@@ -19,7 +19,9 @@ export interface SqliteAdapterConfig {
 	file?: string;
 }
 
-export class SqliteAdapter implements CacheAdapter<SqliteAdapterConfig> {
+export class SqliteAdapter<Data = any>
+	implements CacheAdapter<Data, SqliteAdapterConfig>
+{
 	#db: Database;
 
 	#table = "cache";

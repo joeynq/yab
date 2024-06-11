@@ -1,4 +1,4 @@
-import { Generic, Integer, Of } from "@vermi/openapi";
+import { Generic, Integer, Of } from "@vermi/schema";
 
 export interface IMany<Resource> {
 	data: Resource[];

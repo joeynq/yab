@@ -1,5 +1,5 @@
-import { Email, Model, Prop, String, Uuid } from "@vermi/openapi";
 import { Resource, SearchParams } from "@vermi/restapi";
+import { Email, Model, Prop, String, Uuid } from "@vermi/schema";
 
 @Resource("User")
 export class UserDTO {

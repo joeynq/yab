@@ -1,4 +1,3 @@
-import { HttpMethod } from "../enums";
 import { Action } from "./Action";
 
-export const Put = Action.bind(null, HttpMethod.Put);
+export const Put = Action.bind(null, "PUT");

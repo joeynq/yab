@@ -33,7 +33,7 @@ export class CacheModule<Adapter extends Class<CacheAdapter<any>>>
 				this.logger.info(`Clearing cache on start for ${name}.`);
 				await instance.clear();
 			}
-			context.register(`cache:${name}`, asValue(instance));
+			context.register(`cache.${name}`, asValue(instance));
 			this.logger.info(
 				`Cache module initialized with ${options.adapter.name}.`,
 			);

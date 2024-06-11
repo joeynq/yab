@@ -8,39 +8,6 @@ Error.stackTraceLimit = 10;
 
 let chalk = new Chalk();
 
-Error.prepareStackTrace = (error, stack) => {
-	const stackTrace = stack
-		.map((callSite) => {
-			const functionName = callSite.getFunctionName();
-			const fileName = callSite.getFileName();
-			const lineNumber = callSite.getLineNumber();
-			const columnNumber = callSite.getColumnNumber();
-
-			const functionNameColor = functionName ?? chalk.dim("<anonymous>");
-
-			const fileNameOnly = fileName?.split("/").pop();
-			const pathWithoutFileName = fileName?.split("/").slice(0, -1).join("/");
-			const fileNameColor = fileName
-				? `${pathWithoutFileName}/${chalk.cyan(fileNameOnly)}`
-				: "unknown";
-
-			const lineNumberColor = lineNumber
-				? chalk.yellow(`:${lineNumber}`)
-				: chalk.red(":0");
-
-			const columnNumberColor = columnNumber
-				? chalk.yellow(`:${columnNumber}`)
-				: "";
-
-			return `    at ${functionNameColor} ${chalk.gray(
-				`(${fileNameColor}${lineNumberColor}${columnNumberColor})`,
-			)}`;
-		})
-		.join("\n");
-
-	return `${chalk.red(error)}\n${stackTrace}`;
-};
-
 export type ConsoleLoggerOptions = {
 	formatDate: (date: Date) => string;
 };
@@ -121,7 +88,7 @@ export class ConsoleLogger extends BaseLogger<Console> {
 
 		const formatted =
 			typeof message === "string"
-				? format(message, ...others)
+				? format(message, others)
 				: stringify(message, null, 2);
 
 		const logEntry = this.logEntry(errorLevel ?? level, `${formatted}`);
@@ -134,7 +101,7 @@ export class ConsoleLogger extends BaseLogger<Console> {
 	}
 
 	protected logEntry(level: LogLevel, message: string) {
-		const date = this.opts.options?.formatDate(new Date());
+		const date = chalk.grey(this.opts.options?.formatDate(new Date()));
 
 		const coloredLevels = {
 			error: this.chalk.red,
