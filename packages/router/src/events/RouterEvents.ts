@@ -1,6 +1,6 @@
 import type { RequestContext } from "@vermi/core";
 
-export enum RouterEvent {
+export enum RouterEvents {
 	Match = "router:match",
 	BeforeRoute = "router:beforeRoute",
 	Guard = "router:routeGuard",
@@ -9,29 +9,29 @@ export enum RouterEvent {
 	AfterRoute = "router:afterRoute",
 }
 
-export type RouterEventMap = {
-	[RouterEvent.Match]: (
+export type RouterEventsMap = {
+	[RouterEvents.Match]: (
 		context: RequestContext,
 	) => Promise<Response | undefined>;
 
-	[RouterEvent.BeforeRoute]: (
+	[RouterEvents.BeforeRoute]: (
 		context: RequestContext,
 	) => Promise<Response | undefined>;
 
-	[RouterEvent.Guard]: (
+	[RouterEvents.Guard]: (
 		context: RequestContext,
 	) => Promise<Response | undefined>;
 
-	[RouterEvent.BeforeHandle]: (
+	[RouterEvents.BeforeHandle]: (
 		context: RequestContext,
 	) => Promise<Response | undefined>;
 
-	[RouterEvent.AfterHandle]: <T>(
+	[RouterEvents.AfterHandle]: <T>(
 		context: RequestContext,
 		result: T | undefined,
 	) => Promise<Response | T | undefined>;
 
-	[RouterEvent.AfterRoute]: (
+	[RouterEvents.AfterRoute]: (
 		context: RequestContext,
 		response?: Response,
 	) => Promise<Response | undefined>;

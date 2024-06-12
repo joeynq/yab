@@ -1,8 +1,7 @@
 import type { ArrayOptions, TSchema } from "@sinclair/typebox";
-import { saveStoreData } from "@vermi/core";
 import type { Class } from "@vermi/utils";
 import { SchemaKey } from "../decorators";
-import { ModelStoreKey } from "../stores";
+import { saveSchemas } from "../stores";
 
 export type GenericBuilder = <T extends TSchema>(
 	T: T,
@@ -24,7 +23,7 @@ export const generic = (model: Class<any>, arrayOptions?: ArrayOptions) => {
 			const name = `${model.name}Of${typeName || type.name}`;
 			const schema = genericBuilder(T, name, arrayOptions);
 
-			saveStoreData(ModelStoreKey, [schema, T]);
+			saveSchemas([schema, T]);
 
 			return schema;
 		},

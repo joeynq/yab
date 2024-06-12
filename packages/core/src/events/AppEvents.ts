@@ -13,20 +13,14 @@ export enum AppEvents {
 
 export type AppEventMap = {
 	[AppEvents.OnExit]: (context: AppContext, server: Server) => Promise<void>;
-
 	[AppEvents.OnStarted]: (context: AppContext, server: Server) => Promise<void>;
-
 	[AppEvents.OnEnterContext]: (context: RequestContext) => Promise<void>;
-
 	[AppEvents.OnExitContext]: (context: RequestContext) => Promise<void>;
-
 	[AppEvents.OnInit]: (context: AppContext) => Promise<void>;
-
 	[AppEvents.OnRequest]: (
 		context: RequestContext,
 		server: Server,
 	) => Promise<Response>;
-
 	[AppEvents.OnResponse]: (
 		context: RequestContext,
 		response: Response,

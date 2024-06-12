@@ -28,7 +28,7 @@ import {
 	Hooks,
 	type VermiModule,
 } from "./services";
-import { enhance, registerProviders } from "./utils";
+import { enhance, registerHooks, registerProviders } from "./utils";
 
 @Module({ deps: [Configuration, Hooks] })
 class AppModule {}
@@ -87,12 +87,13 @@ export class Vermi<Log extends object = ConsoleLoggerOptions> {
 		});
 	}
 
-	#initModules() {
+	#initModules(context: AppContext) {
 		const modules = Array.from(this.#options.modules.values()).map(
 			({ module }) => module,
 		);
 
 		registerProviders(AppModule, ...modules);
+		registerHooks(context, AppModule, ...modules);
 	}
 
 	#runInRequestContext(
@@ -208,7 +209,7 @@ export class Vermi<Log extends object = ConsoleLoggerOptions> {
 	async start(onStarted: (context: AppContext, server: Server) => void) {
 		this.#context.runInContext(this.#container, async (container) => {
 			this.#registerServices();
-			this.#initModules();
+			this.#initModules(container.expose());
 
 			const { hooks } = container.cradle;
 

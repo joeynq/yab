@@ -42,15 +42,15 @@ class CasingMiddleware {
 		}
 
 		const service = casingFactory(internal);
-		const { query, body, headers, cookies } = context.store.payload;
+		const { query, body, header, cookie } = context.store.payload;
 
 		context.register(
 			"payload",
 			asValue({
 				query: query ? service.convert(query) : undefined,
 				body: body ? service.convert(JSON.parse(body)) : undefined,
-				headers: service.convert(headers),
-				cookies: service.convert(cookies),
+				header: service.convert(header),
+				cookie: service.convert(cookie),
 			}),
 		);
 	}

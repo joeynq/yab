@@ -3,7 +3,6 @@ import type { Matched } from "@vermi/find-my-way";
 import { Guard, Middleware, Use } from "../decorators";
 import { BadRequest } from "../exceptions";
 import type { RouteMatch, ValidationFn } from "../interfaces";
-import { getValue } from "../utils";
 
 @Middleware()
 export class ValidateMiddleware {
@@ -30,7 +29,7 @@ export class ValidateMiddleware {
 		}
 
 		for (const arg of args) {
-			const value = getValue(arg.in, payload);
+			const value = payload[arg.in];
 
 			if (arg.required && value === undefined) {
 				throw new BadRequest(`Missing required parameter: ${arg.name}`);

@@ -2,7 +2,6 @@ import type { RequestContext } from "@vermi/core";
 import type { MaybePromiseFunction } from "@vermi/utils";
 import { Interceptor } from "../decorators/Interceptor";
 import type { InterceptorMethod } from "../interfaces";
-import { getValue } from "../utils";
 
 @Interceptor()
 export class ArgsPipingInterceptor implements InterceptorMethod {
@@ -16,7 +15,7 @@ export class ArgsPipingInterceptor implements InterceptorMethod {
 		const values: any[] = [];
 
 		for (const arg of args) {
-			let value = getValue(arg.in, payload);
+			let value = payload[arg.in];
 
 			if (arg.pipes) {
 				for (const pipe of arg.pipes) {

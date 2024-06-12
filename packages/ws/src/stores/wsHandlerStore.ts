@@ -29,7 +29,6 @@ export const wsHandlerStore = createStore<
 			if (!current.has(event)) {
 				current.set(event, {
 					...handler,
-
 					handlerId: `${handler.eventStore.name}.${handler.method}`,
 				});
 				set(current);

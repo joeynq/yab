@@ -24,7 +24,7 @@ function merge<T>(
 
 export type StoreToken = symbol | string;
 
-export type GetMetadata<T> = () => T | undefined;
+export type GetMetadata<T> = () => T;
 
 export type SetMetadata<T> = (value: T) => void;
 
@@ -38,28 +38,28 @@ export type APIFactory<T, API extends Dictionary<AnyFunction>> = (
 ) => API;
 
 class Store<T extends object, API extends Dictionary<AnyFunction>> {
-	#initialMap: Map<Class<any>, T> = new Map();
 	constructor(
 		public token: StoreToken,
 		public apis: APIFactory<T, API>,
 		public initialValue: () => T,
 	) {}
 
-	combineStore(...holders: Class<any>[]): undefined | T {
-		const stores = holders.map((holder) => this.apply(holder).get());
-		if (!stores.length) {
+	combine(...providers: Class<any>[]) {
+		const stores = providers
+			.map((provider) => this.apply(provider).get())
+			.filter(Boolean);
+
+		if (stores.length === 0) {
 			return;
 		}
+
 		return deepMerge(...stores) as T;
 	}
 
 	apply(target: Class<any>) {
-		this.#initialMap.set(target, this.initialValue());
-		const currentInitial = this.#initialMap.get(target);
-
-		const current = get(this.token, target);
-		if (!current) {
-			set(this.token, target, currentInitial);
+		const data = get<T>(this.token, target);
+		if (data === undefined) {
+			set<T>(this.token, target, this.initialValue());
 		}
 
 		return {
@@ -80,14 +80,3 @@ export function createStore<
 >(token: StoreToken, apis: APIFactory<T, API>, initialValue: () => T) {
 	return new Store(token, apis, initialValue);
 }
-
-const globalStores = new Map<StoreToken, any>();
-
-export const saveStoreData = <T>(token: StoreToken, data: T) => {
-	const current = globalStores.get(token);
-	globalStores.set(token, deepMerge(current, data) as T);
-};
-
-export const getStoreData = <T>(token: StoreToken) => {
-	return globalStores.get(token) as T;
-};

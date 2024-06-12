@@ -9,12 +9,11 @@ import {
 	type RequestContext,
 	type VermiModule,
 	asValue,
-	hookStore,
+	registerHooks,
 	registerProviders,
-	saveStoreData,
 } from "@vermi/core";
 import { type Class, ensure } from "@vermi/utils";
-import { RouterEvent } from "./event";
+import { RouterEvents } from "./events";
 import type {
 	HTTPMethod,
 	RouteMatch,
@@ -22,18 +21,18 @@ import type {
 	ValidationFn,
 } from "./interfaces";
 import { type CasingType, Router } from "./services";
-import { getRoutes, routeStore } from "./stores";
+import { type ControllerRoutes, addRoutes, routeStore } from "./stores";
 import { defaultErrorHandler, defaultResponseHandler, validate } from "./utils";
 
 declare module "@vermi/core" {
 	interface _RequestContext {
 		route: RouteMatch;
 		payload: {
-			params?: any;
+			path?: any;
 			query?: any;
 			body?: any;
-			headers?: any;
-			cookies?: any;
+			header?: any;
+			cookie?: any;
 		};
 	}
 }
@@ -69,20 +68,37 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 
 	constructor(protected router: Router) {}
 
-	#addRoutes(context: AppContext) {
-		const routes = getRoutes();
-		for (const [path, operation] of routes) {
-			const method = path.split("/")[0];
-			const route = path.slice(method.length) || "/";
+	#addRoutes(
+		context: AppContext,
+		mount: SlashedPath,
+		metadata: ControllerRoutes,
+	) {
+		const { prefix, args, className, routes } = metadata;
+		addRoutes(mount, metadata);
 
-			const instance = context.resolve<any>(operation.handler.target.name);
-			const action = operation.handler.action;
+		for (const { path, method, propertyKey, metadata } of routes) {
+			const route = `${mount}${prefix}${path}`;
+
+			const instance = context.resolve<any>(className);
+			const thisArgs = args
+				.filter((a) => a.propertyKey === propertyKey)
+				.toSorted((a, b) => a.parameterIndex - b.parameterIndex)
+				.map((a) => a.arg);
+
+			const handler = (...args: any) => instance[propertyKey](...args);
+			Object.defineProperty(handler, "name", {
+				value: `${className}.${propertyKey.toString()}`,
+				writable: true,
+			});
 
 			this.router.addRoute(method as HTTPMethod, route, {
-				handler: (...args: any) => instance[action](...args),
+				handler,
 				path: route,
-				args: operation.args,
-				mount: operation.mount || "/",
+				args: thisArgs,
+				mount,
+				method: method as HTTPMethod,
+				responses: metadata.responses,
+				security: metadata.security,
 			});
 		}
 	}
@@ -93,22 +109,21 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 
 		ensure(mounted, "No configuration provided");
 
-		for (const [mount, { controllers }] of Object.entries(mounted)) {
+		for (const [_, { controllers }] of Object.entries(mounted)) {
 			ensure(controllers.length > 0, "No controllers provided");
-			for (const controller of controllers) {
-				routeStore
-					.apply(controller)
-					.updatePathPrefix({ mount: mount as SlashedPath });
-				hookStore.apply(controller).updateScope({ mount });
-			}
 		}
 
 		const all = Object.values(mounted).flatMap((m) => m.controllers);
 		registerProviders(...all);
 
-		saveStoreData(routeStore.token, routeStore.combineStore(...all));
+		for (const [mount, { controllers }] of Object.entries(mounted)) {
+			for (const controller of controllers) {
+				const routeConf = routeStore.apply(controller).get();
+				this.#addRoutes(context, mount as SlashedPath, routeConf);
+			}
+		}
 
-		this.#addRoutes(context);
+		registerHooks(context, ...all);
 	}
 
 	@Hook("app:request")
@@ -132,7 +147,8 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 			responseHandler = defaultResponseHandler,
 			customValidation = validate,
 		} = config.options || {};
-		const { request, logger, hooks } = context.store;
+
+		const { request, logger } = context.store;
 		const { responses } = match.store;
 
 		try {
@@ -140,35 +156,25 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 
 			context.register("validator", asValue(customValidation));
 
-			const invoke = async (
-				event: RouterEvent,
-				...data: any[]
-			): Promise<Response | undefined> => {
-				const response = await hooks.invoke(event, data, {
-					when: (scope: string) => {
-						return scope.startsWith(`${request.method.toUpperCase()}${mount}`);
-					},
-					breakOn: (result: any | undefined) => result instanceof Response,
-				});
-
-				if (response instanceof Response) {
-					return responseHandler(response, responses);
-				}
-			};
-
 			let response: Response | undefined = undefined;
 
-			response = await invoke(RouterEvent.Match, context);
-			if (response) return response;
+			response = await this.router.invoke(RouterEvents.Match, context);
+			if (response) return responseHandler(response);
 
-			response = await invoke(RouterEvent.BeforeRoute, context);
-			if (response) return response;
+			response = await this.router.invoke(RouterEvents.BeforeRoute, context);
+			if (response) return responseHandler(response);
 
 			const result = await this.router.handleRequest();
 
-			response = await invoke(RouterEvent.AfterRoute, context, result);
+			response = responseHandler(result, responses);
 
-			return response ?? responseHandler(result, responses);
+			const newResponse = await this.router.invoke(
+				RouterEvents.AfterRoute,
+				context,
+				response,
+			);
+
+			return newResponse || response;
 		} catch (err) {
 			const error = err as Error;
 			logger.error(error, `${request.method} ${request.url} failed`);

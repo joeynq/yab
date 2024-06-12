@@ -1,95 +1,181 @@
-import { createStore, getStoreData } from "@vermi/core";
-import { format } from "@vermi/utils";
+import { type HttpCodes, createStore } from "@vermi/core";
 import type {
-	FullPath,
 	HTTPMethod,
-	Operation,
+	Parameter,
+	RequestBody,
+	Response,
 	Routes,
 	SlashedPath,
 } from "../interfaces";
 
 export const RouterMetadataKey: unique symbol = Symbol("Router");
 
+interface Route {
+	method: HTTPMethod;
+	path: SlashedPath;
+	propertyKey: string | symbol; // not a key
+	metadata: {
+		operationId?: string;
+		responses: Map<HttpCodes, Response>;
+		security: Map<string, string[]>;
+	};
+}
+
+interface Arg {
+	propertyKey: string | symbol;
+	arg: Parameter | RequestBody;
+	parameterIndex: number;
+}
+
+export interface ControllerRoutes {
+	prefix: SlashedPath;
+	className: string;
+	routes: Route[];
+	args: Arg[];
+}
+
 export type RouterAPI = {
-	findPath(actionName: string | symbol): FullPath | undefined;
+	setPrefix(prefix: SlashedPath): void;
 	addRoute(
 		method: HTTPMethod,
 		path: SlashedPath,
-		propertyKey: string,
-		routeMetadata?: Pick<Operation, "args" | "responses" | "operationId">,
-	): Routes["paths"];
-	updateRoute(path: FullPath, updater: (current: Operation) => Operation): void;
-	updatePathPrefix(prefix: { [key: string]: SlashedPath }):
-		| Routes["paths"]
-		| undefined;
+		propertyKey: string | symbol,
+		operationId?: string,
+	): void;
+	addArg(
+		propertyKey: string | symbol,
+		parameterIndex: number,
+		arg: Parameter | RequestBody,
+	): void;
+	updateRoute(
+		propertyKey: string | symbol,
+		updater: (route: Route) => Route,
+	): void;
 };
 
-export const routeStore = createStore<Routes["paths"], RouterAPI>(
+export const routeStore = createStore<ControllerRoutes, RouterAPI>(
 	RouterMetadataKey,
 	(target, get, set) => ({
-		findPath(actionName: string | symbol) {
+		setPrefix(prefix) {
 			const current = get();
-			if (!current) return;
-
-			for (const [path, { handler }] of current) {
-				if (
-					handler.target.name === target.name &&
-					handler.action === actionName
-				) {
-					return path;
-				}
-			}
+			current.prefix = prefix;
+			current.className = target.name;
+			set(current);
 		},
-		addRoute(method, path, propertyKey, { args, operationId } = {}) {
-			const current = get() || new Map<FullPath, Operation>();
+		addRoute(method, path, propertyKey, operationId) {
+			const current = get();
+			const existing = current.routes.find(
+				(route) => route.path === path && route.method === method,
+			);
+			if (existing?.propertyKey && existing?.propertyKey !== propertyKey) {
+				throw new Error(
+					`Duplicate route found for ${method} ${path} in ${current.className}`,
+				);
+			}
+			if (existing) {
+				return;
+			}
 
-			const full = `${method}${path}` as FullPath;
-
-			current.set(full, {
-				handler: {
-					target,
-					action: propertyKey,
+			current.routes.push({
+				method,
+				path,
+				propertyKey,
+				metadata: {
+					responses: new Map(),
+					security: new Map(),
+					operationId: operationId,
 				},
-				args,
-				operationId,
 			});
 
 			set(current);
-			return current;
 		},
-		updateRoute(path, updater) {
+		updateRoute(propertyKey, updater) {
 			const current = get();
-			const route = current?.get(path);
 
-			if (!route || !current) return;
-
-			current.set(path, updater(route));
+			for (const index in current.routes) {
+				const route = current.routes[index];
+				if (route.propertyKey === propertyKey) {
+					current.routes[index] = updater(route);
+				}
+			}
 
 			set(current);
 		},
-		updatePathPrefix(prefix) {
+		addArg(propertyKey, parameterIndex, arg) {
 			const current = get();
-			if (!current) return;
-			const updated = new Map<FullPath, Operation>();
-			for (const [key, operation] of current) {
-				const newKey = format(key, prefix)
-					.replace(/\/$/, "")
-					.replace(/\/{2,}/g, "/");
-				if (Object.hasOwn(prefix, "prefix")) {
-					operation.prefix = prefix.prefix;
-				}
-				if (Object.hasOwn(prefix, "mount")) {
-					operation.mount = prefix.mount;
-				}
-				updated.set(newKey as FullPath, operation);
+
+			const existing = current.args.find(
+				(arg) =>
+					arg.propertyKey === propertyKey &&
+					arg.parameterIndex === parameterIndex,
+			);
+
+			if (existing) {
+				return;
 			}
-			set(updated);
-			return updated;
+
+			current.args.push({
+				propertyKey,
+				parameterIndex,
+				arg,
+			});
+
+			set(current);
 		},
 	}),
-	() => new Map(),
+	() => ({
+		prefix: "/",
+		className: "",
+		routes: [],
+		args: [],
+	}),
 );
 
-export const getRoutes = () => {
-	return getStoreData<Routes["paths"]>(RouterMetadataKey);
+const routes: Routes["paths"] = new Map();
+
+export const getRoutes = (mounts: SlashedPath[] = []) => {
+	if (!mounts.length) {
+		return routes;
+	}
+
+	const mounted = new Map();
+
+	for (const mount of mounts) {
+		for (const [key, value] of routes) {
+			if (value.mount === mount) {
+				mounted.set(key, value);
+			}
+		}
+	}
+
+	return mounted;
+};
+
+export const addRoutes = (mount: SlashedPath, metadata: ControllerRoutes) => {
+	const args = metadata.args;
+	for (const {
+		path,
+		method,
+		propertyKey,
+		metadata: { responses, security, operationId },
+	} of metadata.routes) {
+		const route = `${mount}${metadata.prefix}${path}`;
+		const key = `${method}${route}` as `${HTTPMethod}${SlashedPath}`;
+
+		if (routes.has(key)) {
+			return;
+		}
+
+		routes.set(key, {
+			handler: {
+				action: propertyKey.toString(),
+				target: metadata.className,
+			},
+			args: args.filter((a) => a.propertyKey === propertyKey).map((a) => a.arg),
+			operationId,
+			responses,
+			security,
+			mount,
+		});
+	}
 };

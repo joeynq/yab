@@ -1,5 +1,4 @@
 import { type TSchema, Type, TypeGuard } from "@sinclair/typebox";
-import { getStoreData } from "@vermi/core";
 import {
 	type Operation,
 	type Parameter,
@@ -7,7 +6,7 @@ import {
 	RouterException,
 	getRoutes,
 } from "@vermi/router";
-import { ModelStoreKey } from "@vermi/schema";
+import { getSchemas } from "@vermi/schema";
 import {
 	OpenApiBuilder,
 	type OperationObject,
@@ -180,11 +179,9 @@ export class OpenAPIService extends BaseAPIService<OpenAPIConfig> {
 
 	async buildSpecs({ serverUrl, title, casing }: BuildSpecsOptions) {
 		this.chooseCasing(casing);
-		const routes = getRoutes();
+		const routes = getRoutes(this.config.routes);
 
-		const unfiltered = getStoreData<TSchema[]>(ModelStoreKey).filter(
-			(schema) => schema.$id,
-		);
+		const unfiltered = getSchemas().filter((schema) => schema.$id);
 		const schemas = [
 			...new Map(unfiltered.map((pos) => [pos.$id, pos])).values(),
 		];

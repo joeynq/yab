@@ -21,3 +21,14 @@ export const modelStore = createStore<TSchema[], ModelStoreAPI>(
 	}),
 	() => [],
 );
+
+const schemaStore: TSchema[] = [];
+
+export const saveSchemas = (schemas: TSchema[]) => {
+	for (const schema of schemas) {
+		if (schemaStore.find((s) => s.$id === schema.$id)) continue;
+		schemaStore.push(schema);
+	}
+};
+
+export const getSchemas = () => schemaStore;

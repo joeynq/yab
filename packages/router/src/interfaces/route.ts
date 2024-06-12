@@ -19,6 +19,7 @@ export type RouterConfig = {
 export interface RouteMatch extends Omit<Operation, "handler"> {
 	handler: MaybePromiseFunction;
 	path: string;
+	method: HTTPMethod;
 }
 
 export type ValidationFn = <Schema extends TSchema, T extends Readonly<any>>(

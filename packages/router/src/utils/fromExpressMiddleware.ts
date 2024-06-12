@@ -1,12 +1,12 @@
 import { type RequestContext, hookStore } from "@vermi/core";
 import type { Class } from "@vermi/utils";
 import { Middleware } from "../decorators";
-import { RouterEvent } from "../event";
+import { RouterEvents } from "../events";
 import { type ExpressMiddleware, promiseMiddleware } from "./promiseMiddleware";
 
 /**
  * The function `fromExpress` converts an Express middleware function into a Middleware class for a
- * specific RouterEvent.
+ * specific RouterEvents.
  * @param {ExpressMiddleware} expressMiddleware - The `expressMiddleware` parameter is a middleware
  * function from the Express.js framework that you want to adapt to be used as a middleware in another
  * framework or system.
@@ -29,7 +29,7 @@ import { type ExpressMiddleware, promiseMiddleware } from "./promiseMiddleware";
 export const fromExpressMiddleware = (
 	expressMiddleware: ExpressMiddleware,
 	name: string,
-	event: string = RouterEvent.BeforeHandle,
+	event: string = RouterEvents.BeforeHandle,
 ): Class<any> => {
 	const ExpressMiddlewareAdapter = class {
 		#expressMiddleware = expressMiddleware;

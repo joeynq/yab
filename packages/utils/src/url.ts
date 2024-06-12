@@ -4,7 +4,7 @@ export const parseQuery = <T>(search: string, depth = 3) => {
 };
 
 export const searchString = (url: string) => {
-	return new URL(url).search;
+	return new URL(url).search.replace("?", "");
 };
 
 export const pathname = (url: string) => {

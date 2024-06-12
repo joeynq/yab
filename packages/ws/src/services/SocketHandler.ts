@@ -113,9 +113,7 @@ export class SocketHandler {
 					const event = this.#createEvent(parser, message);
 					context.register("event", asValue(event));
 
-					await this.hooks.invoke("ws-hook:initEvent", [context.expose()], {
-						when: () => true,
-					});
+					await this.hooks.invoke("ws-hook:initEvent", [context.expose()]);
 
 					if (event.type === "subscribe") {
 						this.logger.info("Subscribing to {topic}", { topic: event.data });
@@ -144,20 +142,14 @@ export class SocketHandler {
 						throw new Error("Event is not handled");
 					}
 
-					const { eventStore, method } = result.store;
+					const { eventStore, method, handlerId } = result.store;
 
 					context.register("params", asValue(result.params));
-
-					const when = (scope: string) => {
-						return scope === `${event.event}:${event.topic}`;
-					};
 
 					await this.hooks.invoke(
 						"ws-hook:guard",
 						[context.expose(), result.store],
-						{
-							when,
-						},
+						{ when: (scope: string) => scope === handlerId },
 					);
 
 					const instance = context.build(asClass(eventStore));
