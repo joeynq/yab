@@ -6,22 +6,55 @@ import {
 	useDecorators,
 } from "@vermi/core";
 import {
-	Before,
+	Guard,
+	Matched,
 	Middleware,
 	Unauthorized,
 	Use,
 	routeStore,
 } from "@vermi/router";
+import { camelCase } from "@vermi/utils";
+import type { JWTVerifyResult } from "jose";
 
 @Middleware()
 class AuthorizedMiddleware {
 	@Logger() logger!: LoggerAdapter;
 
-	@Before()
-	public async authorize<T>(ctx: RequestContext) {
-		const { payload } = await ctx.store.verifyToken<T>();
+	isEnabled(ctx: RequestContext) {
+		return !!ctx.resolve(camelCase("AuthModule"));
+	}
 
-		if (!payload.sub) {
+	@Matched()
+	async onGuard(ctx: RequestContext) {
+		if (!this.isEnabled(ctx)) {
+			return;
+		}
+		const route = ctx.store.route;
+		if (!route.security) {
+			throw new Error("Security scheme is not configured for this route");
+		}
+		const currentScheme = Array.from(route.security.keys())[0];
+
+		const strategy = ctx.store.authStrategies[currentScheme];
+		if (!strategy) {
+			throw new Error(`No strategy found for scheme ${currentScheme}`);
+		}
+
+		await strategy.useContext(ctx);
+	}
+
+	@Guard()
+	public async authorize(ctx: RequestContext) {
+		if (!this.isEnabled(ctx)) {
+			return;
+		}
+		const verifyToken =
+			ctx.resolve<<T>() => Promise<JWTVerifyResult<T>>>("verifyToken");
+
+		// biome-ignore lint/correctness/noUnsafeOptionalChaining: <explanation>
+		const { payload } = await verifyToken?.();
+
+		if (!payload?.sub) {
 			this.logger.error("Unauthorized request");
 			throw new Unauthorized("Unauthorized request");
 		}
@@ -35,15 +68,11 @@ export const Authorized = (scheme: string, scopes: string[] = []) => {
 		Use(AuthorizedMiddleware),
 		(target: any, propertyKey) => {
 			const store = routeStore.apply(target.constructor);
-			const path = store.findPath(propertyKey);
-
-			if (!path) return;
-
-			store.updateRoute(path, (current) => {
-				if (!current.security) {
-					current.security = new Map();
+			store.updateRoute(propertyKey, (current) => {
+				if (!current.metadata.security) {
+					current.metadata.security = new Map();
 				}
-				current.security.set(scheme, scopes);
+				current.metadata.security.set(scheme, scopes);
 
 				return current;
 			});

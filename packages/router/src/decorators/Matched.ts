@@ -1,6 +1,6 @@
-import { RouterEvent } from "../event";
+import { RouterEvents } from "../events";
 import { RouterHook } from "./RouterHook";
 
 export function Matched() {
-	return RouterHook(RouterEvent.Match);
+	return RouterHook(RouterEvents.Match);
 }

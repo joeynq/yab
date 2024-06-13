@@ -9,6 +9,8 @@ import {
 	type RequestContext,
 	type VermiModule,
 	asClass,
+	hookStore,
+	registerHooks,
 	registerProviders,
 } from "@vermi/core";
 import {
@@ -23,6 +25,7 @@ import type { WsData } from "./interfaces";
 import { JsonParser } from "./parser/JsonParser";
 import type { Parser } from "./parser/Parser";
 import { SocketHandler } from "./services";
+import { wsHandlerStore } from "./stores";
 
 declare module "@vermi/core" {
 	interface AppOptions {
@@ -63,6 +66,15 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 		const { eventStores, parser = JsonParser } = this.config;
 
 		registerProviders(...eventStores);
+
+		for (const store of eventStores) {
+			const handlers = wsHandlerStore.apply(store).get();
+			for (const [_, { handlerId }] of handlers) {
+				hookStore.apply(store).scoped(handlerId);
+			}
+		}
+
+		registerHooks(context, ...eventStores);
 		context.register("parser", asClass(parser).singleton());
 
 		this.socketHandler.initRouter(eventStores);

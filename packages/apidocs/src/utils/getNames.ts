@@ -11,7 +11,7 @@ export const getNames = (
 
 	const opId =
 		operation.operationId ||
-		`${operation.handler.action}_${operation.handler.target.name}`;
+		`${operation.handler.action}_${operation.handler.target}`;
 
 	return {
 		operationId: casingFn ? casingFn(opId) : opId,

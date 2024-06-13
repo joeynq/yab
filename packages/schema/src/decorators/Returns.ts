@@ -14,20 +14,13 @@ export const Returns = <T extends TSchema>(
 	options: ReturnsOptions = {},
 ) => {
 	return (target: any, propertyKey: string | symbol) => {
-		const store = routeStore.apply(target.constructor);
-		const path = store.findPath(propertyKey);
-
-		if (!path) {
-			return;
-		}
-
-		store.updateRoute(path, (current) => {
-			if (!current.responses) {
-				current.responses = new Map();
+		routeStore.apply(target.constructor).updateRoute(propertyKey, (current) => {
+			if (!current.metadata.responses) {
+				current.metadata.responses = new Map();
 			}
 
 			const content =
-				current.responses.get(status)?.content ||
+				current.metadata.responses.get(status)?.content ||
 				new Map<`${string}/${string}`, MediaType>();
 
 			const schema =
@@ -37,7 +30,7 @@ export const Returns = <T extends TSchema>(
 				schema,
 			});
 
-			current.responses.set(status, { content });
+			current.metadata.responses.set(status, { content });
 
 			return current;
 		});

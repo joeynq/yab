@@ -30,13 +30,13 @@ export const defaultResponseHandler = <T>(
 	if (responses?.get(201)) {
 		// biome-ignore lint/style/noNonNullAssertion: <explanation>
 		const { content } = responses.get(201)!;
-		const contentType = Object.keys(content)[0];
+		const contentType = content.keys().next().value;
 		return Res.created(result, { "Content-Type": contentType });
 	}
 	if (responses?.get(200)) {
 		// biome-ignore lint/style/noNonNullAssertion: <explanation>
 		const { content } = responses.get(200)!;
-		const contentType = Object.keys(content)[0];
+		const contentType = content.keys().next().value;
 		return Res.ok(result, { "Content-Type": contentType });
 	}
 

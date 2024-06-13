@@ -1,4 +1,5 @@
 import { docs } from "@vermi/apidocs";
+import { BearerAuth, auth } from "@vermi/auth";
 import { cache } from "@vermi/cache";
 import { SqliteAdapter } from "@vermi/cache/sqlite";
 import {
@@ -39,6 +40,11 @@ const logOptions: LogOptions = {
 
 new Vermi({ log: logOptions })
 	.use(cache(SqliteAdapter, {}))
+	.use(
+		auth(BearerAuth, {
+			config: { options: { issuer: import.meta.env.ISSUER } },
+		}),
+	)
 	.use(
 		docs("/docs/openapi", {
 			specs: {},

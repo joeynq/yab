@@ -1,8 +1,8 @@
 import type { TSchema } from "@sinclair/typebox";
 import { useDecorators } from "@vermi/core";
+import { Use } from "@vermi/router";
 import { WsValidateMiddleware } from "../middlewares";
 import { wsHandlerStore } from "../stores";
-import { Use } from "./Use";
 
 export const OnData = (event: string, schema?: TSchema) => {
 	return useDecorators((target: any, key: string | symbol) => {

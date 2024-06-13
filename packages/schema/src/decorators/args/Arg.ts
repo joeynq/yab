@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { Parameter } from "@vermi/router";
+import { type Parameter, routeStore } from "@vermi/router";
 import { type Class, pascalCase } from "@vermi/utils";
 import { guessType, isPrimitive } from "../../utils";
 
@@ -26,20 +26,12 @@ export const Arg = (
 			schema.$id = `#/components/schemas/${pascalCase(name ?? typeClass.name)}`;
 		}
 
-		Reflect.defineMetadata(
-			"design:argtypes",
-			[
-				...(Reflect.getMetadata("design:argtypes", target, propertyKey) || []),
-				{
-					in: from,
-					schema,
-					required: !nullable,
-					index: parameterIndex,
-					name: pascalCase(name ?? typeClass.name),
-				} satisfies Parameter,
-			],
-			target,
-			propertyKey,
-		);
+		routeStore.apply(target.constructor).addArg(propertyKey, parameterIndex, {
+			in: from,
+			schema,
+			required: !nullable,
+			index: parameterIndex,
+			name: pascalCase(name ?? typeClass.name),
+		});
 	};
 };

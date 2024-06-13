@@ -11,7 +11,7 @@ export type SlashedPath = `/${string}`;
 export type FullPath = `${HTTPMethod}${SlashedPath}`;
 
 export interface Handler {
-	target: Class<any>;
+	target: string;
 	action: string;
 }
 
@@ -45,8 +45,7 @@ export interface RequestBody extends CommonArg {
 }
 
 export interface Operation {
-	prefix?: string;
-	mount?: string;
+	mount?: SlashedPath;
 	operationId?: string;
 	responses?: Map<HttpCodes, Response>;
 	security?: Map<string, string[]>;

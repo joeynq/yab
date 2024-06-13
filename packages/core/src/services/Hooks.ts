@@ -64,6 +64,7 @@ export class Hooks<
 				})),
 			);
 		});
+		return debug;
 	}
 
 	#context?: AppContext;
@@ -125,6 +126,8 @@ export class Hooks<
 			handlers = handlers.filter(
 				(handler) => handler.scope && when(handler.scope),
 			);
+		} else {
+			handlers = handlers.filter((handler) => !handler.scope);
 		}
 
 		let finalResult: any | undefined = undefined;

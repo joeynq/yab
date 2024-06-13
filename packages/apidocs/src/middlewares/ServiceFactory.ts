@@ -10,7 +10,6 @@ export class ServiceFactoryMiddleware {
 
 	@Matched()
 	async beforeRoute(ctx: RequestContext) {
-		console.log(ctx.store.route.mount);
 		const id = ctx.store.route.mount ?? "/";
 		if (!Object.keys(this.config).includes(id)) {
 			throw new NotFound(`No API Docs config found for ${id}`);

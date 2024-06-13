@@ -1,5 +1,6 @@
 import type { TObject } from "@sinclair/typebox";
 import type { Parameter } from "../interfaces";
+import { routeStore } from "../stores";
 
 export type ArgOptions = {
 	nullable?: boolean;
@@ -11,19 +12,11 @@ export const Arg = <T extends TObject>(
 	{ nullable = false }: ArgOptions = {},
 ) => {
 	return (target: any, propertyKey: string, parameterIndex: number) => {
-		Reflect.defineMetadata(
-			"design:argtypes",
-			[
-				...(Reflect.getMetadata("design:argtypes", target, propertyKey) || []),
-				{
-					in: from,
-					schema,
-					required: !nullable,
-					index: parameterIndex,
-				} satisfies Parameter,
-			],
-			target,
-			propertyKey,
-		);
+		routeStore.apply(target.constructor).addArg(propertyKey, parameterIndex, {
+			in: from,
+			schema,
+			required: !nullable,
+			index: parameterIndex,
+		});
 	};
 };

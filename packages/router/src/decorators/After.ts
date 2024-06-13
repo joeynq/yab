@@ -1,6 +1,6 @@
-import { RouterEvent } from "../event";
+import { RouterEvents } from "../events";
 import { RouterHook } from "./RouterHook";
 
 export function After() {
-	return RouterHook(RouterEvent.AfterHandle);
+	return RouterHook(RouterEvents.AfterHandle);
 }

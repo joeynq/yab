@@ -1,4 +1,4 @@
-import { type Dictionary, format } from "@vermi/utils";
+import { type Dictionary } from "@vermi/utils";
 import type { EventObject } from "../services";
 import { createStore } from "../utils";
 
@@ -11,13 +11,10 @@ export type HandlerMetadata = EventObject<
 >;
 
 export type HookStoreAPI = {
-	addHandler(
-		event: string,
-		value: EventObject<Dictionary<any>, `${any}`, Dictionary<any>>,
+	addHandler(event: string, value: Omit<HandlerMetadata, "propertyKey">): void;
+	scoped(
+		value: string | ((metadata: HandlerMetadata) => string | undefined),
 	): void;
-	updateScope(prefix: { [key: string]: string }):
-		| Map<string, HandlerMetadata[]>
-		| undefined;
 };
 
 export const hookStore = createStore<
@@ -26,8 +23,8 @@ export const hookStore = createStore<
 >(
 	HookMetadataKey,
 	(target, get, set) => ({
-		addHandler: (event, value: HandlerMetadata) => {
-			const store = get() || new Map<string, HandlerMetadata[]>();
+		addHandler: (event, value: Omit<HandlerMetadata, "propertyKey">) => {
+			const store = get();
 			const handlers = store.get(event) || [];
 
 			handlers.push({
@@ -40,26 +37,21 @@ export const hookStore = createStore<
 
 			set(store);
 		},
-		updateScope: (prefix) => {
+		scoped: (
+			value: string | ((metadata: HandlerMetadata) => string | undefined),
+		) => {
 			const current = get();
-			if (!current) return;
-			const updated = new Map<string, HandlerMetadata[]>();
-			for (const [key, handlers] of current) {
-				const newHandler = handlers.map((handler) => {
-					if (!handler.scope) {
-						return handler;
+
+			for (const handlers of current.values()) {
+				for (const handler of handlers) {
+					const scope = typeof value === "function" ? value(handler) : value;
+					if (scope) {
+						handler.scope = scope;
 					}
-					return {
-						...handler,
-						scope: format(handler.scope, prefix)
-							.replace(/\/$/g, "")
-							.replace(/\/{2,}/g, "/"),
-					};
-				});
-				updated.set(key, newHandler);
+				}
 			}
-			set(updated);
-			return updated;
+
+			set(current);
 		},
 	}),
 	() => new Map(),

@@ -1,4 +1,5 @@
 import {
+	Config,
 	type ContextService,
 	Injectable,
 	type RequestContext,
@@ -6,9 +7,9 @@ import {
 } from "@vermi/core";
 import { FindMyWay } from "@vermi/find-my-way";
 import { ensure, getCookies } from "@vermi/utils";
-import { RouterEvent } from "../event";
+import type { RouterModuleConfig } from "../RouterModule";
+import { RouterEvents } from "../events";
 import type { HTTPMethod, RouteMatch } from "../interfaces";
-import { getRequestScope } from "../utils";
 
 type ConsoleTable = {
 	method: string;
@@ -18,9 +19,9 @@ type ConsoleTable = {
 
 @Injectable("SINGLETON")
 export class Router {
-	#debug: ConsoleTable[] = [];
-
 	protected router = new FindMyWay<RouteMatch>();
+
+	@Config("RouterModule") config!: RouterModuleConfig;
 
 	get context() {
 		ensure(this.contextService.context);
@@ -28,7 +29,7 @@ export class Router {
 	}
 
 	get debug() {
-		return this.#debug;
+		return this.router.getRoutes();
 	}
 
 	constructor(private contextService: ContextService) {}
@@ -73,49 +74,59 @@ export class Router {
 	}
 
 	addRoute(method: HTTPMethod, path: string, store: RouteMatch) {
-		this.#debug.push({
-			method,
-			path: path,
-			handler: store.handler.name,
-		});
 		this.router.add(method, path, store);
 		return store;
 	}
 
+	async invoke(event: RouterEvents, ...data: any[]) {
+		const {
+			hooks,
+			route: { mount, handler },
+		} = this.context.store;
+
+		// invoke global hooks first
+		let response = await hooks.invoke(event, data, {
+			when: (scope: string) => {
+				return !mount || scope === mount;
+			},
+			breakOn: (result: any | undefined) => result instanceof Response,
+		});
+
+		if (response instanceof Response) {
+			return response;
+		}
+
+		// invoke route hooks
+		response = await hooks.invoke(event, data, {
+			when: (scope: string) => handler.name === scope,
+			breakOn: (result: any | undefined) => result instanceof Response,
+		});
+
+		if (response instanceof Response) {
+			return response;
+		}
+	}
+
 	async handleRequest() {
 		const context = this.context;
-		const { request, hooks, route } = context.store;
-
-		const relativePath = route.path.replace(/\/$/, "");
-		const requestScope = getRequestScope(
-			request.method.toUpperCase() as HTTPMethod,
-			relativePath,
-		);
-
-		const invoke = async (event: RouterEvent, ...data: any[]) => {
-			return hooks.invoke(event, data, {
-				when: (scope: string) => requestScope === scope,
-				breakOn: (result: any) => result instanceof Response,
-			});
-		};
 
 		let response: any = undefined;
 
 		// on route guard
-		response = await invoke(RouterEvent.Guard, context);
+		response = await this.invoke(RouterEvents.Guard, context);
 		if (response) {
 			return response;
 		}
 
 		// before route handle
-		response = await invoke(RouterEvent.BeforeHandle, context);
+		response = await this.invoke(RouterEvents.BeforeHandle, context);
 		if (response) {
 			return response;
 		}
 
 		const result = context.store.route.handler(context);
 
-		response = await invoke(RouterEvent.AfterHandle, context, result);
+		response = await this.invoke(RouterEvents.AfterHandle, context, result);
 
 		return response || result;
 	}

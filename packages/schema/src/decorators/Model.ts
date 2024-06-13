@@ -1,7 +1,6 @@
 import { type ObjectOptions, Type } from "@sinclair/typebox";
-import { saveStoreData } from "@vermi/core";
 import { type Class, pascalCase } from "@vermi/utils";
-import { ModelStoreKey, modelStore, propsStore } from "../stores";
+import { modelStore, propsStore, saveSchemas } from "../stores";
 
 export const SchemaKey = Symbol("Schema");
 
@@ -26,7 +25,7 @@ export const Model = <T>(
 		store.addSchema(schema);
 
 		if (!options?.abstract) {
-			saveStoreData(ModelStoreKey, store.get());
+			saveSchemas(store.get());
 		}
 
 		Object.defineProperty(target, SchemaKey, {

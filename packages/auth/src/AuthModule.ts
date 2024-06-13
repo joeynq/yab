@@ -5,11 +5,9 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type RequestContext,
 	type VermiModule,
 	asValue,
 } from "@vermi/core";
-import { Guard, type RouteMatch } from "@vermi/router";
 import { tryRun } from "@vermi/utils";
 import type { JWTVerifyResult } from "jose";
 import type { SecurityScheme } from "./interfaces";
@@ -69,20 +67,5 @@ export class AuthModule<S extends Strategy<any>>
 			authStrategies: asValue(toBeRegistered),
 		});
 		this.logger.info("Auth strategies initialized");
-	}
-
-	@Guard()
-	async onGuard(ctx: RequestContext, route: { store: RouteMatch }) {
-		if (!route.store.security) {
-			return;
-		}
-		const currentScheme = Array.from(route.store.security.keys())[0];
-
-		const strategy = ctx.store.authStrategies[currentScheme];
-		if (!strategy) {
-			throw new Error(`No strategy found for scheme ${currentScheme}`);
-		}
-
-		await strategy.useContext(ctx);
 	}
 }

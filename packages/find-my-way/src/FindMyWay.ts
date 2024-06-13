@@ -1,4 +1,4 @@
-import { parseQuery, pathname } from "@vermi/utils";
+import { parseQuery, pathname, searchString } from "@vermi/utils";
 import Router, { type FindResult, type HTTPMethod } from "find-my-way";
 
 export type { HTTPMethod };
@@ -11,9 +11,11 @@ export class FindMyWay<Data> {
 	#router = Router<Router.HTTPVersion.V2>({
 		ignoreDuplicateSlashes: true,
 		ignoreTrailingSlash: true,
-		// @ts-ignore
-		querystringParser: (str: string) => parseQuery(str),
 	});
+
+	getRoutes() {
+		return this.#router.prettyPrint();
+	}
 
 	add(method: HTTPMethod, path: string, data: Data) {
 		this.#router.on(method as HTTPMethod, path, () => {}, data);
@@ -25,6 +27,14 @@ export class FindMyWay<Data> {
 
 	lookup(request: Request) {
 		const method = request.method.toUpperCase();
-		return this.find(method, pathname(request.url));
+		const route = this.find(method, pathname(request.url));
+
+		if (!route) {
+			return null;
+		}
+
+		route.searchParams = parseQuery(searchString(request.url));
+
+		return route;
 	}
 }
