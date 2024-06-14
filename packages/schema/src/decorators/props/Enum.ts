@@ -4,8 +4,8 @@ import {
 	type TEnumKey,
 	Type,
 } from "@sinclair/typebox";
-import { getEnumValues } from "@vermi/router";
 import { propsStore } from "../../stores";
+import { getEnumValues } from "../../utils";
 
 export function NumberEnum<T extends Record<TEnumKey, number>>(
 	item: T,

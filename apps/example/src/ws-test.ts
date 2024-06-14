@@ -4,11 +4,26 @@ let sid = "";
 
 ws.onmessage = (event) => {
 	const data = JSON.parse(new TextDecoder().decode(event.data));
-	if (data.sid && data.type === "connect") {
-		sid = data.sid;
+
+	if (data.sid) {
+		console.log("Received sid", data);
 	}
 
-	console.log(data);
+	if (data.sid && data.type === "connect") {
+		console.log("Connected");
+		sid = data.sid;
+
+		ws.send(
+			new TextEncoder().encode(
+				JSON.stringify({
+					sid,
+					type: "subscribe",
+					channel: "/",
+					data: "/test",
+				}),
+			),
+		);
+	}
 };
 
 setInterval(() => {
@@ -20,9 +35,8 @@ setInterval(() => {
 		new TextEncoder().encode(
 			JSON.stringify({
 				sid,
-				type: "data",
-				topic: "/test",
-				event: "some-message",
+				type: "some-message",
+				channel: "/test",
 				data: {
 					foo: "bar",
 					bar: 123,
@@ -30,4 +44,4 @@ setInterval(() => {
 			}),
 		),
 	);
-}, 1000);
+}, 2000);

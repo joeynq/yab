@@ -11,12 +11,6 @@ import type { RouterModuleConfig } from "../RouterModule";
 import { RouterEvents } from "../events";
 import type { HTTPMethod, RouteMatch } from "../interfaces";
 
-type ConsoleTable = {
-	method: string;
-	path: string;
-	handler: string;
-};
-
 @Injectable("SINGLETON")
 export class Router {
 	protected router = new FindMyWay<RouteMatch>();

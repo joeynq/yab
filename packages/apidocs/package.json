@@ -18,6 +18,7 @@
 		"@vermi/router": "link:@vermi/router",
 		"@vermi/schema": "link:@vermi/schema",
 		"@vermi/utils": "link:@vermi/utils",
+		"@vermi/ws": "link:@vermi/ws",
 		"@vermi/remix": "link:@vermi/remix"
 	},
 	"peerDependencies": {

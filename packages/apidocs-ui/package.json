@@ -21,14 +21,15 @@
 		"start": "remix-serve ./build/server/index.js"
 	},
 	"dependencies": {
-		"@asyncapi/react-component": "^2.0.1",
+		"@asyncapi/react-component": "^1.0.0-next.54",
 		"@remix-run/node": "^2.9.2",
 		"@remix-run/react": "^2.9.2",
 		"@remix-run/serve": "^2.9.2",
 		"@scalar/api-reference-react": "^0.2.5",
 		"isbot": "^4.1.0",
 		"react": "^18.2.0",
-		"react-dom": "^18.2.0"
+		"react-dom": "^18.2.0",
+		"remix-utils": "^7.6.0"
 	},
 	"devDependencies": {
 		"@remix-run/dev": "^2.9.2",

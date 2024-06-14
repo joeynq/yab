@@ -1,8 +1,9 @@
 import type { TSchema } from "@sinclair/typebox";
 import type { HttpCodes } from "@vermi/core";
-import { type ContentType, type MediaType, routeStore } from "@vermi/router";
+import { SchemaKey } from "@vermi/schema";
 import { type Class } from "@vermi/utils";
-import { SchemaKey } from "./Model";
+import type { ContentType, MediaType } from "../interfaces";
+import { routeStore } from "../stores";
 
 export interface ReturnsOptions {
 	contentType?: ContentType;

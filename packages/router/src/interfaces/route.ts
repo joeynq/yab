@@ -1,5 +1,5 @@
-import type { TSchema } from "@sinclair/typebox";
-import type { HTTPMethod, Matched } from "@vermi/find-my-way";
+import type { HTTPMethod } from "@vermi/find-my-way";
+import type { ValidationFn } from "@vermi/schema";
 import type { Class, MaybePromiseFunction } from "@vermi/utils";
 import type { Operation, SlashedPath } from "./schema";
 
@@ -21,9 +21,3 @@ export interface RouteMatch extends Omit<Operation, "handler"> {
 	path: string;
 	method: HTTPMethod;
 }
-
-export type ValidationFn = <Schema extends TSchema, T extends Readonly<any>>(
-	schema: Schema,
-	value: T,
-	route: Matched<RouteMatch>,
-) => Promise<void>;

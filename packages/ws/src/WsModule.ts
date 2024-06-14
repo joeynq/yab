@@ -16,6 +16,7 @@ import {
 import {
 	type Class,
 	type Dictionary,
+	camelCase,
 	pathStartsWith,
 	uuid,
 } from "@vermi/utils";
@@ -25,7 +26,7 @@ import type { WsData } from "./interfaces";
 import { JsonParser } from "./parser/JsonParser";
 import type { Parser } from "./parser/Parser";
 import { SocketHandler } from "./services";
-import { wsHandlerStore } from "./stores";
+import { addWsEvents, wsHandlerStore } from "./stores";
 
 declare module "@vermi/core" {
 	interface AppOptions {
@@ -65,19 +66,44 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 	async onInit(context: AppContext) {
 		const { eventStores, parser = JsonParser } = this.config;
 
+		context.register("parser", asClass(parser).singleton());
 		registerProviders(...eventStores);
 
 		for (const store of eventStores) {
-			const handlers = wsHandlerStore.apply(store).get();
-			for (const [_, { handlerId }] of handlers) {
-				hookStore.apply(store).scoped(handlerId);
+			const metadata = wsHandlerStore.apply(store).get();
+			addWsEvents(metadata);
+			for (const [event, data] of metadata.events) {
+				const thisArgs = metadata.args
+					.filter((arg) => arg.propertyKey === data.propertyKey)
+					.toSorted((a, b) => a.parameterIndex - b.parameterIndex)
+					.map(({ parameterIndex, schema, propertyKey, required, pipes }) => ({
+						parameterIndex,
+						schema,
+						name: propertyKey,
+						required,
+						pipes,
+					}));
+
+				hookStore.apply(store).scoped(data.handlerId);
+
+				const instance = context.resolve<any>(camelCase(metadata.className));
+				const handler = (...args: any) => instance[data.propertyKey](...args);
+				Object.defineProperty(handler, "name", {
+					value: data.handlerId,
+					writable: true,
+				});
+
+				this.socketHandler.addEvent(`/${event}${metadata.channel}`, {
+					channel: metadata.channel,
+					handlerId: data.handlerId,
+					handler,
+					args: thisArgs,
+				});
 			}
 		}
 
 		registerHooks(context, ...eventStores);
-		context.register("parser", asClass(parser).singleton());
 
-		this.socketHandler.initRouter(eventStores);
 		this.socketHandler.buildHandler();
 	}
 

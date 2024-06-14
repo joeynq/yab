@@ -1,7 +1,10 @@
 import { Type } from "@sinclair/typebox";
 import { useDecorators } from "@vermi/core";
-import { Delete as RouterDelete, RouterException } from "@vermi/router";
-import { Returns } from "@vermi/schema";
+import {
+	Returns,
+	Delete as RouterDelete,
+	RouterException,
+} from "@vermi/router";
 import { type Class, snakeCase } from "@vermi/utils";
 import { SingularName } from "./Resource";
 

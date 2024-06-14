@@ -7,15 +7,12 @@ export interface SocketControllerOptions {
 }
 
 export const SocketController = (
-	topic: `/${string}`,
+	channel: `/${string}`,
 	{ deps = [] }: SocketControllerOptions = {},
 ) => {
 	return useDecorators(
 		(target: any) => {
-			const events = wsHandlerStore.apply(target).get();
-			for (const [event] of events) {
-				wsHandlerStore.apply(target).updateChannel(event, topic);
-			}
+			wsHandlerStore.apply(target).setChannel(channel);
 		},
 		Injectable("SCOPED"),
 		Deps(...deps),

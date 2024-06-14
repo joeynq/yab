@@ -1,34 +1,25 @@
-import { type EventType, WsEvent } from "./WsEvent";
+import type { Dictionary } from "@vermi/utils";
+import type { EventExtraType, MessageDTO } from "../interfaces/Message";
 
-export interface EventOptions {
-	auth?: string;
-	invoker?: string;
-}
+export abstract class WsMessage<
+	Data,
+	EventMap extends Dictionary = {},
+	Type extends string = string,
+> {
+	public timestamp = new Date();
 
-export interface Pack<Payload> extends EventOptions {
-	id: string;
-	type: EventType;
-	topic: `/${string}`;
-	event: string;
-	data: Payload;
-	timestamp: Date;
-}
-
-export class WsMessage<Payload> extends WsEvent<Payload> {
 	constructor(
-		sid: string,
-		public event: string,
-		public topic: `/${string}` = "/",
-		public data?: Payload,
-	) {
-		super(sid, "data");
-	}
+		public sid: string,
+		public type: EventExtraType<EventMap, Type>,
+		public data?: Data,
+	) {}
 
-	toDTO() {
+	toDTO(): MessageDTO<Data, EventMap, Type> {
 		return {
-			...super.toDTO(),
-			topic: this.topic,
-			event: this.event,
+			sid: this.sid,
+			type: this.type,
+			timestamp: this.timestamp,
+			...(this.data ? { data: this.data } : {}),
 		};
 	}
 }

@@ -1,6 +1,6 @@
 import { Logger, type LoggerAdapter } from "@vermi/core";
-import { Model, Number, OnData, String } from "@vermi/schema";
-import { SocketController, type WsContext } from "@vermi/ws";
+import { Model, Number, String } from "@vermi/schema";
+import { Message, SocketController, Subscribe } from "@vermi/ws";
 
 @Model()
 class TestModel {
@@ -16,9 +16,9 @@ export class TestSocket {
 	@Logger()
 	logger!: LoggerAdapter;
 
-	@OnData("some-message", TestModel)
-	async onMessage(context: WsContext<{ "other-message": true }>, message: any) {
+	@Subscribe("some-message")
+	async onMessage(@Message() message: TestModel) {
 		this.logger.info("some-message");
-		context.store.broadcast("other-message", message);
+		this.logger.info(JSON.stringify(message));
 	}
 }
