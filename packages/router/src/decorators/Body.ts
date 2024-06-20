@@ -1,33 +1,45 @@
-import type { TObject } from "@sinclair/typebox";
-import type { Class } from "@vermi/utils";
-import type { ContentType, RequestBody } from "../interfaces";
-import type { Mapper } from "../services";
+import { Type } from "@sinclair/typebox";
+import { guessType, isPrimitive } from "@vermi/schema";
+import { type Class, pascalCase } from "@vermi/utils";
+import type { ContentType } from "../interfaces";
+import { routeStore } from "../stores";
 
 export type BodyOptions = {
-	pipes?: Array<Class<Mapper>>;
+	name?: string;
+	pipes?: Array<Class<any>>;
+	type?: Class<any>;
 	nullable?: boolean;
 	contentType?: ContentType;
 };
 
-export const Body = <T extends TObject>(
-	schema: T,
-	{ nullable = false, contentType = "application/json" }: BodyOptions = {},
-) => {
+export const Body = ({
+	type,
+	pipes,
+	name,
+	nullable = false,
+	contentType = "application/json",
+}: BodyOptions = {}) => {
 	return (target: any, propertyKey: string, parameterIndex: number) => {
-		Reflect.defineMetadata(
-			"design:argtypes",
-			[
-				...(Reflect.getMetadata("design:argtypes", target, propertyKey) || []),
-				{
-					in: "body" as const,
-					schema,
-					required: !nullable,
-					index: parameterIndex,
-					contentType,
-				} satisfies RequestBody,
-			],
-			target,
-			propertyKey,
-		);
+		const typeClass =
+			type ||
+			Reflect.getMetadata("design:paramtypes", target, propertyKey)[
+				parameterIndex
+			];
+
+		const schema = guessType(typeClass) || Type.Any();
+
+		if (isPrimitive(typeClass)) {
+			schema.$id = `#/components/schemas/${pascalCase(name ?? typeClass.name)}`;
+		}
+
+		routeStore.apply(target.constructor).addArg(propertyKey, parameterIndex, {
+			in: "body",
+			schema,
+			required: !nullable,
+			index: parameterIndex,
+			name: pascalCase(name ?? typeClass.name),
+			pipes,
+			contentType,
+		});
 	};
 };

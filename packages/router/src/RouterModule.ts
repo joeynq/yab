@@ -12,17 +12,13 @@ import {
 	registerHooks,
 	registerProviders,
 } from "@vermi/core";
+import { type ValidationFn, validate } from "@vermi/schema";
 import { type Class, ensure } from "@vermi/utils";
 import { RouterEvents } from "./events";
-import type {
-	HTTPMethod,
-	RouteMatch,
-	SlashedPath,
-	ValidationFn,
-} from "./interfaces";
+import type { HTTPMethod, RouteMatch, SlashedPath } from "./interfaces";
 import { type CasingType, Router } from "./services";
 import { type ControllerRoutes, addRoutes, routeStore } from "./stores";
-import { defaultErrorHandler, defaultResponseHandler, validate } from "./utils";
+import { defaultErrorHandler, defaultResponseHandler } from "./utils";
 
 declare module "@vermi/core" {
 	interface _RequestContext {

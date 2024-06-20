@@ -10,22 +10,11 @@
 	"devDependencies": {
 		"@sinclair/typebox": "^0.32.31",
 		"@types/bun": "latest",
-		"@types/react": "^18.3.3",
-		"@types/react-dom": "^18.3.0",
-		"@vermi/auth": "link:@vermi/auth",
-		"@vermi/cache": "link:@vermi/cache",
 		"@vermi/core": "link:@vermi/core",
-		"@vermi/router": "link:@vermi/router",
-		"@vermi/utils": "link:@vermi/utils",
-		"@vermi/ws": "link:@vermi/ws"
+		"@vermi/utils": "link:@vermi/utils"
 	},
 	"peerDependencies": {
 		"@sinclair/typebox": "^0.32.31",
 		"typescript": "^5.4.5"
-	},
-	"dependencies": {
-		"openapi3-ts": "^4.3.2",
-		"react": "^18.3.1",
-		"react-dom": "^18.3.1"
 	}
 }

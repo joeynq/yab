@@ -1,6 +1,6 @@
 import { useDecorators } from "@vermi/core";
-import { Put, RouterException } from "@vermi/router";
-import { Returns, generic } from "@vermi/schema";
+import { Put, Returns, RouterException } from "@vermi/router";
+import { generic } from "@vermi/schema";
 import { type Class, snakeCase } from "@vermi/utils";
 import { Single } from "../models";
 import { SingularName } from "./Resource";

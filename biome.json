@@ -19,6 +19,9 @@
 			"style": {
 				"useImportType": "off",
 				"noParameterAssign": "off"
+			},
+			"complexity": {
+				"noBannedTypes": "off"
 			}
 		}
 	},

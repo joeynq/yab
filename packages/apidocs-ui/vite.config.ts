@@ -3,9 +3,28 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
+	define: {
+		global: "window",
+	},
+	ssr: {
+		noExternal: ["remix-utils"],
+	},
 	build: {
 		rollupOptions: {
-			external: ["fs", "node:fs"],
+			external: [
+				"fs",
+				"node:fs",
+				"path",
+				"node:path",
+				"stream",
+				"node:stream",
+				"zlib",
+				"node:zlib",
+				"http",
+				"node:http",
+				"https",
+				"node:https",
+			],
 		},
 	},
 	plugins: [

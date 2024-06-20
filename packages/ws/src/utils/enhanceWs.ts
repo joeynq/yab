@@ -1,31 +1,64 @@
-import type { ServerWebSocket } from "bun";
-import { type EventType, WsError, WsEvent } from "../events";
+import type { Dictionary } from "@vermi/utils";
+import type { Server, ServerWebSocket } from "bun";
+import { type OutgoingEventType, OutgoingMessage } from "../events";
 import type { WsData } from "../interfaces";
+import type { EventExtraType } from "../interfaces/Message";
 import type { Parser } from "../parser/Parser";
 
-export interface EnhancedWebSocket<T> extends ServerWebSocket<T> {
-	sendEvent(type: "error", data: Error): void;
-	sendEvent<Data>(type: Exclude<EventType, "error">, data?: Data): void;
+export interface EnhancedWebSocket<EventMap extends Dictionary = {}>
+	extends ServerWebSocket<WsData> {
+	sendEvent<Data>(
+		type: EventExtraType<EventMap, OutgoingEventType>,
+		data: Data,
+	): void;
+	sendToChannel<Data>(
+		channel: `/${string}`,
+		type: EventExtraType<EventMap, OutgoingEventType>,
+		data: Data,
+	): void;
+	broadcast<Data>(
+		type: EventExtraType<EventMap, OutgoingEventType>,
+		data: Data,
+	): void;
 }
 
-export const enhanceWs = (
+export const enhanceWs = <EventMap extends Dictionary = {}>(
 	_ws: ServerWebSocket<WsData>,
 	parser: Parser,
-): EnhancedWebSocket<WsData> => {
-	const ws = _ws as EnhancedWebSocket<WsData>;
+	server: Server,
+): EnhancedWebSocket<EventMap> => {
+	const ws = _ws as EnhancedWebSocket<EventMap>;
 
-	function sendEvent<Data>(type: EventType, data?: Data) {
-		const { sid } = ws.data;
+	ws.sendEvent = function sendEvent<Data>(
+		type: EventExtraType<EventMap, OutgoingEventType>,
+		data?: Data,
+	) {
+		ws.send(
+			parser.encode(
+				new OutgoingMessage<Data, EventMap>(ws.data.sid, type, data).toDTO(),
+			),
+		);
+	};
 
-		const event =
-			type === "error"
-				? new WsError(sid, data as Error)
-				: new WsEvent(sid, type, data);
+	ws.sendToChannel = function sendToChannel<Data>(
+		channel: `/${string}`,
+		type: EventExtraType<EventMap, OutgoingEventType>,
+		data?: Data,
+	) {
+		server.publish(
+			channel,
+			parser.encode(
+				new OutgoingMessage<Data, EventMap>(ws.data.sid, type, data).toDTO(),
+			),
+		);
+	};
 
-		ws.send(parser.encode(event.toDTO()));
-	}
-
-	ws.sendEvent = sendEvent;
+	ws.broadcast = function broadcast<Data>(
+		type: EventExtraType<EventMap, OutgoingEventType>,
+		data?: Data,
+	) {
+		ws.sendToChannel("/", type, data);
+	};
 
 	return ws;
 };

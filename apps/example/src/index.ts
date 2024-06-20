@@ -11,7 +11,9 @@ import {
 import { remix } from "@vermi/remix";
 import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
+import { ChannelSocket, ws } from "@vermi/ws";
 import { UserController } from "./controllers";
+import { TestSocket } from "./sockets/TestSocket";
 
 /*
 
@@ -59,6 +61,7 @@ new Vermi({ log: logOptions })
 			casing: { internal: "camel", interfaces: "snake" },
 		}),
 	)
+	.use(ws({ path: "/ws", eventStores: [TestSocket, ChannelSocket] }))
 	.use(
 		remix({
 			build: import.meta.resolve("@vermi/apidocs-ui/server"),

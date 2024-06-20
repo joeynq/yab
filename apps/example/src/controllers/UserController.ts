@@ -8,7 +8,7 @@ import {
 	Result,
 	Update,
 } from "@vermi/restapi";
-import { Query } from "@vermi/schema";
+import { Query } from "@vermi/router";
 import { UserDTO, UserSearch } from "../models";
 
 @RestController(UserDTO)

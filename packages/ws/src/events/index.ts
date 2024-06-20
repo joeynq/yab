@@ -1,3 +1,3 @@
-export * from "./WsError";
-export * from "./WsEvent";
+export * from "./IncomingMessage";
 export * from "./WsMessage";
+export * from "./OutgoingMessage";

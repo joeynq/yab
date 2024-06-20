@@ -1,21 +1,21 @@
 import { Type } from "@sinclair/typebox";
 import { guessType, isPrimitive } from "@vermi/schema";
 import { type Class, pascalCase } from "@vermi/utils";
-import type { Parameter } from "../interfaces";
-import { routeStore } from "../stores";
+import { wsHandlerStore } from "../stores";
 
-export type ArgOptions = {
+export type MessageOptions = {
 	nullable?: boolean;
 	name?: string;
 	type?: Class<any>;
 	pipes?: Array<Class<any>>;
 };
 
-export const Arg = (
-	from: Parameter["in"],
-	{ nullable = false, name, type, pipes }: ArgOptions = {},
-) => {
-	return (target: any, propertyKey: string, parameterIndex: number) => {
+export function Message({ name, nullable, type, pipes }: MessageOptions = {}) {
+	return (
+		target: any,
+		propertyKey: string | symbol,
+		parameterIndex: number,
+	) => {
 		const typeClass =
 			type ||
 			Reflect.getMetadata("design:paramtypes", target, propertyKey)[
@@ -28,13 +28,11 @@ export const Arg = (
 			schema.$id = `#/components/schemas/${pascalCase(name ?? typeClass.name)}`;
 		}
 
-		routeStore.apply(target.constructor).addArg(propertyKey, parameterIndex, {
-			in: from,
-			schema,
-			required: !nullable,
-			index: parameterIndex,
-			name: pascalCase(name ?? typeClass.name),
-			pipes,
-		});
+		wsHandlerStore
+			.apply(target.constructor)
+			.addArg(propertyKey, parameterIndex, schema, {
+				required: !nullable,
+				pipes,
+			});
 	};
-};
+}

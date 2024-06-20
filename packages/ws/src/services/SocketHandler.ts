@@ -1,3 +1,4 @@
+import type { TSchema } from "@sinclair/typebox";
 import {
 	Config,
 	Configuration,
@@ -7,27 +8,47 @@ import {
 	Injectable,
 	Logger,
 	type LoggerAdapter,
-	asClass,
 	asValue,
 } from "@vermi/core";
 import { FindMyWay } from "@vermi/find-my-way";
-import { type Class, ensure, tryRun } from "@vermi/utils";
+import {
+	type Class,
+	type MaybePromiseFunction,
+	ensure,
+	tryRun,
+} from "@vermi/utils";
 import type { Server, ServerWebSocket } from "bun";
 import type { WsModuleOptions } from "../WsModule";
-import { type EventType, WsEvent, WsMessage } from "../events";
-import { WsCloseCode } from "../exceptions";
-import type { WsEventMap, WsEvents } from "../hooks";
+import { IncomingMessage, type IncomingMessageDTO } from "../events";
+import {
+	InternalError,
+	InvalidData,
+	WsCloseCode,
+	WsException,
+} from "../exceptions";
+import { type WsEventMap, WsEvents } from "../hooks";
 import type { WsData, _WsContext } from "../interfaces";
-import type { Parser } from "../parser/Parser";
-import { type WsHandler, wsHandlerStore } from "../stores";
 import { type EnhancedWebSocket, enhanceWs } from "../utils";
+
+export interface EventMatch {
+	handler: MaybePromiseFunction;
+	channel: `/${string}`;
+	handlerId: string;
+	args: {
+		name: string | symbol;
+		required?: boolean;
+		parameterIndex: number;
+		schema: TSchema;
+		pipes?: Class<any>[];
+	}[];
+}
 
 @Injectable("SINGLETON")
 export class SocketHandler {
 	#sockets = new Map<string, EnhancedWebSocket<WsData>>();
 	#server!: Server;
 
-	protected router = new FindMyWay<WsHandler>();
+	protected router = new FindMyWay<EventMatch>();
 
 	@Logger() private logger!: LoggerAdapter;
 	@Config("WsModule") private config!: WsModuleOptions;
@@ -43,65 +64,52 @@ export class SocketHandler {
 		protected hooks: Hooks<typeof WsEvents, WsEventMap>,
 	) {}
 
-	#createEvent(parser: Parser, message: Buffer) {
-		const { sid, type, data, topic, event } = parser.decode<any>(message);
-
-		if (type === "subscribe" || type === "unsubscribe") {
-			return new WsEvent(sid, type, topic);
-		}
-
-		if (topic && (!type || type === "data")) {
-			return new WsMessage(sid, event, topic, data);
-		}
-
-		return new WsEvent(sid, type, data);
-	}
-
 	#prepareContext(_ws: ServerWebSocket<WsData>) {
-		const ws = enhanceWs(_ws, this.context.cradle.parser);
+		const ws = enhanceWs(_ws, this.context.cradle.parser, this.#server);
 		const context = this.context.createEnhancedScope();
-		const sendTopic = (topic: `/${string}`, type: EventType, data: any) => {
-			this.#server.publish(
-				topic,
-				context.cradle.parser.encode(new WsEvent(ws.data.sid, type, data)),
-			);
-		};
-
-		const broadcast = (type: EventType, data: any) => {
-			sendTopic("/", type, data);
-		};
 
 		context.register({
 			traceId: asValue(ws.data.sid),
 			ws: asValue(ws),
-			broadcast: asValue(broadcast),
-			sendTopic: asValue(sendTopic),
 		});
 		return context;
 	}
 
-	async #onOpen(_ws: ServerWebSocket<WsData>) {
-		const ws = enhanceWs(_ws, this.context.cradle.parser);
-		const [error] = await tryRun(async () => {
-			if (!ws.data.sid) {
-				this.logger.error("No sid provided");
-				return ws.close(WsCloseCode.InvalidData, "No sid provided");
-			}
-
-			ws.subscribe("/");
-
-			this.#sockets.set(ws.data.sid, ws);
-
-			ws.sendEvent("connect");
-			this.logger.info("Client connected with sid: {sid}", {
-				sid: ws.data.sid,
-			});
-		});
-
-		if (error) {
-			this.logger.error(error, "Error handling open");
+	#errorHandler(ws: EnhancedWebSocket<WsData>, error: Error) {
+		this.logger.error(error, "Error handling message");
+		if (error instanceof WsException) {
 			return ws.sendEvent("error", error);
 		}
+		const errorEvent = new InternalError(ws.data.sid, error.message, error);
+		return ws.sendEvent("error", errorEvent);
+	}
+
+	async #onOpen(ws: ServerWebSocket<WsData>) {
+		return this.contextService.runInContext(
+			this.#prepareContext(ws),
+			async (context: EnhancedContainer<_WsContext>) => {
+				const { ws } = context.cradle;
+				const [error] = await tryRun(async () => {
+					if (!ws.data.sid) {
+						this.logger.error("No sid provided");
+						return ws.close(WsCloseCode.InvalidData, "No sid provided");
+					}
+
+					this.hooks.invoke("ws-hook:open", [context.expose()]);
+
+					ws.subscribe("/");
+
+					this.#sockets.set(ws.data.sid, ws);
+
+					ws.sendEvent("connect", { sid: ws.data.sid });
+					this.logger.info("Client connected with sid: {sid}", {
+						sid: ws.data.sid,
+					});
+				});
+
+				error && this.#errorHandler(ws, error);
+			},
+		);
 	}
 
 	async #onMessage(ws: ServerWebSocket<WsData>, message: Buffer) {
@@ -110,74 +118,70 @@ export class SocketHandler {
 			async (context: EnhancedContainer<_WsContext>) => {
 				const { ws, parser } = context.cradle;
 				const [error] = await tryRun(async () => {
-					const event = this.#createEvent(parser, message);
+					const { channel, sid, type, data } =
+						parser.decode<IncomingMessageDTO<any>>(message);
+
+					const event = new IncomingMessage(sid, type, channel, data);
+
 					context.register("event", asValue(event));
 
-					await this.hooks.invoke("ws-hook:initEvent", [context.expose()]);
+					await this.hooks.invoke(WsEvents.InitEvent, [context.expose()]);
 
-					if (event.type === "subscribe") {
-						this.logger.info("Subscribing to {topic}", { topic: event.data });
-						ws.subscribe(event.data);
-						return;
-					}
-
-					if (event.type === "unsubscribe") {
-						this.logger.info("Unsubscribing from {topic}", {
-							topic: event.data,
-						});
-						ws.unsubscribe(event.data);
-						return;
-					}
-
-					if (!(event instanceof WsMessage)) {
-						throw new Error("Invalid message type");
+					if (!(event instanceof IncomingMessage)) {
+						throw new InvalidData(ws.data.sid, "Invalid message type");
 					}
 
 					const result = this.router.find(
 						"NOTIFY",
-						`${event.event}${event.topic}`,
+						`/${event.type}${event.channel}`,
 					);
 
 					if (!result) {
-						throw new Error("Event is not handled");
+						throw new InvalidData(ws.data.sid, "Event is not handled");
 					}
 
-					const { eventStore, method, handlerId } = result.store;
+					const { handler, handlerId } = result.store;
 
-					context.register("params", asValue(result.params));
+					context.register({
+						params: asValue(result.params),
+						matchData: asValue(result.store),
+					});
 
 					await this.hooks.invoke(
-						"ws-hook:guard",
+						WsEvents.Guard,
 						[context.expose(), result.store],
 						{ when: (scope: string) => scope === handlerId },
 					);
 
-					const instance = context.build(asClass(eventStore));
-					const methodHandler = instance[method].bind(instance);
-
-					await methodHandler(context.expose());
+					await handler(context.expose());
 				});
 
-				if (error) {
-					this.logger.error(error, "Error handling message");
-					return ws.sendEvent("error", error);
-				}
+				error && this.#errorHandler(ws, error);
 			},
 		);
 	}
-	async #onClose(_ws: ServerWebSocket<WsData>, code: number, reason: string) {
-		const ws = enhanceWs(_ws, this.context.cradle.parser);
-		ws.unsubscribe("/");
-		this.#sockets.delete(ws.data.sid);
+	async #onClose(ws: ServerWebSocket<WsData>, code: number, reason?: string) {
+		return this.contextService.runInContext(
+			this.#prepareContext(ws),
+			async (context: EnhancedContainer<_WsContext>) => {
+				const { ws } = context.cradle;
+
+				const [error] = await tryRun(async () => {
+					this.hooks.invoke("ws-hook:close", [context.expose(), code, reason]);
+
+					ws.unsubscribe("/");
+					this.#sockets.delete(ws.data.sid);
+				});
+
+				error && this.#errorHandler(ws, error);
+			},
+		);
 	}
 
-	initRouter(eventStores: Class<any>[]) {
-		for (const eventStore of eventStores) {
-			const store = wsHandlerStore.apply(eventStore).get();
-
-			for (const [event, handlerData] of store.entries()) {
-				this.router.add("NOTIFY", `${event}${handlerData.topic}`, handlerData);
-			}
+	addEvent(event: string, handler: EventMatch) {
+		const current = this.router.find("NOTIFY", event);
+		if (!current) {
+			this.router.add("NOTIFY", event, handler);
 		}
 	}
 

@@ -1,32 +1,35 @@
-import { type _RequestContext } from "@vermi/core";
-import { Middleware, validate } from "@vermi/router";
+import { Middleware, Use } from "@vermi/router";
+import { validate } from "@vermi/schema";
 import { WsHook } from "../decorators";
-import { WsEvent } from "../events";
+import { InvalidData } from "../exceptions";
 import type { WsContext } from "../interfaces";
-import type { WsHandler } from "../stores";
+import type { EventMatch } from "../services";
 
 @Middleware()
-export class WsValidateMiddleware {
-	@WsHook("ws-hook:initEvent")
-	async beforeEvent(context: WsContext) {
-		context.register<_RequestContext["payload"]>("payload", {
-			resolve: (c) => {
-				const event = c.resolve<WsEvent<any>>("event");
-				return { body: event.data };
-			},
-			lifetime: "SCOPED",
-		});
-	}
-
+class WsValidateMiddleware {
 	@WsHook("ws-hook:guard")
-	async validate(context: WsContext, handlerData: WsHandler) {
-		const schema = handlerData.schema;
-		const data = context.store.payload.body;
+	async validate(context: WsContext, handlerData: EventMatch) {
+		const data = context.store.event.data;
+		const ws = context.store.ws;
+		const args = handlerData.args;
 
-		if (!schema) {
+		if (!args?.length) {
 			return;
 		}
 
-		await validate(schema, data, {} as any);
+		for (const arg of args) {
+			if (arg.required && data === undefined) {
+				throw new InvalidData(
+					ws.data.sid,
+					`Missing required parameter: ${arg.name.toString()}`,
+				);
+			}
+
+			if (arg.schema && data !== undefined) {
+				await validate(arg.schema, data);
+			}
+		}
 	}
 }
+
+export const Validate = Use(WsValidateMiddleware);
