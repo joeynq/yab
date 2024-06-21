@@ -12,7 +12,7 @@ import { changePropCase } from "../utils";
 
 type UndoPartial<T> = T extends Partial<infer R> ? R : T;
 
-interface BuildSpecsOptions {
+export interface BuildSpecsOptions {
 	serverUrl: string;
 	title: string;
 	casing?: "camel" | "snake" | "pascal" | "kebab";

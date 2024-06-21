@@ -22,13 +22,10 @@ declare module "@vermi/core" {
 	}
 }
 
-export type AuthModuleConfig<S extends Strategy<any>> = Record<
-	string,
-	{
-		strategy: S;
-		scheme: Record<string, SecurityScheme>;
-	}
->;
+export type AuthModuleConfig<S extends Strategy<any>> = {
+	strategy: S;
+	scheme: Record<string, SecurityScheme>;
+}[];
 
 type InitStatus = "success" | "error";
 
@@ -47,8 +44,9 @@ export class AuthModule<S extends Strategy<any>>
 			[];
 
 		const toBeRegistered: Record<string, Strategy<any>> = {};
-		for (const [name, { strategy, scheme }] of Object.entries(config)) {
+		for (const { strategy, scheme } of config) {
 			let status: "success" | "error" = "success";
+			const name = strategy.constructor.name;
 
 			const [error] = await tryRun(async () => {
 				await strategy.init?.();

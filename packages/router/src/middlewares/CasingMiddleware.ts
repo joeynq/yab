@@ -14,7 +14,7 @@ const getCasing = (context: RequestContext, config: RouterModuleConfig) => {
 		};
 	}
 
-	const cnf = config[mount as keyof RouterModuleConfig].options;
+	const cnf = config.find((c) => c.mount === mount)?.options;
 
 	const internal = cnf?.casing?.internal ?? "camel";
 	const interfaces = cnf?.casing?.interfaces;

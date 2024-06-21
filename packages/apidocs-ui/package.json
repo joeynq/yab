@@ -26,18 +26,18 @@
 		"@remix-run/react": "^2.9.2",
 		"@remix-run/serve": "^2.9.2",
 		"@scalar/api-reference-react": "^0.2.5",
-		"isbot": "^4.1.0",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
+		"isbot": "^4.4.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
 		"remix-utils": "^7.6.0"
 	},
 	"devDependencies": {
 		"@remix-run/dev": "^2.9.2",
-		"@types/react": "^18.2.20",
-		"@types/react-dom": "^18.2.7",
-		"typescript": "^5.1.6",
-		"vite": "^5.1.0",
-		"vite-tsconfig-paths": "^4.2.1"
+		"@types/react": "^18.3.3",
+		"@types/react-dom": "^18.3.0",
+		"typescript": "^5.4.5",
+		"vite": "^5.3.1",
+		"vite-tsconfig-paths": "^4.3.2"
 	},
 	"engines": {
 		"node": ">=20.0.0"

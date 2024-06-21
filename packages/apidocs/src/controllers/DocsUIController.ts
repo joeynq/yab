@@ -2,6 +2,7 @@ import { UseCache } from "@vermi/cache";
 import { Config, Inject, type RequestContext } from "@vermi/core";
 import { Remix } from "@vermi/remix";
 import { Controller, Get, NotFound, Use } from "@vermi/router";
+import { ensure } from "@vermi/utils";
 import type { ApiDocsConfig } from "../ApiDocsModule";
 import type { ApiConfig } from "../interfaces";
 import { ServiceFactoryMiddleware } from "../middlewares/ServiceFactory";
@@ -14,13 +15,9 @@ export class DocsUIController {
 
 	protected getConfig(ctx: RequestContext) {
 		const id = ctx.store.route.mount ?? "/";
-		if (!Object.keys(this.config).includes(id)) {
-			throw new NotFound(`No API Docs config found for ${id}`);
-		}
-		return {
-			...this.config[id as keyof ApiDocsConfig],
-			id,
-		};
+		const config = this.config.find((c) => c.mount === id);
+		ensure(config, new NotFound(`No API Docs config found for ${id}`));
+		return config;
 	}
 
 	@UseCache()
@@ -43,7 +40,7 @@ export class DocsUIController {
 	async renderDoc(ctx: RequestContext) {
 		const conf = this.getConfig(ctx);
 		return {
-			specsUrl: `${conf.id}/specs.json`,
+			specsUrl: `${conf.mount}/specs.json`,
 			type: conf.type,
 		};
 	}

@@ -3,8 +3,8 @@ import { StaticModule, type StaticModuleOptions } from "./StaticModule";
 
 export const statics = (
 	assetsDir: string,
-	options: StaticModuleOptions,
-): UseModule<StaticModule, Record<string, StaticModuleOptions>> => [
+	options: Omit<StaticModuleOptions, "assetsDir">,
+): UseModule<StaticModule, StaticModuleOptions[]> => [
 	StaticModule,
-	{ [assetsDir]: options },
+	[{ ...options, assetsDir }],
 ];

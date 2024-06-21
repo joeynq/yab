@@ -1,5 +1,5 @@
 import type { Class, Dictionary } from "@vermi/utils";
-import type { TLSOptions } from "bun";
+import type { TLSOptions, WebSocketHandler } from "bun";
 import type { VermiModule } from "../services";
 import type { LogOptions } from "./LoggerAdapter";
 
@@ -16,6 +16,7 @@ export interface AppOptions<Log extends object = ConsoleOptions> {
 	reusePort?: boolean;
 	tls?: TLSOptions;
 	log?: LogOptions<Log>;
+	websocket?: WebSocketHandler<any>;
 }
 
 export type UseModule<

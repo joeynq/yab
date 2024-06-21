@@ -13,6 +13,7 @@ import {
 	registerHooks,
 	registerProviders,
 } from "@vermi/core";
+import type { SlashedPath } from "@vermi/router";
 import {
 	type Class,
 	type Dictionary,
@@ -39,22 +40,14 @@ declare module "@vermi/core" {
 }
 
 export interface WsModuleOptions {
-	path: string;
+	path: SlashedPath;
 	eventStores: Class<any>[];
 	parser?: Class<Parser>;
-	server?: {
-		maxPayloadLength?: number;
-		backpressureLimit?: number;
-		closeOnBackpressureLimit?: boolean;
-		idleTimeout?: number;
-		publishToSelf?: boolean;
-		sendPings?: boolean;
-	};
 }
 
 @Module({ deps: [SocketHandler] })
-export class WsModule implements VermiModule<WsModuleOptions> {
-	@Config() public config!: WsModuleOptions;
+export class WsModule implements VermiModule<WsModuleOptions[]> {
+	@Config() public config!: WsModuleOptions[];
 
 	constructor(
 		protected configuration: Configuration,
@@ -64,45 +57,47 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 
 	@AppHook("app:init")
 	async onInit(context: AppContext) {
-		const { eventStores, parser = JsonParser } = this.config;
+		for (const { path, eventStores, parser = JsonParser } of this.config) {
+			context.register("parser", asClass(parser).singleton());
+			registerProviders(...eventStores);
 
-		context.register("parser", asClass(parser).singleton());
-		registerProviders(...eventStores);
+			for (const store of eventStores) {
+				const metadata = wsHandlerStore.apply(store).get();
+				addWsEvents(path, metadata);
+				for (const [event, data] of metadata.events) {
+					const thisArgs = metadata.args
+						.filter((arg) => arg.propertyKey === data.propertyKey)
+						.toSorted((a, b) => a.parameterIndex - b.parameterIndex)
+						.map(
+							({ parameterIndex, schema, propertyKey, required, pipes }) => ({
+								parameterIndex,
+								schema,
+								name: propertyKey,
+								required,
+								pipes,
+							}),
+						);
 
-		for (const store of eventStores) {
-			const metadata = wsHandlerStore.apply(store).get();
-			addWsEvents(metadata);
-			for (const [event, data] of metadata.events) {
-				const thisArgs = metadata.args
-					.filter((arg) => arg.propertyKey === data.propertyKey)
-					.toSorted((a, b) => a.parameterIndex - b.parameterIndex)
-					.map(({ parameterIndex, schema, propertyKey, required, pipes }) => ({
-						parameterIndex,
-						schema,
-						name: propertyKey,
-						required,
-						pipes,
-					}));
+					hookStore.apply(store).scoped(data.handlerId);
 
-				hookStore.apply(store).scoped(data.handlerId);
+					const instance = context.resolve<any>(camelCase(metadata.className));
+					const handler = (...args: any) => instance[data.propertyKey](...args);
+					Object.defineProperty(handler, "name", {
+						value: data.handlerId,
+						writable: true,
+					});
 
-				const instance = context.resolve<any>(camelCase(metadata.className));
-				const handler = (...args: any) => instance[data.propertyKey](...args);
-				Object.defineProperty(handler, "name", {
-					value: data.handlerId,
-					writable: true,
-				});
-
-				this.socketHandler.addEvent(`/${event}${metadata.channel}`, {
-					channel: metadata.channel,
-					handlerId: data.handlerId,
-					handler,
-					args: thisArgs,
-				});
+					this.socketHandler.addEvent(`/${event}${path}${metadata.channel}`, {
+						channel: metadata.channel,
+						handlerId: data.handlerId,
+						handler,
+						args: thisArgs,
+					});
+				}
 			}
-		}
 
-		registerHooks(context, ...eventStores);
+			registerHooks(context, ...eventStores);
+		}
 
 		this.socketHandler.buildHandler();
 	}
@@ -116,20 +111,25 @@ export class WsModule implements VermiModule<WsModuleOptions> {
 	async onRequest(context: RequestContext, server: Server) {
 		const { request } = context.store;
 
-		if (pathStartsWith(request.url, this.config.path)) {
-			const hooks = context.store.hooks as Hooks<typeof WsEvents, WsEventMap>;
+		const config = this.config.find((c) => pathStartsWith(request.url, c.path));
 
-			const customData: Dictionary<any> = {};
-
-			await hooks.invoke("ws-hook:handshake", [context, customData]);
-
-			server.upgrade<WsData>(request, {
-				data: {
-					...customData,
-					sid: uuid(),
-				},
-			});
-			return {};
+		if (!config) {
+			return;
 		}
+
+		const hooks = context.store.hooks as Hooks<typeof WsEvents, WsEventMap>;
+
+		const customData: Dictionary<any> = {};
+
+		await hooks.invoke("ws-hook:handshake", [context, customData]);
+
+		server.upgrade<WsData>(request, {
+			data: {
+				...customData,
+				sid: uuid(),
+				path: config.path,
+			},
+		});
+		return {};
 	}
 }

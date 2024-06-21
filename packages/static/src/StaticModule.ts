@@ -16,6 +16,7 @@ import { generateETag, isCached } from "./utils";
 export type SlashedPath = `/${string}`;
 
 export type StaticModuleOptions = {
+	assetsDir: string;
 	patterns?: (string | RegExp)[];
 	cache?: string;
 	extensions?: string[];
@@ -50,11 +51,9 @@ interface StaticCache {
 }
 
 @Module()
-export class StaticModule
-	implements VermiModule<Record<SlashedPath, StaticModuleOptions>>
-{
+export class StaticModule implements VermiModule<StaticModuleOptions[]> {
 	@Logger() private logger!: LoggerAdapter;
-	@Config() public config!: Record<SlashedPath, StaticModuleOptions>;
+	@Config() public config!: StaticModuleOptions[];
 	@Cache() cache!: CacheAdapter<StaticCache>;
 
 	#getHeaders(config: StaticModuleOptions, etag?: string) {
@@ -79,7 +78,7 @@ export class StaticModule
 
 	@AppHook("app:init")
 	public async onInit() {
-		for (const [assetsDir] of Object.entries(this.config)) {
+		for (const { assetsDir } of this.config) {
 			this.logger.info(`StaticModule initialized. ${assetsDir}`);
 		}
 	}
@@ -103,7 +102,10 @@ export class StaticModule
 		const isAbsolute = (assetsDir: string) => assetsDir.startsWith("/");
 
 		const findFile = async (assetsDir: string) => {
-			const conf = this.config[assetsDir as keyof typeof this.config];
+			const conf = this.config.find((c) => c.assetsDir === assetsDir);
+			if (!conf) {
+				return;
+			}
 			const indexFile = conf.index ?? "index.html";
 			const allowedExtensions = conf.extensions ?? defaultStaticExtensions;
 			if (!ext) {
@@ -124,11 +126,9 @@ export class StaticModule
 			}
 		};
 
-		for (const [assetsDir, { patterns, ...rest }] of Object.entries(
-			this.config,
-		)) {
+		for (const { patterns, ...rest } of this.config) {
 			if (!patterns?.length) {
-				const file = await findFile(assetsDir);
+				const file = await findFile(rest.assetsDir);
 				if (file) {
 					return [file, rest];
 				}
@@ -141,7 +141,7 @@ export class StaticModule
 			if (!isMatch) {
 				continue;
 			}
-			const file = await findFile(assetsDir);
+			const file = await findFile(rest.assetsDir);
 			if (file) {
 				return [file, rest];
 			}

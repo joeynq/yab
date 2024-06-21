@@ -50,12 +50,11 @@ export type RouterOptions = {
 	};
 };
 
-export type RouterModuleConfig = {
-	[prefix: SlashedPath]: {
-		controllers: Class<any>[];
-		options?: RouterOptions;
-	};
-};
+export type RouterModuleConfig = Array<{
+	mount: SlashedPath;
+	controllers: Class<any>[];
+	options?: RouterOptions;
+}>;
 
 @Module({ deps: [Router] })
 export class RouterModule implements VermiModule<RouterModuleConfig> {
@@ -73,7 +72,10 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 		addRoutes(mount, metadata);
 
 		for (const { path, method, propertyKey, metadata } of routes) {
-			const route = `${mount}${prefix}${path}`;
+			// replace double slashes with single slashes
+			const route = `${mount}${prefix}${path}`
+				.replace(/\/+/g, "/")
+				.replace(/\/$/, "");
 
 			const instance = context.resolve<any>(className);
 			const thisArgs = args
@@ -105,14 +107,14 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 
 		ensure(mounted, "No configuration provided");
 
-		for (const [_, { controllers }] of Object.entries(mounted)) {
+		for (const { controllers } of mounted) {
 			ensure(controllers.length > 0, "No controllers provided");
 		}
 
-		const all = Object.values(mounted).flatMap((m) => m.controllers);
+		const all = mounted.flatMap((m) => m.controllers);
 		registerProviders(...all);
 
-		for (const [mount, { controllers }] of Object.entries(mounted)) {
+		for (const { mount, controllers } of mounted) {
 			for (const controller of controllers) {
 				const routeConf = routeStore.apply(controller).get();
 				this.#addRoutes(context, mount as SlashedPath, routeConf);
@@ -132,7 +134,7 @@ export class RouterModule implements VermiModule<RouterModuleConfig> {
 		const mount = match.store.mount;
 		ensure(mount, "No mount found for route");
 
-		const config = this.config[mount as keyof RouterModuleConfig];
+		const config = this.config.find((c) => c.mount === mount);
 
 		if (!config) {
 			return;

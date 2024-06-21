@@ -16,6 +16,7 @@
 		"deburr",
 		"deburred",
 		"deepmerge",
+		"demi",
 		"flushall",
 		"frameguard",
 		"googlepubsub",
@@ -24,6 +25,7 @@
 		"hsts",
 		"ibmmq",
 		"isbot",
+		"jose",
 		"jwks",
 		"lefthook",
 		"mercure",
@@ -40,11 +42,13 @@
 		"paramtypes",
 		"pino",
 		"Pipeable",
+		"postgresql",
 		"restapi",
 		"reviewdog",
 		"rlflx",
 		"ruleset",
 		"SAMEORIGIN",
+		"sinclair",
 		"sindresorhus",
 		"sonarjs",
 		"sprintf",
@@ -53,6 +57,7 @@
 		"tslog",
 		"typebox",
 		"typeorm",
+		"vermi",
 		"Vermi",
 		"voca",
 		"workdir"
@@ -74,7 +79,10 @@
 		"editor.defaultFormatter": "biomejs.biome"
 	},
 	"[typescript]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "biomejs.biome",
+		"editor.tabSize": 2,
+		"editor.insertSpaces": true,
+		"editor.detectIndentation": false
 	},
 	"[yaml]": {
 		"editor.defaultFormatter": "redhat.vscode-yaml"
@@ -85,5 +93,10 @@
 	"npm-intellisense.importQuotes": "\"",
 	"npm-intellisense.scanDevDependencies": true,
 	"npm-intellisense.showBuildInLibs": true,
-	"npm-intellisense.packageSubfoldersIntellisense": true
+	"npm-intellisense.packageSubfoldersIntellisense": true,
+	"editor.insertSpaces": true,
+	"editor.detectIndentation": false,
+	"cSpell.caseSensitive": true,
+	"javascript.experimental.updateImportsOnPaste": true,
+	"javascript.format.enable": false
 }

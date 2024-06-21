@@ -31,4 +31,6 @@ export interface OpenAPIConfig extends CommonApiConfig {
 	specs: Partial<OpenAPIObject>;
 }
 
-export type ApiConfig = OpenAPIConfig | AsyncAPIConfig;
+export type ApiConfig = (OpenAPIConfig | AsyncAPIConfig) & {
+	mount: SlashedPath;
+};

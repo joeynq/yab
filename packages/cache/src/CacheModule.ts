@@ -12,6 +12,7 @@ import type { Class } from "@vermi/utils";
 import type { CacheAdapter } from "./interfaces";
 
 export type CacheModuleOptions<Adapter extends Class<CacheAdapter<any>>> = {
+	name?: string;
 	adapter: Adapter;
 	adapterArg: ConstructorParameters<Adapter>[0];
 	clearOnStart?: boolean;
@@ -19,14 +20,14 @@ export type CacheModuleOptions<Adapter extends Class<CacheAdapter<any>>> = {
 
 @Module()
 export class CacheModule<Adapter extends Class<CacheAdapter<any>>>
-	implements VermiModule<Record<string, CacheModuleOptions<Adapter>>>
+	implements VermiModule<CacheModuleOptions<Adapter>[]>
 {
 	@Logger() protected logger!: LoggerAdapter;
-	@Config() public config!: Record<string, CacheModuleOptions<Adapter>>;
+	@Config() public config!: CacheModuleOptions<Adapter>[];
 
 	@AppHook("app:init")
 	async init(context: AppContext) {
-		for (const [name, options] of Object.entries(this.config)) {
+		for (const { name = "default", ...options } of this.config) {
 			const instance = new options.adapter(options.adapterArg);
 
 			if (options.clearOnStart) {

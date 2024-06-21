@@ -20,13 +20,13 @@ export const auth = <
 
 	return [
 		AuthModule,
-		{
-			[Strategy.name]: {
+		[
+			{
 				strategy,
 				scheme: {
 					[name]: strategy.securityScheme,
 				},
 			},
-		},
+		],
 	];
 };

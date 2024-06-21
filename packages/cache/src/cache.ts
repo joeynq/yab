@@ -13,12 +13,13 @@ export const cache = <Adapter extends Class<CacheAdapter<any>>>(
 	const { name = "default" } = options || {};
 	return [
 		CacheModule,
-		{
-			[name]: {
+		[
+			{
+				name,
 				adapter,
 				adapterArg: args,
 				...options,
 			},
-		},
+		],
 	];
 };

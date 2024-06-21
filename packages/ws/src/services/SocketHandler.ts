@@ -1,6 +1,5 @@
 import type { TSchema } from "@sinclair/typebox";
 import {
-	Config,
 	Configuration,
 	type ContextService,
 	type EnhancedContainer,
@@ -18,7 +17,6 @@ import {
 	tryRun,
 } from "@vermi/utils";
 import type { Server, ServerWebSocket } from "bun";
-import type { WsModuleOptions } from "../WsModule";
 import { IncomingMessage, type IncomingMessageDTO } from "../events";
 import {
 	InternalError,
@@ -51,7 +49,6 @@ export class SocketHandler {
 	protected router = new FindMyWay<EventMatch>();
 
 	@Logger() private logger!: LoggerAdapter;
-	@Config("WsModule") private config!: WsModuleOptions;
 
 	get context() {
 		ensure(this.contextService.context, "Context not found");
@@ -133,7 +130,7 @@ export class SocketHandler {
 
 					const result = this.router.find(
 						"NOTIFY",
-						`/${event.type}${event.channel}`,
+						`/${event.type}${ws.data.path}${event.channel}`,
 					);
 
 					if (!result) {
@@ -187,10 +184,10 @@ export class SocketHandler {
 
 	buildHandler(): void {
 		this.configuration.options.websocket = {
+			...this.configuration.options.websocket,
 			open: this.#onOpen.bind(this),
 			message: this.#onMessage.bind(this),
 			close: this.#onClose.bind(this),
-			...this.config.server,
 		};
 	}
 

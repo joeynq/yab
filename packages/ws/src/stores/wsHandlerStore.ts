@@ -1,5 +1,6 @@
 import type { TSchema } from "@sinclair/typebox";
 import { createStore } from "@vermi/core";
+import type { SlashedPath } from "@vermi/router";
 import type { Class } from "@vermi/utils";
 
 export const WsHandlerStoreKey = Symbol("WsHandlerStoreKey");
@@ -107,9 +108,9 @@ export interface WsMessageObject {
 	}[];
 }
 
-const globalEvents = new Map<`/${string}`, WsMessageObject[]>();
+const globalEvents = new Map<SlashedPath, WsMessageObject[]>();
 
-export const addWsEvents = (store: WsHandlerStore) => {
+export const addWsEvents = (path: SlashedPath, store: WsHandlerStore) => {
 	const { channel, className, events, args } = store;
 	const handlers = Array.from(events.values());
 
@@ -132,7 +133,7 @@ export const addWsEvents = (store: WsHandlerStore) => {
 		},
 	);
 
-	globalEvents.set(channel, messages);
+	globalEvents.set(`${path}${channel}`, messages);
 };
 
 export const getWsEvents = () => globalEvents;

@@ -15,8 +15,7 @@ import {
 } from "openapi3-ts/oas31";
 import type { OpenAPIConfig } from "../interfaces";
 import * as utils from "../utils";
-import type { BuildSpecsOptions } from "./AsyncAPIService";
-import { BaseAPIService } from "./BaseAPIService";
+import { BaseAPIService, type BuildSpecsOptions } from "./BaseAPIService";
 import { corsSchema, rateLimitSchemas } from "./builtin";
 
 export class OpenAPIService extends BaseAPIService<OpenAPIConfig> {

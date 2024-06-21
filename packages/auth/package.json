@@ -18,7 +18,7 @@
 		"typescript": "^5.4.5"
 	},
 	"dependencies": {
-		"jose": "^5.3.0",
+		"jose": "^5.4.1",
 		"reflect-metadata": "^0.2.2"
 	}
 }

@@ -159,7 +159,9 @@ export const addRoutes = (mount: SlashedPath, metadata: ControllerRoutes) => {
 		propertyKey,
 		metadata: { responses, security, operationId },
 	} of metadata.routes) {
-		const route = `${mount}${metadata.prefix}${path}`;
+		const route = `${mount}${metadata.prefix}${path}`
+			.replace(/\/+/g, "/")
+			.replace(/\/$/, "");
 		const key = `${method}${route}` as `${HTTPMethod}${SlashedPath}`;
 
 		if (routes.has(key)) {

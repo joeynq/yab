@@ -46,12 +46,13 @@ export class RemixModule implements VermiModule<RemixModuleOptions> {
 		);
 
 		const staticConfig: StaticModuleOptions = {
+			assetsDir: assets,
 			patterns: [/^\/assets\//],
 		};
 
 		this.configuration.setModuleConfig({
 			module: StaticModule,
-			config: { [assets]: staticConfig },
+			config: [staticConfig],
 		});
 	}
 }

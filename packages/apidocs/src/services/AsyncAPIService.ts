@@ -9,13 +9,7 @@ import type {
 	SecuritySchemeObject,
 } from "../interfaces/AsyncAPI";
 import { removeUnused } from "../utils";
-import { BaseAPIService } from "./BaseAPIService";
-
-export interface BuildSpecsOptions {
-	serverUrl: string;
-	title: string;
-	casing?: "camel" | "snake" | "pascal" | "kebab";
-}
+import { BaseAPIService, type BuildSpecsOptions } from "./BaseAPIService";
 
 export class AsyncAPIService extends BaseAPIService<AsyncAPIConfig> {
 	protected defaultSpecs: AsyncAPIObject = {
