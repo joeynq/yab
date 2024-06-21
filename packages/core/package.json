@@ -15,7 +15,7 @@
 	},
 	"peerDependencies": {
 		"awilix": "^10.0.2",
-		"typescript": "^5.4.5"
+		"typescript": "^5.5.2"
 	},
 	"dependencies": {
 		"chalk": "^5.3.0",

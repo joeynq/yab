@@ -1,4 +1,4 @@
-import type { TSchema } from "@sinclair/typebox";
+import { type TSchema, Type } from "@sinclair/typebox";
 import { createStore } from "@vermi/core";
 import type { SlashedPath } from "@vermi/router";
 import type { Class } from "@vermi/utils";
@@ -96,6 +96,7 @@ export const wsHandlerStore = createStore<WsHandlerStore, WsHandlerStoreAPI>(
 );
 
 export interface WsMessageObject {
+	prefix: SlashedPath;
 	propertyKey: string | symbol;
 	handlerId: string;
 	className: string;
@@ -110,13 +111,30 @@ export interface WsMessageObject {
 
 const globalEvents = new Map<SlashedPath, WsMessageObject[]>();
 
+// sid: string,
+// 		type: EventExtraType<EventMap, IncomingEventType>,
+// 		public channel: `/${string}`,
+// 		data?: Data,
+
 export const addWsEvents = (path: SlashedPath, store: WsHandlerStore) => {
 	const { channel, className, events, args } = store;
 	const handlers = Array.from(events.values());
 
+	const eventSchema = (schema: TSchema) =>
+		Type.Object(
+			{
+				sid: Type.String(),
+				type: Type.String(),
+				channel: Type.String(),
+				data: schema.$id ? Type.Ref(schema) : schema,
+			},
+			{ $id: `${schema.$id}Event` },
+		);
+
 	const messages: WsMessageObject[] = handlers.map(
 		({ event, propertyKey, handlerId }) => {
 			return {
+				prefix: path,
 				propertyKey,
 				handlerId,
 				className,
@@ -125,7 +143,7 @@ export const addWsEvents = (path: SlashedPath, store: WsHandlerStore) => {
 					.filter((arg) => arg.propertyKey === propertyKey)
 					.map(({ parameterIndex, schema, required }) => ({
 						parameterIndex,
-						schema,
+						schema: eventSchema(schema),
 						required,
 						propertyKey,
 					})),

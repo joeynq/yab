@@ -12,7 +12,7 @@
 		"type-fest": "^4.20.1"
 	},
 	"peerDependencies": {
-		"typescript": "^5.4.5"
+		"typescript": "^5.5.2"
 	},
 	"dependencies": {
 		"change-case": "^5.4.4",

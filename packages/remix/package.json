@@ -16,7 +16,7 @@
 		"@vermi/static": "link:@vermi/static"
 	},
 	"peerDependencies": {
-		"typescript": "^5.4.5"
+		"typescript": "^5.5.2"
 	},
 	"dependencies": {
 		"@remix-run/node": "^2.9.2",

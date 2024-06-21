@@ -18,8 +18,8 @@
 		"@vermi/utils": "link:@vermi/utils"
 	},
 	"peerDependencies": {
-		"@sinclair/typebox": "^0.32.31",
-		"typescript": "^5.4.5"
+		"@sinclair/typebox": "^0.32.33",
+		"typescript": "^5.5.2"
 	},
 	"dependencies": {
 		"pluralize": "^8.0.0"

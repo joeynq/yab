@@ -22,8 +22,8 @@
 		"@vermi/remix": "link:@vermi/remix"
 	},
 	"peerDependencies": {
-		"@sinclair/typebox": "^0.32.31",
-		"typescript": "^5.4.5"
+		"@sinclair/typebox": "^0.32.33",
+		"typescript": "^5.5.2"
 	},
 	"dependencies": {
 		"openapi3-ts": "^4.3.3",

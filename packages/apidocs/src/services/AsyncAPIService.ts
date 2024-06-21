@@ -75,12 +75,7 @@ export class AsyncAPIService extends BaseAPIService<AsyncAPIConfig> {
 		);
 
 		specs.info.title = title;
-		specs.servers = {
-			[import.meta.env.NODE_ENV ?? "local"]: {
-				host: new URL(serverUrl).host,
-				protocol: "ws",
-			},
-		};
+		specs.servers = {};
 
 		specs.channels = specs.channels ?? {};
 		specs.operations = specs.operations ?? {};
@@ -89,24 +84,28 @@ export class AsyncAPIService extends BaseAPIService<AsyncAPIConfig> {
 			const channelObject: ChannelObject = { messages: {} };
 			const channelName = camelCase(channel) || "root";
 			for (const message of messages) {
-				const { event, args, handlerId } = message;
-				channelObject.address = channel;
+				const { event, args, handlerId, prefix } = message;
+
+				const serverName = camelCase(prefix);
+				const address = channel.replace(prefix, "");
+				if (!specs.servers[serverName]) {
+					specs.servers[serverName] = {
+						host: new URL(serverUrl).host,
+						pathname: prefix,
+						protocol: "ws",
+					};
+				}
+
+				channelObject.address = address;
 				specs.operations[camelCase(handlerId)] = {
 					action: "receive",
 					channel: { $ref: `#/channels/${channelName}` },
-					messages: [{ $ref: `#/channels/${channelName}/messages/${event}` }],
 				};
 
+				this.#addSchemas(args.map((arg) => arg.schema));
 				this.#addMessage(event, args[0]?.schema);
 				(channelObject.messages as any)[event] = {
-					payload: {
-						$ref: `#/components/messages/${event}`,
-					},
-				};
-				specs.operations[camelCase(handlerId)] = {
-					action: "receive",
-					channel: { $ref: `#/channels/${channelName}` },
-					messages: [{ $ref: `#/channels/${channelName}/messages/${event}` }],
+					$ref: `#/components/messages/${event}`,
 				};
 			}
 			specs.channels[channelName] = channelObject;
