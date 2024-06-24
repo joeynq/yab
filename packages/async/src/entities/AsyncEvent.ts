@@ -5,7 +5,6 @@ export class AsyncEvent<Data> {
 	public id: string;
 
 	constructor(
-		public readonly topic: string,
 		public readonly name: string,
 		public readonly data: Data,
 	) {

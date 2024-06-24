@@ -6,7 +6,9 @@ import {
 import type { MaybePromiseFunction } from "@vermi/utils";
 
 @Interceptor()
-export class ArgsPipingInterceptor implements InterceptorMethods {
+export class ArgsPipingInterceptor
+	implements InterceptorMethods<RequestContext>
+{
 	async intercept(context: RequestContext, next: MaybePromiseFunction) {
 		const payload = context.store.payload;
 		const args = context.store.route.args;

@@ -3,14 +3,14 @@ import { guessType, isPrimitive } from "@vermi/schema";
 import { type Class, pascalCase } from "@vermi/utils";
 import { eventStore } from "../stores";
 
-export type MessageOptions = {
+export type PayloadOptions = {
 	nullable?: boolean;
 	name?: string;
 	type?: Class<any>;
 	pipes?: Array<Class<any>>;
 };
 
-export function Message({ name, nullable, type, pipes }: MessageOptions = {}) {
+export function Payload({ name, nullable, type, pipes }: PayloadOptions = {}) {
 	return (
 		target: any,
 		propertyKey: string | symbol,

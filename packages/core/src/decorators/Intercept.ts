@@ -1,9 +1,9 @@
 import { type Class, camelCase } from "@vermi/utils";
-import type { RequestContext } from "../interfaces";
+import type { AppContext, InterceptorMethods } from "../interfaces";
 import { dependentStore } from "../store";
 import { asClass, asValue, useDecorators } from "../utils";
 
-export const Intercept = <Interceptor extends Class<any>>(
+export const Intercept = <Interceptor extends Class<InterceptorMethods<any>>>(
 	interceptor: Interceptor,
 	options?: any,
 ): MethodDecorator => {
@@ -19,7 +19,7 @@ export const Intercept = <Interceptor extends Class<any>>(
 			const originalMethod = target[propertyKey];
 			const name = camelCase(interceptor.name);
 
-			descriptor.value = async <Context extends RequestContext>(
+			descriptor.value = async <Context extends AppContext>(
 				context: Context,
 			) => {
 				options && context.register(`${name}.options`, asValue(options));

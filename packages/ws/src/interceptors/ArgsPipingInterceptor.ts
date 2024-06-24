@@ -4,7 +4,7 @@ import type { WsContext } from "../interfaces";
 import type { EventMatch } from "../services";
 
 @Interceptor()
-export class ArgsPipingInterceptor implements InterceptorMethods {
+export class ArgsPipingInterceptor implements InterceptorMethods<WsContext> {
 	async intercept(context: WsContext, next: MaybePromiseFunction) {
 		let value = context.store.event.data;
 		const { args } = context.resolve<EventMatch>("matchData");

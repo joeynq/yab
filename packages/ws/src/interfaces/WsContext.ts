@@ -1,10 +1,10 @@
-import type { ExposedContext, _RequestContext } from "@vermi/core";
+import type { ExposedContext, _AppContext } from "@vermi/core";
 import type { Dictionary } from "@vermi/utils";
 import type { WsMessage } from "../events";
 import type { EnhancedWebSocket } from "../utils";
 
 export interface _WsContext<EventMap extends Dictionary = {}>
-	extends _RequestContext {
+	extends _AppContext {
 	ws: EnhancedWebSocket<EventMap>;
 	event: WsMessage<any, EventMap>;
 	params: Dictionary;

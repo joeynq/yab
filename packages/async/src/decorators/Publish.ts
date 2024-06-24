@@ -1,58 +1,56 @@
 import {
 	type AppContext,
 	Intercept,
+	InterceptOptions,
 	Interceptor,
 	type InterceptorMethods,
 	useDecorators,
 } from "@vermi/core";
-import { InterceptOptions } from "@vermi/core";
 import type { MaybePromiseFunction } from "@vermi/utils";
 import { AsyncEvent } from "../entities";
 import type { Transporter } from "../interfaces";
 
-export interface PublishOptions {
+export interface PublishOptions<Context extends AppContext, Result = unknown> {
 	/**
-	 * The topic of the event to publish.
+	 * The event name.
 	 */
-	topic: string;
-
-	/**
-	 * A function that returns the ID of the invoker.
-	 */
-	invokerId?: <Context extends AppContext>(context: Context) => string;
-
-	/**
-	 * The name of the event to publish.
-	 */
-	event: string;
+	event: string | ((context: Context, result: Result) => AsyncEvent<Result>);
 
 	/**
 	 * A function that determines whether the event should be published.
 	 */
 	when?: "always" | ((event: any) => boolean);
+	transport?: Transporter;
 }
 
 @Interceptor()
-class PublishInterceptor implements InterceptorMethods {
+class PublishInterceptor<Context extends AppContext>
+	implements InterceptorMethods<AppContext>
+{
 	@InterceptOptions()
-	options!: PublishOptions;
+	options!: PublishOptions<Context>;
 
-	async intercept(context: AppContext, next: MaybePromiseFunction) {
-		const { event: eventName, invokerId, when, topic } = this.options;
-		const result = await next();
+	async intercept(context: Context, next: MaybePromiseFunction) {
+		const { event: getEvent, when } = this.options;
+		const result = await next(context);
 
 		const transporter = context.resolve<Transporter>("transporter");
 		if (when === "always" || when?.(result)) {
-			const event = new AsyncEvent(topic, eventName, result);
-			if (invokerId) {
-				event.invokerId = invokerId(context);
-			}
+			const event =
+				typeof getEvent === "function"
+					? getEvent(context, result)
+					: new AsyncEvent(getEvent, result);
 			transporter.publish(event);
 		}
-		return next();
+		return result;
 	}
 }
 
-export function Publish(options: PublishOptions) {
-	return useDecorators(Intercept(PublishInterceptor, options));
+export function Publish<Context extends AppContext>(
+	event: string | ((context: Context, result: any) => AsyncEvent<any>),
+	options: Omit<PublishOptions<Context>, "event"> = {},
+) {
+	return useDecorators(
+		Intercept(PublishInterceptor<Context>, { ...options, event }),
+	);
 }
