@@ -1,10 +1,12 @@
-import type { RequestContext } from "@vermi/core";
+import {
+	Interceptor,
+	type InterceptorMethods,
+	type RequestContext,
+} from "@vermi/core";
 import type { MaybePromiseFunction } from "@vermi/utils";
-import { Interceptor } from "../decorators/Interceptor";
-import type { InterceptorMethod } from "../interfaces";
 
 @Interceptor()
-export class ArgsPipingInterceptor implements InterceptorMethod {
+export class ArgsPipingInterceptor implements InterceptorMethods {
 	async intercept(context: RequestContext, next: MaybePromiseFunction) {
 		const payload = context.store.payload;
 		const args = context.store.route.args;

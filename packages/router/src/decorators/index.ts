@@ -11,8 +11,6 @@ export * from "./Delete";
 export * from "./Get";
 export * from "./Guard";
 export * from "./Header";
-export * from "./Intercept";
-export * from "./Interceptor";
 export * from "./Matched";
 export * from "./Middleware";
 export * from "./Params";

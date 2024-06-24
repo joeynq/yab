@@ -4,5 +4,8 @@ export * from "./Deps";
 export * from "./Hook";
 export * from "./Inject";
 export * from "./Injectable";
+export * from "./Intercept";
+export * from "./Interceptor";
+export * from "./InterceptOptions";
 export * from "./Logger";
 export * from "./Module";

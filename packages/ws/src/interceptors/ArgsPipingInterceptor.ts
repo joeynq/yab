@@ -1,10 +1,10 @@
-import { Interceptor, type InterceptorMethod } from "@vermi/router";
+import { Interceptor, type InterceptorMethods } from "@vermi/core";
 import type { MaybePromiseFunction } from "@vermi/utils";
 import type { WsContext } from "../interfaces";
 import type { EventMatch } from "../services";
 
 @Interceptor()
-export class ArgsPipingInterceptor implements InterceptorMethod {
+export class ArgsPipingInterceptor implements InterceptorMethods {
 	async intercept(context: WsContext, next: MaybePromiseFunction) {
 		let value = context.store.event.data;
 		const { args } = context.resolve<EventMatch>("matchData");

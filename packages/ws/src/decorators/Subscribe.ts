@@ -1,5 +1,4 @@
-import { useDecorators } from "@vermi/core";
-import { Intercept } from "@vermi/router";
+import { Intercept, useDecorators } from "@vermi/core";
 import { ArgsPipingInterceptor } from "../interceptors";
 import { Validate } from "../middlewares";
 import { wsHandlerStore } from "../stores";

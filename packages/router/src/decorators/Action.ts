@@ -1,9 +1,8 @@
-import { useDecorators } from "@vermi/core";
+import { Intercept, useDecorators } from "@vermi/core";
 import { ArgsPipingInterceptor } from "../interceptors";
 import type { HTTPMethod, SlashedPath } from "../interfaces";
 import { Casing, Validator } from "../middlewares";
 import { routeStore } from "../stores";
-import { Intercept } from "./Intercept";
 
 export interface ActionOptions {
 	operationId?: string;
