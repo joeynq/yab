@@ -3,7 +3,7 @@ import {
 	Config,
 	Module,
 	type RequestContext,
-	type VermiModule,
+	VermiModule,
 } from "@vermi/core";
 
 export type HelmetOptions = {
@@ -21,7 +21,7 @@ export type HelmetOptions = {
 };
 
 @Module()
-export class HelmetModule implements VermiModule<HelmetOptions> {
+export class HelmetModule extends VermiModule<HelmetOptions> {
 	@Config() public config!: HelmetOptions;
 
 	@AppHook("app:response")

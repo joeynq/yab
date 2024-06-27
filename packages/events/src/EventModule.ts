@@ -4,7 +4,7 @@ import {
 	Config,
 	Configuration,
 	Module,
-	type VermiModule,
+	VermiModule,
 	asValue,
 } from "@vermi/core";
 import type { Class } from "@vermi/utils";
@@ -23,12 +23,12 @@ export interface AsyncModuleConfig<T extends Transporter> {
 }
 
 @Module()
-export class AsyncModule
-	implements VermiModule<AsyncModuleConfig<Transporter>[]>
-{
+export class AsyncModule extends VermiModule<AsyncModuleConfig<Transporter>[]> {
 	@Config() public config!: AsyncModuleConfig<Transporter>[];
 
-	constructor(protected configuration: Configuration) {}
+	constructor(protected configuration: Configuration) {
+		super();
+	}
 
 	@AppHook("app:init")
 	public async init(context: AppContext) {

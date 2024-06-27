@@ -18,7 +18,7 @@
 		"chalk": "4.1.2",
 		"globals": "^15.6.0",
 		"lefthook": "^1.6.18",
-		"turbo": "^2.0.4"
+		"turbo": "^2.0.5"
 	},
 	"engines": {
 		"node": ">=18"

@@ -6,9 +6,9 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type VermiModule,
+	VermiModule,
 } from "@vermi/core";
-import { RouterModule, type RouterModuleConfig } from "@vermi/router";
+import { router } from "@vermi/router";
 import type { Server } from "bun";
 import { DocsUIController } from "./controllers";
 import type { ApiConfig } from "./interfaces";
@@ -19,14 +19,16 @@ type AuthConfig = { scheme: Record<string, SecuritySchemeObject> }[];
 export type ApiDocsConfig = ApiConfig[];
 
 @Module()
-export class ApiDocsModule implements VermiModule<ApiDocsConfig> {
+export class ApiDocsModule extends VermiModule<ApiDocsConfig> {
 	@Logger() private logger!: LoggerAdapter;
 	@Config() public config!: ApiDocsConfig;
 	@Config("AuthModule") public authConfig?: AuthConfig;
 
 	baseUrl = "";
 
-	constructor(protected configuration: Configuration) {}
+	constructor(protected configuration: Configuration) {
+		super();
+	}
 
 	@AppHook("app:started")
 	async started(_: AppContext, server: Server) {
@@ -54,17 +56,9 @@ export class ApiDocsModule implements VermiModule<ApiDocsConfig> {
 			);
 		}
 
-		const routerConfig: RouterModuleConfig = [];
 		for (const { mount } of this.config) {
-			routerConfig.push({
-				mount,
-				controllers: [DocsUIController],
-			});
+			this.use(router(mount, [DocsUIController]));
 		}
-		this.configuration.setModuleConfig({
-			module: RouterModule,
-			config: routerConfig,
-		});
 
 		// for (const [_, config] of Object.entries(this.config)) {
 		// 	const conf = config as ApiConfig;

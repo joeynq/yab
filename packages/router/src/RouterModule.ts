@@ -7,7 +7,7 @@ import {
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	type VermiModule,
+	VermiModule,
 	asValue,
 	registerHooks,
 	registerProviders,
@@ -57,11 +57,13 @@ export type RouterModuleConfig = Array<{
 }>;
 
 @Module({ deps: [Router] })
-export class RouterModule implements VermiModule<RouterModuleConfig> {
+export class RouterModule extends VermiModule<RouterModuleConfig> {
 	@Logger() private logger!: LoggerAdapter;
 	@Config() public config!: RouterModuleConfig;
 
-	constructor(protected router: Router) {}
+	constructor(protected router: Router) {
+		super();
+	}
 
 	#addRoutes(
 		context: AppContext,

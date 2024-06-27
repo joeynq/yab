@@ -1,4 +1,4 @@
-import type { UseModule } from "@vermi/core";
+import type { ConfigureModule } from "@vermi/core";
 import type { Class } from "@vermi/utils";
 import { AuthModule } from "./AuthModule";
 import type { Strategy } from "./strategies";
@@ -14,7 +14,7 @@ export const auth = <
 >(
 	Strategy: Class<S>,
 	{ config, schemeName }: AuthOptions<C>,
-): UseModule<AuthModule<S>> => {
+): ConfigureModule<AuthModule<S>> => {
 	const strategy = new Strategy(config);
 	const name = schemeName || Strategy.name;
 

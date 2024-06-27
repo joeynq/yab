@@ -1,7 +1,5 @@
 import { docs } from "@vermi/apidocs";
 import { BearerAuth, auth } from "@vermi/auth";
-import { cache } from "@vermi/cache";
-import { SqliteAdapter } from "@vermi/cache/sqlite";
 import {
 	type LogLevel,
 	type LogOptions,
@@ -9,10 +7,9 @@ import {
 	Vermi,
 } from "@vermi/core";
 import { remix } from "@vermi/remix";
-import { router } from "@vermi/router";
 import { statics } from "@vermi/static";
 import { ChannelSocket, ws } from "@vermi/ws";
-import { UserController } from "./controllers";
+import { AppModule } from "./AppModule";
 import { TestSocket } from "./sockets/TestSocket";
 
 /*
@@ -41,7 +38,6 @@ const logOptions: LogOptions = {
 };
 
 new Vermi({ log: logOptions })
-	.use(cache(SqliteAdapter, {}))
 	.use(
 		auth(BearerAuth, {
 			config: { options: { issuer: import.meta.env.ISSUER } },
@@ -56,11 +52,7 @@ new Vermi({ log: logOptions })
 		}),
 	)
 	.use(docs("/docs/asyncapi", { specs: {}, type: "asyncapi", casing: "snake" }))
-	.use(
-		router("/api", [UserController], {
-			casing: { internal: "camel", interfaces: "snake" },
-		}),
-	)
+	.use(AppModule, {})
 	.use(ws({ path: "/ws", eventStores: [TestSocket, ChannelSocket] }))
 	.use(
 		remix({

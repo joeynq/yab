@@ -52,6 +52,7 @@
 		"sindresorhus",
 		"sonarjs",
 		"sprintf",
+		"Sqlite",
 		"tseep",
 		"tseslint",
 		"tslog",

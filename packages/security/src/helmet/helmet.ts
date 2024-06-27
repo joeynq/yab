@@ -1,7 +1,6 @@
-import type { UseModule } from "@vermi/core";
+import type { ConfigureModule } from "@vermi/core";
 import { HelmetModule, type HelmetOptions } from "./HelmetModule";
 
-export const helmet = (config: HelmetOptions = {}): UseModule<HelmetModule> => [
-	HelmetModule,
-	config,
-];
+export const helmet = (
+	config: HelmetOptions = {},
+): ConfigureModule<HelmetModule> => [HelmetModule, config];

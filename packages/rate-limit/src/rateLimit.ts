@@ -1,4 +1,4 @@
-import type { UseModule } from "@vermi/core";
+import type { ConfigureModule } from "@vermi/core";
 import {
 	type AdapterMap,
 	type RateLimitConfig,
@@ -8,4 +8,7 @@ import {
 export const rateLimit = <N extends keyof AdapterMap>(
 	adapter: N,
 	options: RateLimitConfig<N>["options"],
-): UseModule<RateLimitModule<N>> => [RateLimitModule, { adapter, options }];
+): ConfigureModule<RateLimitModule<N>> => [
+	RateLimitModule,
+	{ adapter, options },
+];

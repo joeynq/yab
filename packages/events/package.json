@@ -1,5 +1,5 @@
 {
-	"name": "@vermi/async",
+	"name": "@vermi/events",
 	"module": "src/index.ts",
 	"main": "dist/index.js",
 	"type": "module",

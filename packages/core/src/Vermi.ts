@@ -26,8 +26,9 @@ import {
 	type ConsoleLoggerOptions,
 	ContextService,
 	Hooks,
-	type VermiModule,
+	VermiModule,
 } from "./services";
+import { submoduleStore } from "./store";
 import { enhance, registerHooks, registerProviders } from "./utils";
 
 @Module({ deps: [Configuration, Hooks] })
@@ -196,12 +197,25 @@ export class Vermi<Log extends object = ConsoleLoggerOptions> {
 		Config extends Module["config"] = Module["config"],
 	>(module: Class<Module> | [Class<Module>, Config], options?: Config) {
 		const [mod, config] = Array.isArray(module) ? module : [module, options];
-		const current = this.#options.modules.get(mod.name);
 
-		this.#options.modules.set(mod.name, {
-			module: mod,
-			config: deepMerge(current?.config, config),
-		});
+		const useModule = (module: Class<VermiModule<any>>, options: any) => {
+			const current = this.#options.modules.get(module.name)?.config;
+			this.#options.modules.set(module.name, {
+				module,
+				config: current ? deepMerge(current, options) : options,
+			});
+
+			const submodules = submoduleStore.apply(module).get();
+			if (!submodules.length) {
+				return;
+			}
+
+			for (const { module, options } of submodules) {
+				useModule(module, options);
+			}
+		};
+
+		useModule(mod, config);
 
 		return this;
 	}

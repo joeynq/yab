@@ -7,7 +7,7 @@ import {
 	Hooks,
 	Module,
 	type RequestContext,
-	type VermiModule,
+	VermiModule,
 	asClass,
 	hookStore,
 	registerHooks,
@@ -46,14 +46,16 @@ export interface WsModuleOptions {
 }
 
 @Module({ deps: [SocketHandler] })
-export class WsModule implements VermiModule<WsModuleOptions[]> {
+export class WsModule extends VermiModule<WsModuleOptions[]> {
 	@Config() public config!: WsModuleOptions[];
 
 	constructor(
 		protected configuration: Configuration,
 		protected contextService: ContextService,
 		protected socketHandler: SocketHandler,
-	) {}
+	) {
+		super();
+	}
 
 	@AppHook("app:init")
 	async onInit(context: AppContext) {

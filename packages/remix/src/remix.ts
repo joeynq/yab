@@ -1,7 +1,6 @@
-import type { UseModule } from "@vermi/core";
+import type { ConfigureModule } from "@vermi/core";
 import { RemixModule, type RemixModuleOptions } from "./RemixModule";
 
-export const remix = (options: RemixModuleOptions): UseModule<RemixModule> => [
-	RemixModule,
-	options,
-];
+export const remix = (
+	options: RemixModuleOptions,
+): ConfigureModule<RemixModule> => [RemixModule, options];

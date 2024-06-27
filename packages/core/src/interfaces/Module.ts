@@ -4,7 +4,7 @@ import type { VermiModule } from "../services";
 import type { LogOptions } from "./LoggerAdapter";
 
 export interface ModuleConfig<Config> {
-	module: Class<any>;
+	module: Class<VermiModule<Config>>;
 	config: Config;
 }
 
@@ -19,7 +19,7 @@ export interface AppOptions<Log extends object = ConsoleOptions> {
 	websocket?: WebSocketHandler<any>;
 }
 
-export type UseModule<
+export type ConfigureModule<
 	Module extends VermiModule<any>,
 	Config extends Module["config"] = Module["config"],
 > = [Class<Module>, Config];

@@ -30,7 +30,6 @@ export const enhance = <T extends object>(container: AwilixContainer<T>) => {
 					if (!self.hasRegistration(tokenName)) {
 						return undefined;
 					}
-
 					return self.resolve(tokenName);
 				},
 				register: (this as EnhancedContainer<T>).register.bind(this),

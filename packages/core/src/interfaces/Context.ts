@@ -5,7 +5,7 @@ import type { Vermi } from "../Vermi";
 import type { Configuration, ContextService, Hooks } from "../services";
 import type { LoggerAdapter } from "./LoggerAdapter";
 
-export type InjectionToken<T> = string | (new (...args: any[]) => T);
+export type InjectionToken<T> = string | symbol | (new (...args: any[]) => T);
 
 export enum InjectionScope {
 	Singleton = "SINGLETON",

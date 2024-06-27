@@ -4,7 +4,7 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type VermiModule,
+	VermiModule,
 } from "@vermi/core";
 import type { AdapterConfigMap, Templates } from "./interfaces";
 import { NotificationService } from "./services";
@@ -15,13 +15,15 @@ export type NotificationModuleConfig<T extends Templates> = {
 };
 
 @Module({ deps: [NotificationService] })
-export class NotificationModule<T extends Templates>
-	implements VermiModule<NotificationModuleConfig<T>>
-{
+export class NotificationModule<T extends Templates> extends VermiModule<
+	NotificationModuleConfig<T>
+> {
 	@Logger() private logger!: LoggerAdapter;
 	@Config() public config!: NotificationModuleConfig<T>;
 
-	constructor(protected notificationService: NotificationService) {}
+	constructor(protected notificationService: NotificationService) {
+		super();
+	}
 
 	@AppHook("app:exit")
 	async exit() {

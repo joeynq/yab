@@ -7,7 +7,7 @@ import {
 	type LoggerAdapter,
 	Module,
 	type RequestContext,
-	type VermiModule,
+	VermiModule,
 } from "@vermi/core";
 import { pathname } from "@vermi/utils";
 import type { BunFile } from "bun";
@@ -51,7 +51,7 @@ interface StaticCache {
 }
 
 @Module()
-export class StaticModule implements VermiModule<StaticModuleOptions[]> {
+export class StaticModule extends VermiModule<StaticModuleOptions[]> {
 	@Logger() private logger!: LoggerAdapter;
 	@Config() public config!: StaticModuleOptions[];
 	@Cache() cache!: CacheAdapter<StaticCache>;

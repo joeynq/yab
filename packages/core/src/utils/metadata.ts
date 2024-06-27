@@ -38,7 +38,10 @@ export const mergeMetadata = <T extends object = object>(
 	);
 };
 
-export const getTokenName = (token: string | Class<any>): string => {
+export const getTokenName = (token: string | symbol | Class<any>): string => {
+	if (typeof token === "symbol") {
+		return camelCase(token.description || token.toString());
+	}
 	if (isClass(token)) {
 		return camelCase(token.name);
 	}

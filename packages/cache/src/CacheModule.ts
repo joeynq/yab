@@ -5,7 +5,7 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type VermiModule,
+	VermiModule,
 	asValue,
 } from "@vermi/core";
 import type { Class } from "@vermi/utils";
@@ -19,9 +19,9 @@ export type CacheModuleOptions<Adapter extends Class<CacheAdapter<any>>> = {
 };
 
 @Module()
-export class CacheModule<Adapter extends Class<CacheAdapter<any>>>
-	implements VermiModule<CacheModuleOptions<Adapter>[]>
-{
+export class CacheModule<
+	Adapter extends Class<CacheAdapter<any>>,
+> extends VermiModule<CacheModuleOptions<Adapter>[]> {
 	@Logger() protected logger!: LoggerAdapter;
 	@Config() public config!: CacheModuleOptions<Adapter>[];
 

@@ -5,7 +5,7 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type VermiModule,
+	VermiModule,
 	asValue,
 } from "@vermi/core";
 import { DataSource, type DataSourceOptions } from "typeorm";
@@ -21,7 +21,7 @@ export type TypeormModuleConfig = {
 };
 
 @Module()
-export class TypeormModule implements VermiModule<TypeormModuleConfig> {
+export class TypeormModule extends VermiModule<TypeormModuleConfig> {
 	@Logger() private logger!: LoggerAdapter;
 	@Config() public config!: TypeormModuleConfig;
 

@@ -5,7 +5,7 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type VermiModule,
+	VermiModule,
 	asValue,
 } from "@vermi/core";
 import { tryRun } from "@vermi/utils";
@@ -30,9 +30,9 @@ export type AuthModuleConfig<S extends Strategy<any>> = {
 type InitStatus = "success" | "error";
 
 @Module()
-export class AuthModule<S extends Strategy<any>>
-	implements VermiModule<AuthModuleConfig<S>>
-{
+export class AuthModule<S extends Strategy<any>> extends VermiModule<
+	AuthModuleConfig<S>
+> {
 	@Logger() private logger!: LoggerAdapter;
 	@Config() public config!: AuthModuleConfig<S>;
 

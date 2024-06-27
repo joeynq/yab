@@ -3,7 +3,7 @@ import {
 	Config,
 	Module,
 	type RequestContext,
-	type VermiModule,
+	VermiModule,
 } from "@vermi/core";
 
 export type CorsConfig = {
@@ -18,7 +18,7 @@ export type CorsConfig = {
 };
 
 @Module()
-export class CorsModule implements VermiModule<CorsConfig> {
+export class CorsModule extends VermiModule<CorsConfig> {
 	@Config() public config!: CorsConfig;
 
 	@AppHook("app:response")

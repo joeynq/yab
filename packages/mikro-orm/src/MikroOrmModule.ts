@@ -7,7 +7,7 @@ import {
 	Logger,
 	type LoggerAdapter,
 	Module,
-	type VermiModule,
+	VermiModule,
 	asValue,
 } from "@vermi/core";
 import { getToken } from "./utils";
@@ -21,7 +21,7 @@ declare module "@vermi/core" {
 export type MikroOrmModuleConfig = Options;
 
 @Module()
-export class MikroOrmModule implements VermiModule<MikroOrmModuleConfig> {
+export class MikroOrmModule extends VermiModule<MikroOrmModuleConfig> {
 	#orm!: MikroORM;
 
 	@Logger() private logger!: LoggerAdapter;

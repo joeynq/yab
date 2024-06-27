@@ -9,10 +9,10 @@ import {
 	Config,
 	Configuration,
 	Module,
-	type VermiModule,
+	VermiModule,
 	asValue,
 } from "@vermi/core";
-import { StaticModule, type StaticModuleOptions } from "@vermi/static";
+import { statics } from "@vermi/static";
 
 declare module "@vermi/core" {
 	interface _AppContext {
@@ -26,10 +26,12 @@ export interface RemixModuleOptions {
 }
 
 @Module()
-export class RemixModule implements VermiModule<RemixModuleOptions> {
+export class RemixModule extends VermiModule<RemixModuleOptions> {
 	@Config() config!: RemixModuleOptions;
 
-	constructor(protected configuration: Configuration) {}
+	constructor(protected configuration: Configuration) {
+		super();
+	}
 
 	@AppHook("app:init")
 	async init(context: AppContext) {
@@ -45,14 +47,6 @@ export class RemixModule implements VermiModule<RemixModuleOptions> {
 			"",
 		);
 
-		const staticConfig: StaticModuleOptions = {
-			assetsDir: assets,
-			patterns: [/^\/assets\//],
-		};
-
-		this.configuration.setModuleConfig({
-			module: StaticModule,
-			config: [staticConfig],
-		});
+		this.use(statics(assets, { patterns: [/^\/assets\//] }));
 	}
 }
