@@ -13,7 +13,6 @@ import {
 	registerHooks,
 	registerProviders,
 } from "@vermi/core";
-import type { SlashedPath } from "@vermi/router";
 import {
 	type Class,
 	type Dictionary,
@@ -23,7 +22,7 @@ import {
 } from "@vermi/utils";
 import { type Server, type WebSocketHandler } from "bun";
 import type { WsEventMap, WsEvents } from "./hooks";
-import type { WsData } from "./interfaces";
+import type { SlashedPath, WsData } from "./interfaces";
 import { JsonParser } from "./parser/JsonParser";
 import type { Parser } from "./parser/Parser";
 import { SocketHandler } from "./services";

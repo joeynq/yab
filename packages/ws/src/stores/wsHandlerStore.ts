@@ -1,7 +1,7 @@
 import { type TSchema, Type } from "@sinclair/typebox";
 import { createStore } from "@vermi/core";
-import type { SlashedPath } from "@vermi/router";
 import type { Class } from "@vermi/utils";
+import type { SlashedPath } from "../interfaces";
 
 export const WsHandlerStoreKey = Symbol("WsHandlerStoreKey");
 

@@ -1,4 +1,4 @@
-import type { SlashedPath } from "@vermi/router";
+export type SlashedPath = `/${string}`;
 
 export interface WsData {
 	sid: string;

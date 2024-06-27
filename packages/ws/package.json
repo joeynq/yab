@@ -12,7 +12,6 @@
 		"@sinclair/typebox": "^0.32.33",
 		"@types/bun": "latest",
 		"@vermi/core": "link:@vermi/core",
-		"@vermi/router": "link:@vermi/router",
 		"@vermi/schema": "link:@vermi/schema",
 		"@vermi/utils": "link:@vermi/utils"
 	},

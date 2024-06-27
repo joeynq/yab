@@ -1,7 +1,7 @@
 import { UseCache } from "@vermi/cache";
-import { Config, Inject, type RequestContext } from "@vermi/core";
+import { Config, Inject, type RequestContext, Use } from "@vermi/core";
 import { Remix } from "@vermi/remix";
-import { Controller, Get, NotFound, Use } from "@vermi/router";
+import { Controller, Get, NotFound } from "@vermi/router";
 import { ensure } from "@vermi/utils";
 import type { ApiDocsConfig } from "../ApiDocsModule";
 import type { ApiConfig } from "../interfaces";

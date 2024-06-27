@@ -69,9 +69,7 @@
 	"exportall.config.relExclusion": [
 		"/packages/utils/src/internal",
 		"/packages/cache/src/adapters",
-		"/packages/logger/src/loggers",
-		"/packages/openapi/src/settings",
-		"/packages/apidocs/src/controllers/AsyncAPIController.ts"
+		"/packages/logger/src/loggers"
 	],
 	"editor.defaultFormatter": "biomejs.biome",
 	"biome.rename": true,

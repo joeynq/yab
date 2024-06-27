@@ -1,4 +1,4 @@
-import { Middleware, Use } from "@vermi/router";
+import { Middleware, Use } from "@vermi/core";
 import { validate } from "@vermi/schema";
 import { WsHook } from "../decorators";
 import { InvalidData } from "../exceptions";

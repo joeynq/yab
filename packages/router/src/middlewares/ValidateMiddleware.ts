@@ -1,7 +1,7 @@
-import { type RequestContext } from "@vermi/core";
+import { Middleware, type RequestContext, Use } from "@vermi/core";
 import type { Matched } from "@vermi/find-my-way";
 import type { ValidationFn } from "@vermi/schema";
-import { Guard, Middleware, Use } from "../decorators";
+import { Guard } from "../decorators";
 import { BadRequest } from "../exceptions";
 import type { RouteMatch } from "../interfaces";
 

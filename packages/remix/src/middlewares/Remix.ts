@@ -4,9 +4,11 @@ import {
 	Inject,
 	Logger,
 	type LoggerAdapter,
+	Middleware,
 	type RequestContext,
+	Use,
 } from "@vermi/core";
-import { After, Middleware, Res, type SlashedPath, Use } from "@vermi/router";
+import { After, Res, type SlashedPath } from "@vermi/router";
 import type { RemixModuleOptions } from "../RemixModule";
 
 @Middleware()

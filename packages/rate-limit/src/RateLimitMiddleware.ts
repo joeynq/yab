@@ -1,5 +1,5 @@
-import { type RequestContext, asValue } from "@vermi/core";
-import { AfterRoute, BeforeRoute, Middleware } from "@vermi/router";
+import { Middleware, type RequestContext, asValue } from "@vermi/core";
+import { AfterRoute, BeforeRoute } from "@vermi/router";
 
 interface RateLimitOptions {
 	keyPrefix: string;

@@ -8,5 +8,7 @@ export * from "./Intercept";
 export * from "./InterceptOptions";
 export * from "./Interceptor";
 export * from "./Logger";
+export * from "./Middleware";
 export * from "./Module";
+export * from "./Use";
 export * from "./UseModule";

@@ -1,6 +1,5 @@
-import { type RequestContext, hookStore } from "@vermi/core";
+import { Middleware, type RequestContext, hookStore } from "@vermi/core";
 import type { Class } from "@vermi/utils";
-import { Middleware } from "../decorators";
 import { RouterEvents } from "../events";
 import { type ExpressMiddleware, promiseMiddleware } from "./promiseMiddleware";
 

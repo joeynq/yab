@@ -1,5 +1,5 @@
-import { Config, type RequestContext, asValue } from "@vermi/core";
-import { Matched, Middleware, NotFound } from "@vermi/router";
+import { Config, Middleware, type RequestContext, asValue } from "@vermi/core";
+import { Matched, NotFound } from "@vermi/router";
 import type { ApiDocsConfig } from "../ApiDocsModule";
 import { AsyncAPIService, OpenAPIService } from "../services";
 import { isOpenAPI } from "../utils/isOpenAPI";

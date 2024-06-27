@@ -1,7 +1,13 @@
-import { Config, type RequestContext, asValue } from "@vermi/core";
+import {
+	Config,
+	Middleware,
+	type RequestContext,
+	Use,
+	asValue,
+} from "@vermi/core";
 import { stringify } from "@vermi/utils";
 import type { RouterModuleConfig } from "../RouterModule";
-import { AfterRoute, BeforeRoute, Middleware, Use } from "../decorators";
+import { AfterRoute, BeforeRoute } from "../decorators";
 import { type CasingType, casingFactory } from "../services";
 
 const getCasing = (context: RequestContext, config: RouterModuleConfig) => {
