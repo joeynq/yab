@@ -1,6 +1,5 @@
-import type { HTTPMethod } from "@vermi/find-my-way";
 import type { ValidationFn } from "@vermi/schema";
-import type { Class, MaybePromiseFunction } from "@vermi/utils";
+import type { Class, HTTPMethod, MaybePromiseFunction } from "@vermi/utils";
 import type { Operation, SlashedPath } from "./schema";
 
 export type { HTTPMethod };
@@ -16,8 +15,8 @@ export type RouterConfig = {
 	routes: { [key: SlashedPath]: Operation[] };
 };
 
-export interface RouteMatch extends Omit<Operation, "handler"> {
+export type RouteMatch = Omit<Operation, "handler"> & {
 	handler: MaybePromiseFunction;
 	path: string;
 	method: HTTPMethod;
-}
+};

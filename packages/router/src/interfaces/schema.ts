@@ -1,7 +1,6 @@
 import type { TSchema } from "@sinclair/typebox";
 import type { HttpCodes } from "@vermi/core";
-import type { Class } from "@vermi/utils";
-import type { HTTPMethod } from "find-my-way";
+import type { Class, HTTPMethod } from "@vermi/utils";
 import type { Mapper } from "../services";
 
 export type ContentType = `${string}/${string}`;

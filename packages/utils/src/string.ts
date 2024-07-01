@@ -20,8 +20,7 @@ export type ExtractParams<T extends string> =
 		? { [K in P]: string } & ExtractParams<R>
 		: T extends `${string}:${infer P}`
 			? { [K in P]: string }
-			: // biome-ignore lint/complexity/noBannedTypes: <explanation>
-				{};
+			: {};
 
 export const format = (
 	text: string,

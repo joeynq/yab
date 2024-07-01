@@ -9,10 +9,10 @@ import {
 	type LoggerAdapter,
 	asValue,
 } from "@vermi/core";
-import { FindMyWay } from "@vermi/find-my-way";
 import {
 	type Class,
 	type MaybePromiseFunction,
+	createRouter,
 	ensure,
 	tryRun,
 } from "@vermi/utils";
@@ -46,7 +46,7 @@ export class SocketHandler {
 	#sockets = new Map<string, EnhancedWebSocket<WsData>>();
 	#server!: Server;
 
-	protected router = new FindMyWay<EventMatch>();
+	protected router = createRouter<EventMatch>();
 
 	@Logger() private logger!: LoggerAdapter;
 
@@ -128,8 +128,7 @@ export class SocketHandler {
 						throw new InvalidData(ws.data.sid, "Invalid message type");
 					}
 
-					const result = this.router.find(
-						"NOTIFY",
+					const result = this.router.lookup(
 						`/${event.type}${ws.data.path}${event.channel}`,
 					);
 
@@ -137,18 +136,16 @@ export class SocketHandler {
 						throw new InvalidData(ws.data.sid, "Event is not handled");
 					}
 
-					const { handler, handlerId } = result.store;
+					const { handler, handlerId } = result;
 
 					context.register({
-						params: asValue(result.params),
-						matchData: asValue(result.store),
+						params: asValue(result.params || {}),
+						matchData: asValue(result),
 					});
 
-					await this.hooks.invoke(
-						WsEvents.Guard,
-						[context.expose(), result.store],
-						{ when: (scope: string) => scope === handlerId },
-					);
+					await this.hooks.invoke(WsEvents.Guard, [context.expose(), result], {
+						when: (scope: string) => scope === handlerId,
+					});
 
 					await handler(context.expose());
 				});
@@ -176,9 +173,9 @@ export class SocketHandler {
 	}
 
 	addEvent(event: string, handler: EventMatch) {
-		const current = this.router.find("NOTIFY", event);
+		const current = this.router.lookup(event);
 		if (!current) {
-			this.router.add("NOTIFY", event, handler);
+			this.router.insert(event, handler);
 		}
 	}
 

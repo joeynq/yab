@@ -6,8 +6,7 @@ export function InterceptOptions(): PropertyDecorator {
 		Object.defineProperty(target, propertyKey, {
 			get() {
 				const name = `${camelCase(target.constructor.name)}.options`;
-				const has = containerRef().hasRegistration(name);
-				if (!has) {
+				if (!containerRef().hasRegistration(name)) {
 					return undefined;
 				}
 				return containerRef().resolve(name);

@@ -8,7 +8,7 @@
 		"watch": "tsc -w"
 	},
 	"devDependencies": {
-		"@sinclair/typebox": "^0.32.33",
+		"@sinclair/typebox": "^0.32.34",
 		"@types/bun": "latest",
 		"@types/react": "^18.3.3",
 		"@types/react-dom": "^18.3.0",
@@ -22,7 +22,7 @@
 		"@vermi/remix": "link:@vermi/remix"
 	},
 	"peerDependencies": {
-		"@sinclair/typebox": "^0.32.33",
+		"@sinclair/typebox": "^0.32.34",
 		"typescript": "^5.5.2"
 	},
 	"dependencies": {

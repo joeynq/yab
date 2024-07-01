@@ -7,20 +7,19 @@ import {
 	useDecorators,
 } from "@vermi/core";
 import type { MaybePromiseFunction } from "@vermi/utils";
-import { AsyncEvent } from "../entities";
-import type { Transporter } from "../interfaces";
+import type { EventType } from "../interfaces";
+import { Event } from "../services";
 
 export interface PublishOptions<Context extends AppContext, Result = unknown> {
 	/**
 	 * The event name.
 	 */
-	event: string | ((context: Context, result: Result) => AsyncEvent<Result>);
+	event: string | ((context: Context, result: Result) => EventType<Result>);
 
 	/**
 	 * A function that determines whether the event should be published.
 	 */
 	when?: "always" | ((event: any) => boolean);
-	transport?: Transporter;
 }
 
 @Interceptor()
@@ -34,20 +33,20 @@ class PublishInterceptor<Context extends AppContext>
 		const { event: getEvent, when } = this.options;
 		const result = await next(context);
 
-		const transporter = context.resolve<Transporter>("transporter");
+		const dispatcher = context.store.eventDispatcher;
 		if (when === "always" || when?.(result)) {
 			const event =
 				typeof getEvent === "function"
 					? getEvent(context, result)
-					: new AsyncEvent(getEvent, result);
-			transporter.publish(event);
+					: new Event(getEvent, result);
+			dispatcher.dispatch(event);
 		}
 		return result;
 	}
 }
 
 export function Publish<Context extends AppContext>(
-	event: string | ((context: Context, result: any) => AsyncEvent<any>),
+	event: string | ((context: Context, result: any) => EventType<any>),
 	options: Omit<PublishOptions<Context>, "event"> = {},
 ) {
 	return useDecorators(

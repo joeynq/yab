@@ -5,25 +5,20 @@ import {
 	type RequestContext,
 	asValue,
 } from "@vermi/core";
-import { FindMyWay } from "@vermi/find-my-way";
-import { ensure, getCookies } from "@vermi/utils";
+import { Router as RadixRouter, ensure, getCookies } from "@vermi/utils";
 import type { RouterModuleConfig } from "../RouterModule";
 import { RouterEvents } from "../events";
 import type { HTTPMethod, RouteMatch } from "../interfaces";
 
 @Injectable("SINGLETON")
 export class Router {
-	protected router = new FindMyWay<RouteMatch>();
+	protected router = new RadixRouter<RouteMatch>();
 
 	@Config("RouterModule") config!: RouterModuleConfig;
 
 	get context() {
 		ensure(this.contextService.context);
 		return this.contextService.context.expose() as RequestContext;
-	}
-
-	get debug() {
-		return this.router.getRoutes();
 	}
 
 	constructor(private contextService: ContextService) {}

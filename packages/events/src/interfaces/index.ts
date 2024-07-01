@@ -1,1 +1,2 @@
-export * from "./Transporter";
+export * from "./EventType";
+export * from "./TypedEventEmitter";

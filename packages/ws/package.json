@@ -9,7 +9,7 @@
 	},
 	"devDependencies": {
 		"@msgpack/msgpack": "^3.0.0-beta2",
-		"@sinclair/typebox": "^0.32.33",
+		"@sinclair/typebox": "^0.32.34",
 		"@types/bun": "latest",
 		"@vermi/core": "link:@vermi/core",
 		"@vermi/schema": "link:@vermi/schema",
@@ -20,7 +20,6 @@
 		"typescript": "^5.5.2"
 	},
 	"dependencies": {
-		"find-my-way": "^8.2.0",
 		"reflect-metadata": "^0.2.2"
 	}
 }
